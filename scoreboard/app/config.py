@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     first_blood_bonus: int = 50
     defense_streak_bonus: int = 5
 
+    # Event mode: "team" or "individual"
+    event_mode: str = "team"
+
     # Registration
     registration_enabled: bool = True
     registration_code: str = ""

@@ -18,7 +18,7 @@ from app.config import get_settings
 from app.database import engine, init_db
 from app.services.tick_engine import tick_engine
 from app.services.ws_manager import ws_manager
-from app.routers import scoreboard, teams, hills, admin, websocket, internal, registration, auth, agent, vpn
+from app.routers import scoreboard, teams, hills, admin, websocket, internal, registration, auth, agent, vpn, users
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -136,6 +136,7 @@ app.include_router(registration.router)
 app.include_router(auth.router)
 app.include_router(agent.router)
 app.include_router(vpn.router)
+app.include_router(users.router)
 
 
 # ─── Static files (frontend) ────────────────────────────────────────────────

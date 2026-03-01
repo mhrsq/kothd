@@ -170,4 +170,36 @@ class AuditLog(Base):
     event_type = Column(String(32), nullable=False, index=True)
     actor = Column(String(64))
     details = Column(JSON, default={})
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), index=True)
+
+
+class OrganizerUser(Base):
+    """Admin/organizer user accounts for multi-user management."""
+    __tablename__ = "organizer_users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(64), unique=True, nullable=False, index=True)
+    display_name = Column(String(128))
+    password_hash = Column(String(256), nullable=False)
+    role = Column(String(16), default="organizer")  # superadmin | organizer
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+    last_login = Column(DateTime, nullable=True)
+
+
+class IndividualUser(Base):
+    """Individual user accounts (used when event_mode=individual)."""
+    __tablename__ = "individual_users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(64), unique=True, nullable=False, index=True)
+    display_name = Column(String(128))
+    password_hash = Column(String(256), nullable=False)
+    vpn_ip = Column(String(45), nullable=True)
+    category = Column(String(32), default="default")
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    last_login = Column(DateTime, nullable=True)

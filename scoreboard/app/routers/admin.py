@@ -430,15 +430,34 @@ async def update_config(
 
 @router.get("/audit")
 async def get_audit_log(
-    limit: int = Query(50, le=500),
+    limit: int = Query(50, le=1000),
     event_type: str = Query(None),
+    search: str = Query(None, max_length=200),
+    actor: str = Query(None, max_length=64),
     db: AsyncSession = Depends(get_db),
     _: bool = Depends(require_admin),
 ):
-    """Get audit log entries"""
+    """Get audit log entries with optional filtering and search."""
     query = select(AuditLog).order_by(desc(AuditLog.created_at))
+
     if event_type:
         query = query.where(AuditLog.event_type == event_type)
+
+    if actor:
+        query = query.where(AuditLog.actor.ilike(f"%{actor}%"))
+
+    if search:
+        # Search across actor, event_type, details (cast to text), ip_address
+        from sqlalchemy import or_, cast, String
+        query = query.where(
+            or_(
+                AuditLog.actor.ilike(f"%{search}%"),
+                AuditLog.event_type.ilike(f"%{search}%"),
+                cast(AuditLog.details, String).ilike(f"%{search}%"),
+                AuditLog.ip_address.ilike(f"%{search}%") if search else False,
+            )
+        )
+
     query = query.limit(limit)
 
     result = await db.execute(query)
@@ -449,6 +468,8 @@ async def get_audit_log(
             "event_type": log.event_type,
             "actor": log.actor,
             "details": log.details,
+            "ip_address": log.ip_address,
+            "user_agent": log.user_agent,
             "created_at": log.created_at.isoformat() if log.created_at else None,
         }
         for log in logs

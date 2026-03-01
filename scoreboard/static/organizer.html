@@ -166,6 +166,24 @@
         .audit-row .at { color: var(--text-muted); white-space: nowrap; font-family: var(--font-mono); }
         .audit-row .ae { font-weight: 700; color: var(--accent-cyan); min-width: 130px; }
         .audit-row .ad { color: var(--text-secondary); word-break: break-all; }
+        .audit-row .aip { color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; white-space: nowrap; }
+        .audit-row .aua { color: var(--text-muted); font-size: 10px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .audit-search { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+        .audit-search input { padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 13px; flex: 1; min-width: 200px; font-family: var(--font-mono); }
+        .audit-search input::placeholder { color: var(--text-muted); }
+
+        /* ── User Management ── */
+        .mode-toggle { display: flex; gap: 0; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); width: fit-content; }
+        .mode-toggle button { padding: 12px 28px; border: none; background: var(--bg-secondary); color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--font-sans); transition: all .2s; }
+        .mode-toggle button.active { background: var(--accent-cyan); color: #000; }
+        .mode-toggle button:hover:not(.active) { background: var(--bg-hover); color: var(--text-primary); }
+        .um-section { margin-top: 24px; }
+        .um-section.disabled { opacity: 0.4; pointer-events: none; }
+        .um-section .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 12px; font-weight: 700; }
+        .um-add-form { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: flex-end; }
+        .um-add-form .fg { margin-bottom: 0; }
+        .um-add-form .fg label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 4px; font-weight: 700; }
+        .um-add-form .fg input, .um-add-form .fg select { padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 13px; font-family: var(--font-mono); }
 
         /* ── Timer Big ── */
         .big-timer { font-size: 48px; font-weight: 900; font-family: var(--font-mono); text-align: center; margin: 10px 0; }
@@ -279,6 +297,7 @@
     <a href="#" data-page="gamecontrol"><span class="ico">🎮</span> Game Control</a>
     <a href="#" data-page="ticks"><span class="ico">⏱️</span> Tick Engine</a>
     <div class="sidebar-title">Management</div>
+    <a href="#" data-page="usermgmt"><span class="ico">👤</span> User Management</a>
     <a href="#" data-page="teams"><span class="ico">👥</span> Teams</a>
     <a href="#" data-page="hills"><span class="ico">🏔️</span> Hills</a>
     <a href="#" data-page="deploywizard"><span class="ico">🧙</span> Deploy Wizard</a>
@@ -648,6 +667,64 @@
     </div>
 </div>
 
+<!-- ───── PAGE: USER MANAGEMENT ───── -->
+<div class="section-page" id="page-usermgmt">
+    <h2 class="page-title">👤 User Management</h2>
+
+    <!-- Event Mode -->
+    <div class="card">
+        <h3>🎯 Event Mode</h3>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Pilih mode event: <strong>Team</strong> (tim login pakai token) atau <strong>Individual</strong> (peserta login pakai username/password).</p>
+        <div class="mode-toggle" id="eventModeToggle">
+            <button id="modeTeam" onclick="setEventMode('team')">👥 Team</button>
+            <button id="modeIndividual" onclick="setEventMode('individual')">👤 Individual</button>
+        </div>
+        <div id="eventModeStatus" style="margin-top:10px; font-size:12px; color:var(--text-muted);"></div>
+    </div>
+
+    <!-- Organizer Users -->
+    <div class="card um-section">
+        <h3>🛡️ Organizer Accounts</h3>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Akun organizer bisa login ke console ini dengan username/password.</p>
+        <div class="um-add-form">
+            <div class="fg"><label>Username</label><input id="orgNewUser" placeholder="username" style="width:160px;"></div>
+            <div class="fg"><label>Display Name</label><input id="orgNewName" placeholder="Display Name" style="width:180px;"></div>
+            <div class="fg"><label>Password</label><input id="orgNewPass" type="password" placeholder="min 6 chars" style="width:160px;"></div>
+            <div class="fg"><label>Role</label>
+                <select id="orgNewRole" style="padding:8px 12px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:6px; color:var(--text-primary); font-size:13px;">
+                    <option value="organizer">Organizer</option>
+                    <option value="superadmin">Superadmin</option>
+                </select>
+            </div>
+            <button class="btn btn-sm btn-green" onclick="createOrganizer()">+ Tambah</button>
+        </div>
+        <table class="tbl">
+            <thead><tr><th>ID</th><th>Username</th><th>Display Name</th><th>Role</th><th>Active</th><th>Last Login</th><th>Aksi</th></tr></thead>
+            <tbody id="orgUsersBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Individual Users -->
+    <div class="card um-section" id="individualSection">
+        <h3>👤 Individual Users</h3>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">User individual hanya bisa login jika event mode = Individual.</p>
+        <div id="individualDisabledMsg" style="background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:6px; padding:10px 14px; color:var(--accent-red); font-size:12px; margin-bottom:14px; display:none;">
+            ⚠️ Event mode saat ini = <strong>Team</strong>. Individual users tidak bisa login. Ganti ke Individual mode untuk mengaktifkan.
+        </div>
+        <div class="um-add-form">
+            <div class="fg"><label>Username</label><input id="indNewUser" placeholder="username" style="width:160px;"></div>
+            <div class="fg"><label>Display Name</label><input id="indNewName" placeholder="Display Name" style="width:180px;"></div>
+            <div class="fg"><label>Password</label><input id="indNewPass" type="password" placeholder="min 6 chars" style="width:160px;"></div>
+            <div class="fg"><label>Category</label><input id="indNewCat" placeholder="default" style="width:120px;" value="default"></div>
+            <button class="btn btn-sm btn-green" onclick="createIndividual()">+ Tambah</button>
+        </div>
+        <table class="tbl">
+            <thead><tr><th>ID</th><th>Username</th><th>Display Name</th><th>Category</th><th>Active</th><th>Last Login</th><th>Aksi</th></tr></thead>
+            <tbody id="indUsersBody"></tbody>
+        </table>
+    </div>
+</div>
+
 <!-- ───── PAGE: CONFIG ───── -->
 <div class="section-page" id="page-config">
     <h2 class="page-title">⚙️ Game Configuration</h2>
@@ -664,7 +741,8 @@
 <div class="section-page" id="page-audit">
     <h2 class="page-title">📋 Audit Log</h2>
     <div class="card">
-        <div style="display:flex; gap:12px; margin-bottom:16px;">
+        <div class="audit-search">
+            <input type="text" id="auditSearch" placeholder="🔍 Cari di audit log (IP, username, detail...)" onkeydown="if(event.key==='Enter') loadAudit();">
             <select id="auditFilter" onchange="loadAudit()" style="padding:8px 12px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:6px; color:var(--text-primary); font-size:13px;">
                 <option value="">Semua Event</option>
                 <option value="game_control">Game Control</option>
@@ -678,10 +756,17 @@
                 <option value="announcement">Announcement</option>
                 <option value="config_updated">Config Updated</option>
                 <option value="agent_token_generated">Agent Token</option>
+                <option value="auth_login">Auth Login</option>
+                <option value="auth_failed">Auth Failed</option>
+                <option value="event_mode_changed">Event Mode Changed</option>
+                <option value="organizer_created">Organizer Created</option>
+                <option value="individual_created">Individual Created</option>
             </select>
-            <button class="btn btn-sm btn-ghost" onclick="loadAudit()">🔄 Refresh</button>
+            <button class="btn btn-sm btn-ghost" onclick="loadAudit()">🔍 Search</button>
+            <button class="btn btn-sm btn-ghost" onclick="document.getElementById('auditSearch').value=''; loadAudit();">✕ Clear</button>
         </div>
-        <div class="audit-feed" id="auditFeed">Loading...</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:12px;" id="auditCount"></div>
+        <div class="audit-feed" id="auditFeed" style="max-height:640px;">Loading...</div>
     </div>
 </div>
 
@@ -1538,6 +1623,7 @@ function loadPage(page) {
         verification: loadVerificationPage,
         topology: loadTopologyEditor,
         deploywizard: loadDeployWizard,
+        usermgmt: loadUserManagement,
         export: ()=>{},
         guide: ()=>{},
     };
@@ -2847,15 +2933,213 @@ async function updateConfig(key) {
 // ── Audit ───────────────────────────────────────
 async function loadAudit() {
     const filter = document.getElementById('auditFilter')?.value || '';
+    const search = document.getElementById('auditSearch')?.value.trim() || '';
     try {
-        const url = '/admin/audit?limit=200' + (filter ? `&event_type=${filter}` : '');
+        let url = '/admin/audit?limit=500' + (filter ? `&event_type=${filter}` : '');
+        if (search) url += `&search=${encodeURIComponent(search)}`;
         const logs = await api(url);
-        document.getElementById('auditFeed').innerHTML = logs.map(l => `<div class="audit-row">
-            <span class="at">${l.created_at ? toWIB(l.created_at, {hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'short'}) : ''}</span>
-            <span class="ae">[${l.event_type}]</span>
-            <span class="ad">${esc(JSON.stringify(l.details))}</span>
-        </div>`).join('') || '<p style="color:var(--text-muted)">Belum ada log</p>';
-    } catch(e) {}
+        document.getElementById('auditCount').textContent = `Menampilkan ${logs.length} log${search ? ` (search: "${search}")` : ''}`;
+        document.getElementById('auditFeed').innerHTML = logs.map(l => {
+            const ipPart = l.ip_address ? `<span class="aip" title="IP Address">${esc(l.ip_address)}</span>` : '';
+            const uaPart = l.user_agent ? `<span class="aua" title="${esc(l.user_agent)}">${esc(l.user_agent)}</span>` : '';
+            return `<div class="audit-row" style="flex-wrap:wrap;">
+                <span class="at">${l.created_at ? toWIB(l.created_at, {hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'short'}) : ''}</span>
+                <span class="ae">[${l.event_type}]</span>
+                <span class="ad" style="flex:1;">${esc(JSON.stringify(l.details))}</span>
+                ${ipPart}${uaPart}
+            </div>`;
+        }).join('') || '<p style="color:var(--text-muted)">Belum ada log</p>';
+    } catch(e) { console.error('Audit load:', e); }
+}
+
+// ── User Management ─────────────────────────────
+let currentEventMode = 'team';
+
+async function loadUserManagement() {
+    await loadEventMode();
+    await Promise.all([loadOrganizers(), loadIndividuals()]);
+}
+
+async function loadEventMode() {
+    try {
+        const d = await api('/admin/users/event-mode');
+        currentEventMode = d.event_mode || 'team';
+    } catch(e) { currentEventMode = 'team'; }
+    updateEventModeUI();
+}
+
+function updateEventModeUI() {
+    document.getElementById('modeTeam').classList.toggle('active', currentEventMode === 'team');
+    document.getElementById('modeIndividual').classList.toggle('active', currentEventMode === 'individual');
+    document.getElementById('eventModeStatus').textContent = `Mode saat ini: ${currentEventMode.toUpperCase()}`;
+
+    const indSection = document.getElementById('individualSection');
+    const indMsg = document.getElementById('individualDisabledMsg');
+    if (currentEventMode === 'team') {
+        indMsg.style.display = 'block';
+    } else {
+        indMsg.style.display = 'none';
+    }
+}
+
+async function setEventMode(mode) {
+    if (mode === currentEventMode) return;
+    if (!confirm(`Switch event mode ke ${mode.toUpperCase()}?`)) return;
+    try {
+        await api('/admin/users/event-mode', {
+            method: 'POST',
+            body: JSON.stringify({ event_mode: mode })
+        });
+        currentEventMode = mode;
+        updateEventModeUI();
+        toast(`Event mode switched to ${mode.toUpperCase()}`);
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── Organizer CRUD ──────────
+async function loadOrganizers() {
+    try {
+        const users = await api('/admin/users/organizers');
+        document.getElementById('orgUsersBody').innerHTML = users.map(u => `<tr>
+            <td class="mono">${u.id}</td>
+            <td class="mono" style="font-weight:700;">${esc(u.username)}</td>
+            <td>${esc(u.display_name || '')}</td>
+            <td><span class="badge ${u.role === 'superadmin' ? 'badge-purple' : 'badge-blue'}">${u.role}</span></td>
+            <td>${u.is_active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-red">Inactive</span>'}</td>
+            <td style="font-size:11px; color:var(--text-muted);">${u.last_login ? toWIB(u.last_login, {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '-'}</td>
+            <td style="display:flex; gap:6px;">
+                <button class="btn btn-sm btn-ghost" onclick="toggleOrgActive(${u.id}, ${u.is_active})" title="${u.is_active ? 'Deactivate' : 'Activate'}">${u.is_active ? '🚫' : '✅'}</button>
+                <button class="btn btn-sm btn-ghost" onclick="resetOrgPassword(${u.id}, '${esc(u.username)}')" title="Reset password">🔑</button>
+                <button class="btn btn-sm btn-ghost" onclick="deleteOrganizer(${u.id}, '${esc(u.username)}')" title="Delete" style="color:var(--accent-red);">🗑️</button>
+            </td>
+        </tr>`).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Belum ada organizer</td></tr>';
+    } catch(e) { console.error('loadOrganizers:', e); }
+}
+
+async function createOrganizer() {
+    const username = document.getElementById('orgNewUser').value.trim();
+    const display_name = document.getElementById('orgNewName').value.trim();
+    const password = document.getElementById('orgNewPass').value;
+    const role = document.getElementById('orgNewRole').value;
+    if (!username || !password) { toast('Username dan password wajib diisi', 'error'); return; }
+    if (password.length < 6) { toast('Password minimal 6 karakter', 'error'); return; }
+    try {
+        await api('/admin/users/organizers', {
+            method: 'POST',
+            body: JSON.stringify({ username, display_name: display_name || undefined, password, role })
+        });
+        toast(`Organizer '${username}' created`);
+        document.getElementById('orgNewUser').value = '';
+        document.getElementById('orgNewName').value = '';
+        document.getElementById('orgNewPass').value = '';
+        loadOrganizers();
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+async function toggleOrgActive(id, currentActive) {
+    try {
+        await api(`/admin/users/organizers/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ is_active: !currentActive })
+        });
+        toast(currentActive ? 'Organizer deactivated' : 'Organizer activated');
+        loadOrganizers();
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+async function resetOrgPassword(id, username) {
+    const newPass = prompt(`Reset password untuk "${username}".\nMasukkan password baru (min 6 chars):`);
+    if (!newPass) return;
+    if (newPass.length < 6) { toast('Password minimal 6 karakter', 'error'); return; }
+    try {
+        await api(`/admin/users/organizers/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ password: newPass })
+        });
+        toast(`Password '${username}' direset`);
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteOrganizer(id, username) {
+    if (!confirm(`Hapus organizer "${username}"? Aksi ini tidak bisa di-undo.`)) return;
+    try {
+        await api(`/admin/users/organizers/${id}`, { method: 'DELETE' });
+        toast(`Organizer '${username}' deleted`);
+        loadOrganizers();
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── Individual CRUD ──────────
+async function loadIndividuals() {
+    try {
+        const users = await api('/admin/users/individuals');
+        document.getElementById('indUsersBody').innerHTML = users.map(u => `<tr>
+            <td class="mono">${u.id}</td>
+            <td class="mono" style="font-weight:700;">${esc(u.username)}</td>
+            <td>${esc(u.display_name || '')}</td>
+            <td><span class="badge badge-gray">${esc(u.category || 'default')}</span></td>
+            <td>${u.is_active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-red">Inactive</span>'}</td>
+            <td style="font-size:11px; color:var(--text-muted);">${u.last_login ? toWIB(u.last_login, {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '-'}</td>
+            <td style="display:flex; gap:6px;">
+                <button class="btn btn-sm btn-ghost" onclick="toggleIndActive(${u.id}, ${u.is_active})" title="${u.is_active ? 'Deactivate' : 'Activate'}">${u.is_active ? '🚫' : '✅'}</button>
+                <button class="btn btn-sm btn-ghost" onclick="resetIndPassword(${u.id}, '${esc(u.username)}')" title="Reset password">🔑</button>
+                <button class="btn btn-sm btn-ghost" onclick="deleteIndividual(${u.id}, '${esc(u.username)}')" title="Delete" style="color:var(--accent-red);">🗑️</button>
+            </td>
+        </tr>`).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Belum ada individual user</td></tr>';
+    } catch(e) { console.error('loadIndividuals:', e); }
+}
+
+async function createIndividual() {
+    const username = document.getElementById('indNewUser').value.trim();
+    const display_name = document.getElementById('indNewName').value.trim();
+    const password = document.getElementById('indNewPass').value;
+    const category = document.getElementById('indNewCat').value.trim() || 'default';
+    if (!username || !password) { toast('Username dan password wajib diisi', 'error'); return; }
+    if (password.length < 6) { toast('Password minimal 6 karakter', 'error'); return; }
+    try {
+        await api('/admin/users/individuals', {
+            method: 'POST',
+            body: JSON.stringify({ username, display_name: display_name || undefined, password, category })
+        });
+        toast(`Individual user '${username}' created`);
+        document.getElementById('indNewUser').value = '';
+        document.getElementById('indNewName').value = '';
+        document.getElementById('indNewPass').value = '';
+        loadIndividuals();
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+async function toggleIndActive(id, currentActive) {
+    try {
+        await api(`/admin/users/individuals/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ is_active: !currentActive })
+        });
+        toast(currentActive ? 'User deactivated' : 'User activated');
+        loadIndividuals();
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+async function resetIndPassword(id, username) {
+    const newPass = prompt(`Reset password untuk "${username}".\nMasukkan password baru (min 6 chars):`);
+    if (!newPass) return;
+    if (newPass.length < 6) { toast('Password minimal 6 karakter', 'error'); return; }
+    try {
+        await api(`/admin/users/individuals/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ password: newPass })
+        });
+        toast(`Password '${username}' direset`);
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteIndividual(id, username) {
+    if (!confirm(`Hapus individual user "${username}"? Aksi ini tidak bisa di-undo.`)) return;
+    try {
+        await api(`/admin/users/individuals/${id}`, { method: 'DELETE' });
+        toast(`Individual user '${username}' deleted`);
+        loadIndividuals();
+    } catch(e) { toast(e.message, 'error'); }
 }
 
 // ── Export ───────────────────────────────────────

@@ -112,7 +112,45 @@ CREATE TABLE IF NOT EXISTS audit_log (
     event_type VARCHAR(32) NOT NULL,
     actor VARCHAR(64),
     details JSONB DEFAULT '{}',
+    ip_address VARCHAR(45),
+    user_agent TEXT,
     created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Organizer/admin user accounts
+CREATE TABLE IF NOT EXISTS organizer_users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(64) UNIQUE NOT NULL,
+    display_name VARCHAR(128),
+    password_hash VARCHAR(256) NOT NULL,
+    role VARCHAR(16) DEFAULT 'organizer',  -- 'superadmin' or 'organizer'
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT NOW(),
+    last_login TIMESTAMP
+);
+
+-- Individual user accounts (used when event_mode=individual)
+CREATE TABLE IF NOT EXISTS individual_users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(64) UNIQUE NOT NULL,
+    display_name VARCHAR(128),
+    password_hash VARCHAR(256) NOT NULL,
+    vpn_ip VARCHAR(45),
+    category VARCHAR(32) DEFAULT 'default',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    last_login TIMESTAMP
+);
+
+-- Announcements
+CREATE TABLE IF NOT EXISTS announcements (
+    id SERIAL PRIMARY KEY,
+    message TEXT NOT NULL,
+    type VARCHAR(16) DEFAULT 'info',
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Create indexes for performance
@@ -123,6 +161,9 @@ CREATE INDEX IF NOT EXISTS idx_scores_team ON scores(team_id);
 CREATE INDEX IF NOT EXISTS idx_ticks_number ON ticks(tick_number);
 CREATE INDEX IF NOT EXISTS idx_audit_log_type ON audit_log(event_type);
 CREATE INDEX IF NOT EXISTS idx_audit_log_time ON audit_log(created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_log_actor ON audit_log(actor);
+CREATE INDEX IF NOT EXISTS idx_organizer_users_username ON organizer_users(username);
+CREATE INDEX IF NOT EXISTS idx_individual_users_username ON individual_users(username);
 
 -- Insert default game configuration
 INSERT INTO game_config (key, value, description) VALUES
@@ -136,7 +177,8 @@ INSERT INTO game_config (key, value, description) VALUES
     ('first_blood_bonus', '50', 'Bonus points for first capture of a hill'),
     ('defense_streak_bonus', '5', 'Bonus points per consecutive tick holding a hill'),
     ('game_start_time', '', 'Timestamp when game was started'),
-    ('current_tick', '0', 'Current tick number')
+    ('current_tick', '0', 'Current tick number'),
+    ('event_mode', 'team', 'Event mode: team or individual')
 ON CONFLICT (key) DO NOTHING;
 
 -- Insert example hills (update IPs to match your infrastructure)
