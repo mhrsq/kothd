@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  # Test environment variables for the scoreboard
+  POSTGRES_PASSWORD: testpass
+  API_SECRET_KEY: test-secret-key
+  API_ADMIN_TOKEN: test-admin-token
+  REDIS_PASSWORD: testredis
+  REGISTRATION_CODE: TESTCODE
+  REGISTRATION_ENABLED: "true"
+  POSTGRES_HOST: localhost
+  REDIS_HOST: localhost
+
+jobs:
+  # ── Python tests ─────────────────────────────────────────────────────────
+  python-tests:
+    name: Python Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r scoreboard/requirements.txt
+          pip install pytest pytest-asyncio pytest-cov aiosqlite httpx
+
+      - name: Run tests with coverage
+        working-directory: .
+        env:
+          PYTHONPATH: scoreboard
+        run: |
+          python -m pytest tests/ \
+            --tb=short \
+            --cov=scoreboard/app \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            -v
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  # ── Python lint ──────────────────────────────────────────────────────────
+  python-lint:
+    name: Python Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Lint with ruff
+        run: ruff check scoreboard/app/ tests/
+
+  # ── Go tests ─────────────────────────────────────────────────────────────
+  go-tests:
+    name: Go Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Scorebot tests
+        working-directory: scorebot
+        run: go test -v -race -count=1 ./...
+
+      - name: Hill Agent build check
+        working-directory: hill-agent
+        run: go build -o /dev/null .
+
+  # ── Docker build check ──────────────────────────────────────────────────
+  docker-build:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build scoreboard image
+        run: docker build -t kothd-scoreboard:ci ./scoreboard
+
+      - name: Build scorebot image
+        run: docker build -t kothd-scorebot:ci ./scorebot
+
+      - name: Build hill-agent image
+        run: docker build -t kothd-hill-agent:ci ./hill-agent

@@ -218,6 +218,69 @@ All admin endpoints require the `X-Admin-Token` header.
 
 See the built-in Organizer Guide (`/organizer.html`) for the complete API reference.
 
+## Development
+
+### Prerequisites
+
+- Python ≥ 3.11
+- Go ≥ 1.22
+- Docker & Docker Compose v2
+
+### Run Tests
+
+```bash
+# All tests (Python + Go)
+make test
+
+# Python tests only
+make test-py
+
+# Go tests only
+make test-go
+
+# Python tests with HTML coverage report
+make test-cov
+```
+
+### Lint & Format
+
+```bash
+make lint    # ruff check + go vet
+make fmt     # ruff format + gofmt
+```
+
+### Test Coverage
+
+| Module | Coverage |
+|--------|----------|
+| `services/scoring.py` | 97% |
+| `config.py` | 94% |
+| `routers/auth.py` | 82% |
+| `services/game_manager.py` | 67% |
+| Overall | ~44% |
+
+### CI/CD
+
+GitHub Actions runs on every push/PR to `main`:
+
+1. **Python Tests** — pytest with coverage (Python 3.12)
+2. **Python Lint** — ruff check
+3. **Go Tests** — go test with race detector (Go 1.22)
+4. **Docker Build** — builds all 3 container images
+
+### Makefile Targets
+
+| Target | Description |
+|--------|-------------|
+| `make test` | Run all tests (Python + Go) |
+| `make test-cov` | Python tests with HTML coverage |
+| `make lint` | Lint all code |
+| `make fmt` | Auto-format all code |
+| `make build` | Build Docker images |
+| `make up` | Start all containers |
+| `make down` | Stop all containers |
+| `make clean` | Remove build artifacts |
+
 ## Documentation
 
 - [Admin Guide](docs/admin-guide.md) — Operator manual for running a competition

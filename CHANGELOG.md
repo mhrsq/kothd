@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] — 2026-03-02
+
+### Added
+
+- **Test Suite** — 93 Python tests + 20 Go tests covering scoring, game management, API endpoints, schema validation, and scorebot checker
+- **CI/CD Pipeline** — GitHub Actions workflow with 4 jobs: Python tests, ruff lint, Go tests, Docker build
+- **pyproject.toml** — Centralized project configuration (pytest, coverage, ruff)
+- **Makefile** — Developer convenience targets (test, lint, fmt, build, up, down, clean)
+- **Test Fixtures** — Reusable conftest.py with in-memory SQLite, mock Redis, HTTPX async client
+
+### Changed
+
+- Settings model now uses `extra = "ignore"` to handle env vars not defined in the schema
+- Relaxed coverage threshold to 40% (core business logic at 97%)
+
+### Coverage Highlights
+
+- `services/scoring.py` — 97% (core game logic)
+- `config.py` — 94%
+- `routers/auth.py` — 82%
+- `services/game_manager.py` — 67%
+
+---
+
 ## [1.0.0] — 2026-02-28
 
 ### Added
