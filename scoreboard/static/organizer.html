@@ -26,7 +26,7 @@
         }
         .sidebar a:hover, .sidebar a.active { background: var(--bg-hover); color: var(--accent-cyan); }
         .sidebar a .ico { font-size: 16px; width: 22px; text-align: center; }
-        .content { flex: 1; padding: 24px 32px; max-width: 1100px; }
+        .content { flex: 1; padding: 24px 32px; }
 
         /* ── Auth ── */
         .auth-overlay {
@@ -95,14 +95,16 @@
         .stat-box {
             background: var(--bg-secondary); border-radius: 6px; padding: 14px 16px; text-align: center;
         }
-        .stat-box .val { font-size: 28px; font-weight: 900; font-family: var(--font-mono); }
+        .stat-box .val-num, .stat-box .val-text { font-weight: 900; font-family: var(--font-mono); }
+        .stat-box .val-num { font-size: 38px; }
+        .stat-box .val-text { font-size: 28px; }
         .stat-box .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-top: 2px; }
-        .stat-box.green .val { color: var(--accent-green); }
-        .stat-box.blue .val  { color: var(--accent-blue); }
-        .stat-box.cyan .val  { color: var(--accent-cyan); }
-        .stat-box.red .val   { color: var(--accent-red); }
-        .stat-box.orange .val{ color: var(--accent-orange); }
-        .stat-box.purple .val{ color: var(--accent-purple); }
+        .stat-box.green .val-num, .stat-box.green .val-text { color: var(--accent-green); }
+        .stat-box.blue .val-num, .stat-box.blue .val-text   { color: var(--accent-blue); }
+        .stat-box.cyan .val-num, .stat-box.cyan .val-text   { color: var(--accent-cyan); }
+        .stat-box.red .val-num, .stat-box.red .val-text     { color: var(--accent-red); }
+        .stat-box.orange .val-num, .stat-box.orange .val-text{ color: var(--accent-orange); }
+        .stat-box.purple .val-num, .stat-box.purple .val-text{ color: var(--accent-purple); }
 
         /* ── Status Badge ── */
         .badge {
@@ -266,7 +268,6 @@
     </div>
     <div class="header-right" style="display:flex; align-items:center; gap:12px;">
         <span id="headerStatus" class="badge badge-gray">OFFLINE</span>
-        <button class="btn btn-ghost btn-sm" onclick="doLogout()" style="color:var(--accent-red); border-color:rgba(239,68,68,.3);">🚪 Logout</button>
     </div>
 </header>
 
@@ -708,10 +709,10 @@
     <div class="card">
         <h3>📊 Verification Summary</h3>
         <div id="verifySummary" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:16px;">
-            <div class="stat-box green"><div class="val" id="vsBoth">-</div><div class="lbl">2/2 Verified</div></div>
-            <div class="stat-box orange"><div class="val" id="vsPartial">-</div><div class="lbl">1/2 Partial</div></div>
-            <div class="stat-box red"><div class="val" id="vsNone">-</div><div class="lbl">0/2 Failed</div></div>
-            <div class="stat-box cyan"><div class="val" id="vsTotal">-</div><div class="lbl">Total Checks</div></div>
+            <div class="stat-box green"><div class="val-num" id="vsBoth">-</div><div class="lbl">2/2 Verified</div></div>
+            <div class="stat-box orange"><div class="val-num" id="vsPartial">-</div><div class="lbl">1/2 Partial</div></div>
+            <div class="stat-box red"><div class="val-num" id="vsNone">-</div><div class="lbl">0/2 Failed</div></div>
+            <div class="stat-box cyan"><div class="val-num" id="vsTotal">-</div><div class="lbl">Total Checks</div></div>
         </div>
     </div>
 
@@ -1611,14 +1612,14 @@ async function loadDashboard() {
         document.getElementById('headerStatus').textContent = stats.game_status.toUpperCase().replace('_',' ');
         // Stats grid
         document.getElementById('dashStats').innerHTML = `
-            <div class="stat-box green"><div class="val">${stats.game_status.toUpperCase().replace('_',' ')}</div><div class="lbl">Status</div></div>
-            <div class="stat-box cyan"><div class="val">#${stats.current_tick}</div><div class="lbl">Tick</div></div>
-            <div class="stat-box blue"><div class="val">${stats.teams_count}</div><div class="lbl">Teams</div></div>
-            <div class="stat-box purple"><div class="val">${stats.hills_count}</div><div class="lbl">Hills</div></div>
-            <div class="stat-box orange"><div class="val">${stats.first_bloods_count}</div><div class="lbl">First Bloods</div></div>
-            <div class="stat-box cyan"><div class="val">${stats.ws_connections}</div><div class="lbl">WS Clients</div></div>
-            <div class="stat-box ${stats.is_frozen?'red':'green'}"><div class="val">${stats.is_frozen?'FROZEN':'LIVE'}</div><div class="lbl">Scoreboard</div></div>
-            <div class="stat-box ${stats.registration_enabled?'green':'red'}"><div class="val">${stats.registration_enabled?'OPEN':'CLOSED'}</div><div class="lbl">Registration</div></div>
+            <div class="stat-box green"><div class="val-text">${stats.game_status.toUpperCase().replace('_',' ')}</div><div class="lbl">Status</div></div>
+            <div class="stat-box cyan"><div class="val-num">#${stats.current_tick}</div><div class="lbl">Tick</div></div>
+            <div class="stat-box blue"><div class="val-num">${stats.teams_count}</div><div class="lbl">Teams</div></div>
+            <div class="stat-box purple"><div class="val-num">${stats.hills_count}</div><div class="lbl">Hills</div></div>
+            <div class="stat-box orange"><div class="val-num">${stats.first_bloods_count}</div><div class="lbl">First Bloods</div></div>
+            <div class="stat-box cyan"><div class="val-num">${stats.ws_connections}</div><div class="lbl">WS Clients</div></div>
+            <div class="stat-box ${stats.is_frozen?'red':'green'}"><div class="val-text">${stats.is_frozen?'FROZEN':'LIVE'}</div><div class="lbl">Scoreboard</div></div>
+            <div class="stat-box ${stats.registration_enabled?'green':'red'}"><div class="val-text">${stats.registration_enabled?'OPEN':'CLOSED'}</div><div class="lbl">Registration</div></div>
         `;
         // Timer — rendered by countdown, just update badge
         document.getElementById('dashBadge').innerHTML = statusBadge(stats.game_status);

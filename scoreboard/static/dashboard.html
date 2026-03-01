@@ -52,13 +52,15 @@
         /* ── Stats ── */
         .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
         .stat-box{background:var(--bg-secondary);border-radius:6px;padding:16px;text-align:center;}
-        .stat-box .val{font-size:26px;font-weight:900;font-family:var(--font-mono);}
+        .stat-box .val-num,.stat-box .val-text{font-weight:900;font-family:var(--font-mono);}
+        .stat-box .val-num{font-size:38px;}
+        .stat-box .val-text{font-size:28px;}
         .stat-box .lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-top:2px;}
-        .stat-box.green .val{color:var(--accent-green);}
-        .stat-box.cyan .val{color:var(--accent-cyan);}
-        .stat-box.blue .val{color:var(--accent-blue);}
-        .stat-box.orange .val{color:var(--accent-orange);}
-        .stat-box.purple .val{color:var(--accent-purple);}
+        .stat-box.green .val-num,.stat-box.green .val-text{color:var(--accent-green);}
+        .stat-box.cyan .val-num,.stat-box.cyan .val-text{color:var(--accent-cyan);}
+        .stat-box.blue .val-num,.stat-box.blue .val-text{color:var(--accent-blue);}
+        .stat-box.orange .val-num,.stat-box.orange .val-text{color:var(--accent-orange);}
+        .stat-box.purple .val-num,.stat-box.purple .val-text{color:var(--accent-purple);}
 
         /* ── Step Cards ── */
         .step{display:flex;gap:16px;margin-bottom:18px;padding:16px;background:var(--bg-secondary);border-radius:8px;border-left:3px solid var(--accent-cyan);}
@@ -1140,15 +1142,15 @@ async function loadHomeData() {
         const rank = myTeam ? sb.teams.indexOf(myTeam) + 1 : '-';
 
         document.getElementById('homeStats').innerHTML = `
-            <div class="stat-box green"><div class="val">${myTeam ? myTeam.total_points.toLocaleString() : '0'}</div><div class="lbl">Total Points</div></div>
-            <div class="stat-box cyan"><div class="val">#${rank}</div><div class="lbl">Ranking</div></div>
-            <div class="stat-box orange"><div class="val">${myTeam ? myTeam.hills_owned : '0'}</div><div class="lbl">Hills Owned</div></div>
-            <div class="stat-box purple"><div class="val">${myTeam ? myTeam.total_ticks_as_king : '0'}</div><div class="lbl">Ticks as King</div></div>
-            <div class="stat-box blue"><div class="val">${myTeam ? myTeam.first_bloods : '0'}</div><div class="lbl">First Bloods</div></div>
-            <div class="stat-box green"><div class="val">${sb.game_status ? sb.game_status.toUpperCase().replace('_',' ') : 'N/A'}</div><div class="lbl">Game Status</div></div>
+            <div class="stat-box green"><div class="val-num">${myTeam ? myTeam.total_points.toLocaleString() : '0'}</div><div class="lbl">Total Points</div></div>
+            <div class="stat-box cyan"><div class="val-num">#${rank}</div><div class="lbl">Ranking</div></div>
+            <div class="stat-box orange"><div class="val-num">${myTeam ? myTeam.hills_owned : '0'}</div><div class="lbl">Hills Owned</div></div>
+            <div class="stat-box purple"><div class="val-num">${myTeam ? myTeam.total_ticks_as_king : '0'}</div><div class="lbl">Ticks as King</div></div>
+            <div class="stat-box blue"><div class="val-num">${myTeam ? myTeam.first_bloods : '0'}</div><div class="lbl">First Bloods</div></div>
+            <div class="stat-box green"><div class="val-text">${sb.game_status ? sb.game_status.toUpperCase().replace('_',' ') : 'N/A'}</div><div class="lbl">Game Status</div></div>
         `;
     } catch(e) {
-        document.getElementById('homeStats').innerHTML = '<div class="stat-box"><div class="val" style="font-size:14px;color:var(--text-muted);">Menunggu data...</div></div>';
+        document.getElementById('homeStats').innerHTML = '<div class="stat-box"><div class="val-text" style="font-size:14px;color:var(--text-muted);">Menunggu data...</div></div>';
     }
     // Also refresh announcements
     loadAnnouncements();
