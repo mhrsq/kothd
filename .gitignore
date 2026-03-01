@@ -1,0 +1,69 @@
+# ─── Environment & Secrets ────────────────────────────────
+.env
+.env.local
+.env.production
+*.pem
+*.key
+*.crt
+scorebot_key*
+
+# ─── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ─── Go ───────────────────────────────────────────────────────
+scorebot/scorebot
+hill-agent/hill-agent
+hill-agent/hill-agent-linux
+*.exe
+*.dll
+*.dylib
+
+# ─── IDE ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ─── Docker ───────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ─── Data & Backups ──────────────────────────────────────────
+backup-vps/
+*.sql.gz
+*.dump
+
+# ─── Logs ─────────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── Temp ─────────────────────────────────────────────────────
+tmp/
+temp/
+d/
+
+# ─── Event-specific (should not exist in clean repo) ─────────
+exploit_*.py
+test_hill*.py
+run_event_test.py
+final_verify.py
+restore_hill*.py
+extract_pdf.py
+extracted_slides.txt
+*.pdf
+EVENT_TEST_REPORT.md
+SECURITY_AUDIT.md
+PLAN.md
+OPENSOURCE_ROADMAP.md

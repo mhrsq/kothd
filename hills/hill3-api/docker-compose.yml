@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  hill3-api:
+    build: .
+    container_name: hill3-api-gateway
+    hostname: hill3-api
+    restart: unless-stopped
+    ports:
+      - "2222:22"    # SSH for teams
+      - "8080:8080"  # API gateway (SLA check target)
+    volumes:
+      - api-data:/opt/api/data
+      - /root/king.txt:/root/king.txt  # Host king.txt mounted
+    environment:
+      - SERVICE_NAME=api-gateway
+    privileged: true
+
+volumes:
+  api-data:

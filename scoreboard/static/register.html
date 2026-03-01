@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoTH CTF — Team Registration</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .register-page {
+            max-width: 520px;
+            margin: 60px auto;
+            padding: 0 24px;
+        }
+        .register-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+        }
+        .register-card h2 {
+            font-size: 22px;
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .register-card .desc {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+        .form-group .hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .btn-register {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: var(--font-sans);
+            background: var(--accent-green);
+            color: #000;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+        .btn-register:hover { background: #16a34a; }
+        .btn-register:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+        .alert-success {
+            background: rgba(34,197,94,0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(34,197,94,0.3);
+        }
+        .alert-error {
+            background: rgba(239,68,68,0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+        .alert-closed {
+            background: rgba(249,115,22,0.15);
+            color: var(--accent-orange);
+            border: 1px solid rgba(249,115,22,0.3);
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+        }
+        .result-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent-green);
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .result-card h3 {
+            color: var(--accent-green);
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+        .result-row .label { color: var(--text-muted); }
+        .result-row .value {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .token-display {
+            background: var(--bg-primary);
+            border: 1px dashed var(--accent-cyan);
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            word-break: break-all;
+            color: var(--accent-cyan);
+            user-select: all;
+        }
+        .token-warning {
+            font-size: 11px;
+            color: var(--accent-orange);
+            margin-top: 8px;
+        }
+        .nav-links {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .nav-links a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-size: 13px;
+            margin: 0 12px;
+        }
+        .nav-links a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">⚔️</div>
+            <div>
+                <h1>KoTH CTF Platform</h1>
+                <p class="subtitle">King of the Hill — Team Registration</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <a href="/" style="color:var(--accent-cyan); text-decoration:none; font-weight:700;">← Scoreboard</a>
+        </div>
+    </header>
+
+    <div class="register-page">
+        <div id="alert-container"></div>
+
+        <div class="register-card" id="register-form-card">
+            <h2>📝 Team Registration</h2>
+            <p class="desc">Register your team for the KoTH CTF event. Each team requires a registration code from the organizer.</p>
+
+            <div class="form-group">
+                <label>Team Name *</label>
+                <input type="text" id="reg-name" placeholder="contoh: team-alpha" maxlength="64"
+                       pattern="^[a-zA-Z0-9_-]+$">
+                <div class="hint">Hanya huruf, angka, underscore, dan dash. Akan digunakan untuk identifikasi di king.txt</div>
+            </div>
+
+            <div class="form-group">
+                <label>Display Name *</label>
+                <input type="text" id="reg-display" placeholder="contoh: Tim Alpha" maxlength="128">
+                <div class="hint">Nama yang ditampilkan di scoreboard</div>
+            </div>
+
+            <div class="form-group">
+                <label>Kategori *</label>
+                <select id="reg-category">
+                    <option value="default" selected>Default</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Kode Registrasi *</label>
+                <input type="password" id="reg-code" placeholder="Masukkan kode dari panitia">
+                <div class="hint">Dapatkan kode registrasi dari panitia lomba</div>
+            </div>
+
+            <button class="btn-register" id="btn-register" onclick="doRegister()">
+                Daftar Sekarang
+            </button>
+        </div>
+
+        <div id="result-container" style="display:none;">
+            <div class="result-card">
+                <h3>✅ Registrasi Berhasil!</h3>
+                <div class="result-row">
+                    <span class="label">Team ID</span>
+                    <span class="value" id="res-id"></span>
+                </div>
+                <div class="result-row">
+                    <span class="label">Team Name</span>
+                    <span class="value" id="res-name"></span>
+                </div>
+                <div class="result-row">
+                    <span class="label">Display Name</span>
+                    <span class="value" id="res-display"></span>
+                </div>
+                <div class="result-row">
+                    <span class="label">Kategori</span>
+                    <span class="value" id="res-category"></span>
+                </div>
+
+                <div id="vpn-info-section" style="display:none; margin-top:16px;">
+                    <h3>🔐 VPN Config (WireGuard)</h3>
+                    <div class="result-row">
+                        <span class="label">VPN IP</span>
+                        <span class="value" id="res-vpn-ip" style="color:#22c55e;"></span>
+                    </div>
+                    <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:6px;padding:12px 16px;margin-top:8px;">
+                        <p style="font-size:13px;color:#22c55e;margin-bottom:6px;">✅ Config WireGuard otomatis dibuat!</p>
+                        <p style="font-size:12px;color:var(--text-secondary);">Login dengan token di atas, lalu download config WireGuard di halaman <strong>Dashboard → 🔐 VPN Setup</strong>.</p>
+                    </div>
+                </div>
+
+                <h3 style="margin-top:16px;">🔑 Team Token</h3>
+                <div class="token-display" id="res-token"></div>
+                <p class="token-warning">⚠️ SIMPAN TOKEN INI! Token hanya ditampilkan sekali dan dibutuhkan untuk verifikasi identitas tim.</p>
+
+                <a href="/login" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#3b82f6;color:#fff;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;">🔐 Login ke Dashboard →</a>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="/">🏠 Scoreboard</a>
+            <a href="/history">📊 Point History</a>
+        </div>
+    </div>
+
+    <script>
+    const API_BASE = window.location.origin + '/api';
+
+    // Check registration status on load
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const r = await fetch(`${API_BASE}/register/status`);
+            const d = await r.json();
+            if (!d.registration_enabled) {
+                document.getElementById('register-form-card').style.display = 'none';
+                showAlert('Registrasi sudah ditutup. Hubungi panitia untuk informasi lebih lanjut.', 'closed');
+            }
+        } catch(e) {
+            console.error('Failed to check registration status:', e);
+        }
+    });
+
+    async function doRegister() {
+        const name = document.getElementById('reg-name').value.trim();
+        const display = document.getElementById('reg-display').value.trim();
+        const category = document.getElementById('reg-category').value;
+        const code = document.getElementById('reg-code').value;
+
+        // Client-side validation
+        if (!name || !display || !code) {
+            showAlert('Semua field bertanda * harus diisi', 'error');
+            return;
+        }
+
+        if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
+            showAlert('Team Name hanya boleh huruf, angka, underscore (-), dan dash (_)', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btn-register');
+        btn.disabled = true;
+        btn.textContent = 'Mendaftar...';
+
+        try {
+            const r = await fetch(`${API_BASE}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    display_name: display,
+                    category: category,
+                    registration_code: code,
+                }),
+            });
+            const d = await r.json();
+
+            if (r.ok) {
+                // Show success
+                document.getElementById('register-form-card').style.display = 'none';
+                document.getElementById('result-container').style.display = 'block';
+                document.getElementById('res-id').textContent = d.id;
+                document.getElementById('res-name').textContent = d.name;
+                document.getElementById('res-display').textContent = d.display_name;
+                document.getElementById('res-category').textContent = d.category || 'default';
+                document.getElementById('res-token').textContent = d.token;
+
+                // Show VPN info if available
+                if (d.vpn_ip && d.vpn_config_ready) {
+                    document.getElementById('vpn-info-section').style.display = 'block';
+                    document.getElementById('res-vpn-ip').textContent = d.vpn_ip;
+                }
+
+                clearAlert();
+            } else {
+                showAlert(d.detail || 'Registrasi gagal', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Daftar Sekarang';
+            }
+        } catch(e) {
+            showAlert('Network error: ' + e.message, 'error');
+            btn.disabled = false;
+            btn.textContent = 'Daftar Sekarang';
+        }
+    }
+
+    function showAlert(msg, type) {
+        document.getElementById('alert-container').innerHTML =
+            `<div class="alert alert-${type}">${escHtml(msg)}</div>`;
+    }
+
+    function clearAlert() {
+        document.getElementById('alert-container').innerHTML = '';
+    }
+
+    function escHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+    </script>
+    <script src="/static/js/navbar.js"></script>
+</body>
+</html>

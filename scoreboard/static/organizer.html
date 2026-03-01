@@ -1,0 +1,3476 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoTH CTF — Event Organizer Console</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* ── Layout ── */
+        .eo-wrap { display: flex; min-height: calc(100vh - 68px); }
+        .sidebar {
+            width: 240px; min-width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 16px 0;
+            position: sticky; top: 68px; height: calc(100vh - 68px);
+            overflow-y: auto;
+        }
+        .sidebar-title { font-size:10px; text-transform:uppercase; letter-spacing:2px; color:var(--text-muted); padding:8px 20px; margin-top:12px; }
+        .sidebar a {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 20px; color: var(--text-secondary);
+            text-decoration: none; font-size: 13px; font-weight: 600;
+            transition: all .15s;
+        }
+        .sidebar a:hover, .sidebar a.active { background: var(--bg-hover); color: var(--accent-cyan); }
+        .sidebar a .ico { font-size: 16px; width: 22px; text-align: center; }
+        .content { flex: 1; padding: 24px 32px; max-width: 1100px; }
+
+        /* ── Auth ── */
+        .auth-overlay {
+            position: fixed; inset: 0; z-index: 999;
+            background: var(--bg-primary);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .auth-box {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 40px; width: 400px; text-align: center;
+        }
+        .auth-box h2 { margin-bottom: 8px; }
+        .auth-box p { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; }
+        .auth-box input {
+            width: 100%; padding: 12px; background: var(--bg-secondary);
+            border: 1px solid var(--border); border-radius: 6px;
+            color: var(--text-primary); font-family: var(--font-mono); font-size: 14px;
+        }
+        .auth-box input:focus { outline: none; border-color: var(--accent-green); }
+        .auth-err { color: var(--accent-red); font-size: 12px; margin-top: 8px; display: none; }
+
+        /* ── Cards ── */
+        .section-page { display: none; }
+        .section-page.active { display: block; }
+        .page-title { font-size: 20px; font-weight: 900; margin-bottom: 20px; }
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px; margin-bottom: 20px;
+        }
+        .card h3 {
+            font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--accent-cyan); margin-bottom: 14px;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            padding: 9px 20px; border: none; border-radius: 6px;
+            font-size: 13px; font-weight: 700; cursor: pointer;
+            font-family: var(--font-sans); transition: all .15s;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-sm { padding: 6px 14px; font-size: 12px; }
+        .btn-primary { background: var(--accent-green); color: #000; }
+        .btn-primary:hover { filter: brightness(1.15); }
+        .btn-danger { background: var(--accent-red); color: #fff; }
+        .btn-danger:hover { filter: brightness(1.15); }
+        .btn-warning { background: var(--accent-orange); color: #fff; }
+        .btn-warning:hover { filter: brightness(1.15); }
+        .btn-blue { background: var(--accent-blue); color: #fff; }
+        .btn-blue:hover { filter: brightness(1.15); }
+        .btn-purple { background: var(--accent-purple); color: #fff; }
+        .btn-purple:hover { filter: brightness(1.15); }
+        .btn-ghost {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .btn:disabled { opacity: .45; cursor: not-allowed; }
+        .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        /* ── Stat Boxes ── */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
+            gap: 12px; margin-bottom: 20px;
+        }
+        .stat-box {
+            background: var(--bg-secondary); border-radius: 6px; padding: 14px 16px; text-align: center;
+        }
+        .stat-box .val { font-size: 28px; font-weight: 900; font-family: var(--font-mono); }
+        .stat-box .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-top: 2px; }
+        .stat-box.green .val { color: var(--accent-green); }
+        .stat-box.blue .val  { color: var(--accent-blue); }
+        .stat-box.cyan .val  { color: var(--accent-cyan); }
+        .stat-box.red .val   { color: var(--accent-red); }
+        .stat-box.orange .val{ color: var(--accent-orange); }
+        .stat-box.purple .val{ color: var(--accent-purple); }
+
+        /* ── Status Badge ── */
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+        }
+        .badge-green { background: rgba(34,197,94,.15); color: var(--accent-green); }
+        .badge-red   { background: rgba(239,68,68,.15); color: var(--accent-red); }
+        .badge-orange{ background: rgba(249,115,22,.15); color: var(--accent-orange); }
+        .badge-blue  { background: rgba(59,130,246,.15); color: var(--accent-blue); }
+        .badge-gray  { background: rgba(100,116,139,.15); color: var(--text-muted); }
+
+        /* ── Wizard Stepper ── */
+        .wiz-step { display:flex; align-items:center; gap:8px; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; color:var(--text-muted); transition:.2s; }
+        .wiz-step.active { background:rgba(59,130,246,.15); color:var(--accent-blue); }
+        .wiz-step.done { background:rgba(34,197,94,.15); color:var(--accent-green); }
+        .wiz-num { display:inline-flex; width:24px; height:24px; align-items:center; justify-content:center; border-radius:50%; background:var(--bg-secondary); border:1px solid var(--border); font-size:12px; font-weight:700; }
+        .wiz-step.active .wiz-num { background:var(--accent-blue); color:#fff; border-color:var(--accent-blue); }
+        .wiz-step.done .wiz-num { background:var(--accent-green); color:#fff; border-color:var(--accent-green); }
+        .wiz-arrow { color:var(--text-muted); display:flex; align-items:center; font-size:16px; }
+
+        /* ── Forms ── */
+        .fg { margin-bottom: 12px; }
+        .fg label { display: block; font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; letter-spacing: .5px; }
+        .fg input, .fg select, .fg textarea {
+            width: 100%; padding: 9px 12px; background: var(--bg-secondary);
+            border: 1px solid var(--border); border-radius: 6px;
+            color: var(--text-primary); font-family: var(--font-mono); font-size: 13px;
+        }
+        .fg input:focus, .fg select:focus, .fg textarea:focus { outline: none; border-color: var(--accent-cyan); }
+        .fg textarea { resize: vertical; min-height: 70px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* ── Tables ── */
+        .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .tbl th {
+            text-align: left; padding: 8px 12px; background: var(--bg-secondary);
+            color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: .5px;
+        }
+        .tbl td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+        .tbl tr:hover td { background: var(--bg-hover); }
+        .tbl .mono { font-family: var(--font-mono); }
+
+        /* ── Alert / Toast ── */
+        .eo-toast {
+            position: fixed; top: 80px; right: 24px; z-index: 9999;
+            min-width: 300px; max-width: 460px;
+            padding: 14px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
+            animation: slideIn .3s;
+        }
+        .eo-toast.success { background: rgba(34,197,94,.15); color: var(--accent-green); border: 1px solid rgba(34,197,94,.3); }
+        .eo-toast.error   { background: rgba(239,68,68,.15); color: var(--accent-red); border: 1px solid rgba(239,68,68,.3); }
+        .eo-toast.info    { background: rgba(6,182,212,.15); color: var(--accent-cyan); border: 1px solid rgba(6,182,212,.3); }
+        @keyframes slideIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+
+        /* ── Audit Feed ── */
+        .audit-feed { max-height: 480px; overflow-y: auto; }
+        .audit-row { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; display: flex; gap: 10px; }
+        .audit-row .at { color: var(--text-muted); white-space: nowrap; font-family: var(--font-mono); }
+        .audit-row .ae { font-weight: 700; color: var(--accent-cyan); min-width: 130px; }
+        .audit-row .ad { color: var(--text-secondary); word-break: break-all; }
+
+        /* ── Timer Big ── */
+        .big-timer { font-size: 48px; font-weight: 900; font-family: var(--font-mono); text-align: center; margin: 10px 0; }
+        .big-timer.running { color: var(--accent-green); }
+        .big-timer.paused  { color: var(--accent-orange); }
+        .big-timer.stopped { color: var(--text-muted); }
+        .game-badge { text-align: center; margin-bottom: 16px; }
+
+        /* ── Preflight Modal ── */
+        .preflight-overlay {
+            display: none; position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,.7); align-items: center; justify-content: center;
+        }
+        .preflight-box {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 28px 32px; width: 520px;
+            max-width: 95vw; max-height: 90vh; overflow-y: auto; position: relative;
+        }
+        .preflight-header {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+        }
+        .preflight-header h3 { margin: 0; font-size: 16px; }
+        .preflight-header .subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .pf-checks { display: flex; flex-direction: column; gap: 8px; }
+        .pf-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 14px; border-radius: 8px;
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            transition: all .3s;
+        }
+        .pf-item.checking { border-color: var(--accent-cyan); }
+        .pf-item.pass { border-color: rgba(34,197,94,.4); }
+        .pf-item.fail { border-color: rgba(239,68,68,.4); }
+        .pf-item.warning { border-color: rgba(249,115,22,.4); }
+        .pf-icon {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0;
+        }
+        .pf-item.pending .pf-icon { background: rgba(100,116,139,.2); color: var(--text-muted); }
+        .pf-item.checking .pf-icon {
+            background: rgba(6,182,212,.15); color: var(--accent-cyan);
+            animation: pfSpin 1s linear infinite;
+        }
+        .pf-item.pass .pf-icon { background: rgba(34,197,94,.15); color: var(--accent-green); }
+        .pf-item.fail .pf-icon { background: rgba(239,68,68,.15); color: var(--accent-red); }
+        .pf-item.warning .pf-icon { background: rgba(249,115,22,.15); color: var(--accent-orange); }
+        .pf-label { font-size: 13px; font-weight: 600; flex: 1; }
+        .pf-detail { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .pf-summary {
+            margin-top: 20px; padding: 14px; border-radius: 8px; text-align: center;
+            font-weight: 700; font-size: 14px;
+        }
+        .pf-summary.ready { background: rgba(34,197,94,.1); color: var(--accent-green); border: 1px solid rgba(34,197,94,.3); }
+        .pf-summary.issues { background: rgba(239,68,68,.1); color: var(--accent-red); border: 1px solid rgba(239,68,68,.3); }
+        .pf-summary.warnings { background: rgba(249,115,22,.1); color: var(--accent-orange); border: 1px solid rgba(249,115,22,.3); }
+        .pf-actions {
+            display: flex; gap: 10px; margin-top: 16px; justify-content: center;
+        }
+        @keyframes pfSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes pfFadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .pf-item { animation: pfFadeIn .3s ease-out; }
+
+        /* ── Responsive ── */
+        @media(max-width:768px) {
+            .sidebar { display: none; }
+            .content { padding: 16px; }
+            .form-row { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2,1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ════════════ AUTH OVERLAY ════════════ -->
+<div class="auth-overlay" id="authOverlay">
+    <div class="auth-box">
+        <div style="font-size:48px; margin-bottom:12px;">🎖️</div>
+        <h2>Event Organizer Console</h2>
+        <p>KoTH CTF Platform<br>Enter admin token for full access.</p>
+        <input type="password" id="tokenInput" placeholder="Admin Token" onkeydown="if(event.key==='Enter')doLogin()">
+        <div class="auth-err" id="authErr">Token tidak valid</div>
+        <br><br>
+        <button class="btn btn-primary" style="width:100%;" onclick="doLogin()">🔐 Login</button>
+    </div>
+</div>
+
+<!-- ════════════ GLOBAL NAVBAR ════════════ -->
+<script src="/static/js/navbar.js"></script>
+
+<!-- ════════════ HEADER ════════════ -->
+<header class="header">
+    <div class="header-left">
+        <div class="logo">🎖️</div>
+        <div>
+            <h1>EVENT ORGANIZER CONSOLE</h1>
+            <p class="subtitle">KoTH CTF — Full Control Panel</p>
+        </div>
+    </div>
+    <div class="header-right" style="display:flex; align-items:center; gap:12px;">
+        <span id="headerStatus" class="badge badge-gray">OFFLINE</span>
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()" style="color:var(--accent-red); border-color:rgba(239,68,68,.3);">🚪 Logout</button>
+    </div>
+</header>
+
+<div class="eo-wrap">
+<!-- ════════════ SIDEBAR ════════════ -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-title">Game Control</div>
+    <a href="#" class="active" data-page="dashboard"><span class="ico">📊</span> Dashboard</a>
+    <a href="#" data-page="gamecontrol"><span class="ico">🎮</span> Game Control</a>
+    <a href="#" data-page="ticks"><span class="ico">⏱️</span> Tick Engine</a>
+    <div class="sidebar-title">Management</div>
+    <a href="#" data-page="teams"><span class="ico">👥</span> Teams</a>
+    <a href="#" data-page="hills"><span class="ico">🏔️</span> Hills</a>
+    <a href="#" data-page="deploywizard"><span class="ico">🧙</span> Deploy Wizard</a>
+    <a href="#" data-page="scores"><span class="ico">⚖️</span> Score Adjust</a>
+    <a href="#" data-page="verification"><span class="ico">🔍</span> Connection Status</a>
+    <div class="sidebar-title">Komunikasi</div>
+    <a href="#" data-page="announce"><span class="ico">📢</span> Announcement</a>
+    <a href="#" data-page="registration"><span class="ico">📝</span> Registration</a>
+    <div class="sidebar-title">System</div>
+    <a href="#" data-page="config"><span class="ico">⚙️</span> Config</a>
+    <a href="#" data-page="audit"><span class="ico">📋</span> Audit Log</a>
+    <a href="#" data-page="export"><span class="ico">💾</span> Export Data</a>
+    <a href="#" data-page="topology"><span class="ico">🗺️</span> Topology Editor</a>
+    <div class="sidebar-title">Dokumentasi</div>
+    <a href="#" data-page="guide"><span class="ico">📖</span> Admin Guide</a>
+    <div style="border-top:1px solid var(--border); margin:16px 0;"></div>
+    <a href="#" onclick="doLogout(); return false;" style="color:var(--accent-red);"><span class="ico">🚪</span> Logout</a>
+</nav>
+
+<!-- ════════════ CONTENT AREA ════════════ -->
+<main class="content">
+
+<!-- ───── PAGE: DASHBOARD ───── -->
+<div class="section-page active" id="page-dashboard">
+    <h2 class="page-title">📊 Dashboard Overview</h2>
+    <div class="stats-grid" id="dashStats"></div>
+    <div class="card">
+        <h3>⏱️ Game Timer</h3>
+        <div class="game-badge" id="dashBadge"></div>
+        <div class="big-timer stopped" id="dashTimer">00:00:00</div>
+        <div style="text-align:center; color:var(--text-muted); font-size:12px;" id="dashRemaining"></div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div class="card">
+            <h3>🏔️ Hill Status (Live)</h3>
+            <table class="tbl" id="dashHillsTbl"><thead><tr><th>Hill</th><th>King</th><th>SLA</th><th>Pts</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="card">
+            <h3>🏆 Top 5 Teams</h3>
+            <table class="tbl" id="dashTopTbl"><thead><tr><th>#</th><th>Team</th><th>Pts</th><th>Kategori</th></tr></thead><tbody></tbody></table>
+        </div>
+    </div>
+</div>
+
+<!-- ───── PAGE: GAME CONTROL ───── -->
+<div class="section-page" id="page-gamecontrol">
+    <h2 class="page-title">🎮 Game Control</h2>
+    <div class="card">
+        <h3>Status Saat Ini</h3>
+        <div class="game-badge" id="gcBadge"></div>
+        <div class="big-timer stopped" id="gcTimer">00:00:00</div>
+        <div id="gcInfo" style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:16px;"></div>
+        <div class="btn-row" style="justify-content:center;">
+            <button class="btn btn-primary" onclick="openPreflightModal()">🚀 Start Game</button>
+            <button class="btn btn-warning" onclick="gameCtrl('pause')">⏸️ Pause</button>
+            <button class="btn btn-primary" onclick="gameCtrl('resume')">⏯️ Resume</button>
+            <button class="btn btn-danger"  onclick="gameCtrl('stop')">⏹️ Stop Game</button>
+        </div>
+    </div>
+    <div class="card">
+        <h3>⚠️ Danger Zone</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
+            Reset akan menghapus SEMUA data tick, score, first blood. Team tetap ada.
+        </p>
+        <div class="btn-row">
+            <button class="btn btn-danger" onclick="confirmAction('RESET semua data game? Ketik RESET untuk konfirmasi.','RESET',resetGame)">🗑️ Reset Game Data</button>
+            <button class="btn btn-blue" onclick="freezeBoard()">🧊 Freeze Scoreboard</button>
+            <button class="btn btn-ghost" onclick="unfreezeBoard()">☀️ Unfreeze Scoreboard</button>
+        </div>
+    </div>
+</div>
+
+<!-- ───── PAGE: TICK ENGINE ───── -->
+<div class="section-page" id="page-ticks">
+    <h2 class="page-title">⏱️ Tick Engine</h2>
+    <div class="card">
+        <h3>Manual Tick</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
+            Force jalankan 1 tick sekarang. Berguna untuk testing sebelum event.
+        </p>
+        <button class="btn btn-purple" onclick="forceTick()">⚡ Force Tick Now</button>
+        <span id="tickResult" style="margin-left:12px; font-size:13px;"></span>
+    </div>
+    <div class="card">
+        <h3>Recent Ticks</h3>
+        <table class="tbl" id="ticksTbl">
+            <thead><tr><th>Tick #</th><th>Started</th><th>Status</th><th>Duration</th></tr></thead>
+            <tbody id="ticksBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ───── PAGE: TEAMS ───── -->
+<div class="section-page" id="page-teams">
+    <h2 class="page-title">👥 Team Management</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div class="card">
+            <h3>➕ Register Team Baru</h3>
+            <div class="fg"><label>Team Name (slug)</label><input id="t_name" placeholder="team-alpha"></div>
+            <div class="fg"><label>Display Name</label><input id="t_display" placeholder="Team Alpha"></div>
+            <div class="form-row">
+                <div class="fg"><label>Kategori</label>
+                    <select id="t_cat"><option value="default">Default</option></select>
+                </div>
+                <div class="fg"><label>VPN IP</label><input id="t_vpn" placeholder="10.10.0.x"></div>
+            </div>
+            <button class="btn btn-primary" onclick="createTeam()">Daftarkan Team</button>
+        </div>
+        <div class="card">
+            <h3>📦 Bulk Register (JSON)</h3>
+            <div class="fg"><label>Teams Array JSON</label>
+                <textarea id="t_bulk" placeholder='[{"name":"team-1","display_name":"Team 1","category":"default"},...]' rows="5"></textarea>
+            </div>
+            <button class="btn btn-blue" onclick="bulkTeams()">Bulk Register</button>
+        </div>
+    </div>
+    <div class="card">
+        <h3>� WireGuard VPN — Auto Generate</h3>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px;">Generate WireGuard config untuk semua team sekaligus. IP akan auto-assign mulai dari 10.10.0.2. Key yang sudah ada akan di-reuse.</p>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="generateVpnConfigs()" id="btnGenVpn">⚡ Generate All VPN Configs</button>
+            <button class="btn btn-blue" onclick="downloadServerConfig()" id="btnDlServer">⬇️ Download Server Config</button>
+            <span id="vpnGenStatus" style="font-size:12px;color:var(--text-muted);"></span>
+        </div>
+        <div id="vpnGenResult" style="margin-top:12px;display:none;">
+            <table class="tbl" id="vpnResultTbl">
+                <thead><tr><th>Team</th><th>VPN IP</th><th>Download</th></tr></thead>
+                <tbody id="vpnResultBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card">
+        <h3>�📋 Semua Team <span id="teamCount" style="color:var(--text-muted); font-weight:400;"></span></h3>
+        <table class="tbl" id="teamsTbl">
+            <thead><tr><th>ID</th><th>Name</th><th>Display</th><th>Kategori</th><th>VPN IP</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="teamsBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ───── PAGE: HILLS ───── -->
+<div class="section-page" id="page-hills">
+    <h2 class="page-title">🏔️ Hill Management</h2>
+    <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <h3 style="margin:0;">📋 Semua Hill</h3>
+            <button class="btn btn-primary" onclick="openHillModal()">➕ Tambah Hill</button>
+        </div>
+        <table class="tbl" id="hillsTbl">
+            <thead><tr><th>ID</th><th>Nama</th><th>IP</th><th>Type</th><th>Pts</th><th>Multi</th><th>Pivot</th><th>King</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="hillsBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Agent Token Management -->
+    <div class="card">
+        <h3>🔑 Agent Tokens</h3>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+            Token autentikasi untuk setiap hill agent. Generate token lalu deploy ke hill server.
+        </p>
+        <table class="tbl" id="hillAgentTokenTbl">
+            <thead><tr><th>Hill</th><th>IP</th><th>Agent Token</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="hillAgentTokenBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ── Preflight Check Modal ── -->
+<div class="preflight-overlay" id="preflightModal">
+    <div class="preflight-box">
+        <button onclick="closePreflightModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">&times;</button>
+        <div class="preflight-header">
+            <div style="font-size:32px;">🚀</div>
+            <div>
+                <h3>Pre-Flight System Check</h3>
+                <div class="subtitle">Checking all components before game start...</div>
+            </div>
+        </div>
+        <div class="pf-checks" id="pfChecks"></div>
+        <div id="pfSummary" style="display:none;"></div>
+        <div class="pf-actions" id="pfActions" style="display:none;"></div>
+    </div>
+</div>
+
+<!-- ── Hill Edit Modal ── -->
+<div id="hillEditModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);align-items:center;justify-content:center;">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;position:relative;">
+        <button onclick="closeEditHillModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">&times;</button>
+        <h3 style="margin-bottom:16px;">✏️ Edit Hill — <span id="he_title"></span></h3>
+        <input type="hidden" id="he_id">
+        <div class="form-row">
+            <div class="fg"><label>Nama Hill</label><input id="he_name"></div>
+            <div class="fg"><label>IP Address</label><input id="he_ip"></div>
+        </div>
+        <div class="fg"><label>Deskripsi</label><textarea id="he_desc"></textarea></div>
+        <div style="border-top:1px solid var(--border); margin:12px 0; padding-top:12px;">
+            <h4 style="margin-bottom:8px; color:var(--accent-cyan);">🔐 SSH Credentials</h4>
+        </div>
+        <div class="form-row">
+            <div class="fg"><label>SSH Port</label><input type="number" id="he_ssh_port"></div>
+            <div class="fg"><label>SSH User</label><input id="he_ssh_user" placeholder="root"></div>
+            <div class="fg"><label>SSH Password</label><input id="he_ssh_pass" type="password" placeholder="••••••••"></div>
+        </div>
+        <div style="border-top:1px solid var(--border); margin:12px 0; padding-top:12px;">
+            <h4 style="margin-bottom:8px; color:var(--accent-cyan);">📡 SLA & Scoring</h4>
+        </div>
+        <div class="form-row">
+            <div class="fg"><label>SLA Check Type</label>
+                <select id="he_sla_type"><option value="http">HTTP</option><option value="tcp">TCP</option><option value="ssh">SSH</option><option value="">Tidak ada</option></select>
+            </div>
+            <div class="fg"><label>SLA Check URL</label><input id="he_sla_url" placeholder="http://10.0.0.100:80"></div>
+            <div class="fg"><label>SLA Check Port</label><input type="number" id="he_sla_port"></div>
+        </div>
+        <div class="form-row">
+            <div class="fg"><label>King File Path</label><input id="he_king"></div>
+            <div class="fg"><label>Base Points</label><input type="number" id="he_pts"></div>
+        </div>
+        <div class="form-row">
+            <div class="fg"><label>Multiplier</label><input type="number" step="0.1" id="he_mult"></div>
+            <div class="fg"><label>Behind Pivot?</label>
+                <select id="he_pivot"><option value="false">No</option><option value="true">Yes (1.5x)</option></select>
+            </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+            <button class="btn btn-primary" onclick="saveEditHill()">💾 Save Changes</button>
+            <button class="btn btn-ghost" onclick="closeEditHillModal()">Batal</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Hill Create Modal ── -->
+<div id="hillModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);align-items:center;justify-content:center;">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;position:relative;">
+        <button onclick="closeHillModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">&times;</button>
+        <h3 style="margin-bottom:16px;">➕ Create Hill Baru</h3>
+        <div class="form-row">
+            <div class="fg"><label>Nama Hill</label><input id="h_name" placeholder="Hill 5 - Crypto Vault"></div>
+            <div class="fg"><label>IP Address</label><input id="h_ip" placeholder="10.0.0.100"></div>
+        </div>
+        <div class="fg"><label>Deskripsi</label><textarea id="h_desc" placeholder="Deskripsi vulnerable machine..."></textarea></div>
+        <div class="form-row">
+            <div class="fg"><label>SSH Port</label><input type="number" id="h_ssh" value="22"></div>
+            <div class="fg"><label>SLA Check Type</label>
+                <select id="h_sla_type"><option value="http">HTTP</option><option value="tcp">TCP</option><option value="ssh">SSH</option></select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="fg"><label>SLA Check URL</label><input id="h_sla_url" placeholder="http://10.0.0.100:80"></div>
+            <div class="fg"><label>SLA Check Port</label><input type="number" id="h_sla_port" placeholder="80"></div>
+        </div>
+        <div class="form-row">
+            <div class="fg"><label>Base Points</label><input type="number" id="h_pts" value="10"></div>
+            <div class="fg"><label>Multiplier</label><input type="number" step="0.1" id="h_mult" value="1.0"></div>
+        </div>
+        <div class="form-row">
+            <div class="fg"><label>King File Path</label><input id="h_king" value="/root/king.txt"></div>
+            <div class="fg"><label>Behind Pivot?</label>
+                <select id="h_pivot"><option value="false">No</option><option value="true">Yes (1.5x)</option></select>
+            </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+            <button class="btn btn-primary" onclick="createHill()">Create Hill</button>
+            <button class="btn btn-ghost" onclick="closeHillModal()">Batal</button>
+        </div>
+    </div>
+</div>
+
+<!-- ───── PAGE: SCORE ADJUST ───── -->
+<div class="section-page" id="page-scores">
+    <h2 class="page-title">⚖️ Score Adjustment</h2>
+    <div class="card">
+        <h3>Adjust Score Manual</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
+            Gunakan untuk penalty, bonus, atau koreksi score. Nilai negatif untuk pengurangan.
+        </p>
+        <div class="form-row">
+            <div class="fg"><label>Team</label><select id="adj_team"></select></div>
+            <div class="fg"><label>Points (+/-)</label><input type="number" id="adj_pts" placeholder="-50"></div>
+        </div>
+        <div class="fg"><label>Alasan</label><input id="adj_reason" placeholder="Penalty: mematikan service sengaja"></div>
+        <button class="btn btn-warning" onclick="adjustScore()">⚖️ Apply Adjustment</button>
+    </div>
+    <div class="card">
+        <h3>📊 Current Standings</h3>
+        <table class="tbl" id="standingsTbl">
+            <thead><tr><th>#</th><th>Team</th><th>Total Pts</th><th>Hills</th><th>Ticks King</th><th>First Blood</th></tr></thead>
+            <tbody id="standingsBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ───── PAGE: ANNOUNCEMENT ───── -->
+<div class="section-page" id="page-announce">
+    <h2 class="page-title">📢 Broadcast Announcement</h2>
+    <div class="card">
+        <h3>Kirim Pengumuman</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
+            Pesan akan dikirim ke semua client yang terhubung via WebSocket secara realtime.
+        </p>
+        <div class="fg"><label>Pesan</label><textarea id="ann_msg" placeholder="Perhatian: game akan dimulai dalam 5 menit..."></textarea></div>
+        <div class="fg"><label>Tipe</label>
+            <select id="ann_type">
+                <option value="info">ℹ️ Info</option>
+                <option value="warning">⚠️ Warning</option>
+                <option value="danger">🚨 Danger / Urgent</option>
+            </select>
+        </div>
+        <button class="btn btn-blue" onclick="sendAnnouncement()">📢 Broadcast</button>
+    </div>
+    <div class="card">
+        <h3 style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            📜 Riwayat Pengumuman
+            <span id="annBulkActions" style="display:none;">
+                <button class="btn btn-sm" style="background:var(--accent-red);color:#fff;" onclick="annBulkDelete()">🗑️ Hapus Terpilih (<span id="annSelCount">0</span>)</button>
+                <button class="btn btn-sm btn-ghost" onclick="annClearSelection()">✕ Batal</button>
+            </span>
+            <button class="btn btn-sm" style="background:rgba(239,68,68,.15);color:var(--accent-red);border:1px solid rgba(239,68,68,.3);" onclick="annDeleteAll()">🗑️ Hapus Semua</button>
+        </h3>
+        <table class="tbl" id="annTbl" style="font-size:13px;">
+            <thead><tr>
+                <th style="width:40px;"><input type="checkbox" id="annSelectAll" onchange="annToggleAll(this.checked)" title="Select All"></th>
+                <th style="width:50px;">#</th>
+                <th style="width:80px;">Tipe</th>
+                <th>Pesan</th>
+                <th style="width:150px;">Waktu</th>
+                <th style="width:110px;">Aksi</th>
+            </tr></thead>
+            <tbody id="annBody"><tr><td colspan="6">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Edit Announcement Modal -->
+<div class="modal-overlay" id="annEditModal" style="display:none;" onclick="if(event.target===this)closeAnnEditModal()">
+    <div class="modal" style="max-width:540px;">
+        <div class="modal-header"><h3>✏️ Edit Announcement</h3><button class="btn btn-sm btn-ghost" onclick="closeAnnEditModal()">✕</button></div>
+        <div class="modal-body">
+            <input type="hidden" id="annEditId">
+            <div class="fg"><label>Pesan</label><textarea id="annEditMsg" rows="4" style="width:100%;resize:vertical;"></textarea></div>
+            <div class="fg"><label>Tipe</label>
+                <select id="annEditType" style="width:100%;">
+                    <option value="info">ℹ️ Info</option>
+                    <option value="warning">⚠️ Warning</option>
+                    <option value="danger">🚨 Danger / Urgent</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeAnnEditModal()">Batal</button>
+            <button class="btn btn-blue" onclick="saveAnnEdit()">💾 Simpan</button>
+        </div>
+    </div>
+</div>
+
+<!-- ───── PAGE: REGISTRATION ───── -->
+<div class="section-page" id="page-registration">
+    <h2 class="page-title">📝 Registration Control</h2>
+    <div class="card">
+        <h3>Status Registrasi</h3>
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+            <span>Self-Registration:</span>
+            <span id="regStatus" class="badge badge-gray">...</span>
+            <button class="btn btn-sm btn-blue" onclick="toggleRegistration()">🔄 Toggle</button>
+        </div>
+        <div class="fg"><label>Kode Registrasi (read-only)</label><input id="regCode" readonly></div>
+        <p style="font-size:12px; color:var(--text-muted);">Kode ini digunakan peserta untuk self-register di <a href="/register" style="color:var(--accent-cyan);">/register</a></p>
+    </div>
+</div>
+
+<!-- ───── PAGE: CONFIG ───── -->
+<div class="section-page" id="page-config">
+    <h2 class="page-title">⚙️ Game Configuration</h2>
+    <div class="card">
+        <h3>Semua Config</h3>
+        <table class="tbl" id="configTbl">
+            <thead><tr><th>Key</th><th>Value</th><th>Deskripsi</th><th>Aksi</th></tr></thead>
+            <tbody id="configBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ───── PAGE: AUDIT ───── -->
+<div class="section-page" id="page-audit">
+    <h2 class="page-title">📋 Audit Log</h2>
+    <div class="card">
+        <div style="display:flex; gap:12px; margin-bottom:16px;">
+            <select id="auditFilter" onchange="loadAudit()" style="padding:8px 12px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:6px; color:var(--text-primary); font-size:13px;">
+                <option value="">Semua Event</option>
+                <option value="game_control">Game Control</option>
+                <option value="team_created">Team Created</option>
+                <option value="team_self_registered">Self Register</option>
+                <option value="score_adjust">Score Adjust</option>
+                <option value="hill_created">Hill Created</option>
+                <option value="hill_toggled">Hill Toggled</option>
+                <option value="game_reset">Game Reset</option>
+                <option value="force_tick">Force Tick</option>
+                <option value="announcement">Announcement</option>
+                <option value="config_updated">Config Updated</option>
+                <option value="agent_token_generated">Agent Token</option>
+            </select>
+            <button class="btn btn-sm btn-ghost" onclick="loadAudit()">🔄 Refresh</button>
+        </div>
+        <div class="audit-feed" id="auditFeed">Loading...</div>
+    </div>
+</div>
+
+<!-- ───── PAGE: CONNECTION STATUS ───── -->
+<div class="section-page" id="page-verification">
+    <h2 class="page-title">🔍 Connection Status</h2>
+    <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+        Setiap tick dicek dengan 2 metode: <strong>SSH</strong> (scorebot) dan <strong>Agent</strong> (hill binary).
+        Jika peserta matiin SSH, agent tetap jalan — scoring tidak terganggu.
+    </p>
+
+    <!-- Agent Status Overview -->
+    <div class="card">
+        <h3>📡 Agent Status (Live)</h3>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Status agent yang running di setiap hill server.</p>
+        <div id="agentStatusGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:12px;">
+            <div style="color:var(--text-muted);">Loading...</div>
+        </div>
+        <div style="margin-top:12px;">
+            <button class="btn btn-sm btn-ghost" onclick="loadAgentStatus()">🔄 Refresh</button>
+        </div>
+    </div>
+
+    <!-- Verification Summary -->
+    <div class="card">
+        <h3>📊 Verification Summary</h3>
+        <div id="verifySummary" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:16px;">
+            <div class="stat-box green"><div class="val" id="vsBoth">-</div><div class="lbl">2/2 Verified</div></div>
+            <div class="stat-box orange"><div class="val" id="vsPartial">-</div><div class="lbl">1/2 Partial</div></div>
+            <div class="stat-box red"><div class="val" id="vsNone">-</div><div class="lbl">0/2 Failed</div></div>
+            <div class="stat-box cyan"><div class="val" id="vsTotal">-</div><div class="lbl">Total Checks</div></div>
+        </div>
+    </div>
+
+    <!-- Per-Tick Verification Details -->
+    <div class="card">
+        <h3>🕐 Per-Tick Verification</h3>
+        <div style="display:flex; gap:12px; margin-bottom:12px; align-items:center;">
+            <label style="font-size:13px; color:var(--text-muted);">Last</label>
+            <select id="verifyLimit" onchange="loadVerification()" style="padding:6px 10px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:6px; color:var(--text-primary); font-size:13px;">
+                <option value="5">5 ticks</option>
+                <option value="10" selected>10 ticks</option>
+                <option value="20">20 ticks</option>
+                <option value="50">50 ticks</option>
+            </select>
+            <button class="btn btn-sm btn-ghost" onclick="loadVerification()">🔄 Refresh</button>
+        </div>
+        <div id="verifyTickList"></div>
+    </div>
+</div>
+
+<!-- ───── PAGE: EXPORT ───── -->
+<!-- ───── PAGE: TOPOLOGY EDITOR ───── -->
+<div class="section-page" id="page-topology">
+    <h2 class="page-title">🗺️ Topology Editor</h2>
+    <div style="display:flex; gap:8px; margin-bottom:12px; align-items:center;">
+        <span style="font-size:13px; color:var(--text-muted);">Drag nodes, click to select, draw links between nodes. All changes auto-saved.</span>
+        <span id="topoSaveStatus" style="font-size:11px; color:var(--accent-green); margin-left:auto;">✓ Saved</span>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="card" style="padding:10px 16px; margin-bottom:0; border-bottom-left-radius:0; border-bottom-right-radius:0; background:var(--bg-secondary); display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-sm btn-primary" onclick="topoAddNode()">➕ Add Node</button>
+        <button class="btn btn-sm btn-blue" onclick="topoStartLink()" id="topoLinkBtn">🔗 Add Link</button>
+        <button class="btn btn-sm btn-warning" onclick="topoAddLabel()">🏷️ Add Text</button>
+        <div style="width:1px; height:24px; background:var(--border); margin:0 4px;"></div>
+        <button class="btn btn-sm btn-danger" onclick="topoDeleteSelected()" id="topoDelBtn" disabled>🗑️ Delete</button>
+        <button class="btn btn-sm btn-ghost" onclick="topoEditSelected()" id="topoEditBtn" disabled>✏️ Edit</button>
+        <div style="width:1px; height:24px; background:var(--border); margin:0 4px;"></div>
+        <button class="btn btn-sm btn-ghost" onclick="topoZoomIn()">🔍+</button>
+        <button class="btn btn-sm btn-ghost" onclick="topoZoomOut()">🔍-</button>
+        <button class="btn btn-sm btn-ghost" onclick="topoResetView()">⊞ Fit</button>
+        <div style="margin-left:auto; display:flex; gap:6px;">
+            <button class="btn btn-sm btn-green" onclick="topoApply()">💾 Apply to Dashboard</button>
+            <button class="btn btn-sm btn-ghost" onclick="topoReset()">↺ Reset</button>
+        </div>
+    </div>
+
+    <!-- Canvas -->
+    <div style="border:1px solid var(--border); border-top:none; border-radius:0 0 12px 12px; overflow:hidden; position:relative; background:var(--bg-card);">
+        <canvas id="topoCanvas" width="1200" height="700" style="display:block; width:100%; cursor:default;"></canvas>
+    </div>
+
+    <!-- Edit Node Modal -->
+    <div id="topoEditModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.6); align-items:center; justify-content:center;">
+        <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:24px; width:400px; max-width:95vw;">
+            <h3 style="margin-bottom:16px;" id="topoEditTitle">Edit Node</h3>
+            <div id="topoEditFields"></div>
+            <div style="display:flex; gap:8px; margin-top:16px;">
+                <button class="btn btn-primary" onclick="topoEditSave()">Save</button>
+                <button class="btn btn-ghost" onclick="topoEditClose()">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section-page" id="page-export">
+    <h2 class="page-title">💾 Export Data</h2>
+    <div class="card">
+        <h3>Export Teams + Scores</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Download seluruh data team dan score dalam format CSV.</p>
+        <button class="btn btn-blue" onclick="exportTeamsCSV()">📥 Download CSV</button>
+        <button class="btn btn-ghost" onclick="exportTeamsJSON()">📥 Download JSON</button>
+    </div>
+    <div class="card">
+        <h3>Export Scoreboard Snapshot</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Snapshot lengkap scoreboard saat ini.</p>
+        <button class="btn btn-ghost" onclick="exportScoreboard()">📥 Download Scoreboard JSON</button>
+    </div>
+</div>
+
+<!-- ───── PAGE: DEPLOY WIZARD ───── -->
+<div class="section-page" id="page-deploywizard">
+    <h2 class="page-title">🧙 Deploy Hill Wizard</h2>
+
+    <!-- STEPPER -->
+    <div class="card" style="margin-bottom:0; border-bottom-left-radius:0; border-bottom-right-radius:0; background:var(--bg-secondary);">
+        <div id="wizardStepper" style="display:flex; gap:8px; justify-content:center;">
+            <div class="wiz-step active" data-step="1"><span class="wiz-num">1</span> Konfigurasi</div>
+            <div class="wiz-arrow">→</div>
+            <div class="wiz-step" data-step="2"><span class="wiz-num">2</span> Script</div>
+            <div class="wiz-arrow">→</div>
+            <div class="wiz-step" data-step="3"><span class="wiz-num">3</span> Verifikasi</div>
+        </div>
+    </div>
+
+    <!-- STEP 1: KONFIGURASI -->
+    <div class="card wiz-panel" id="wizStep1" style="border-top-left-radius:0; border-top-right-radius:0;">
+        <h3 style="margin-bottom:16px;">⚙️ Step 1 — Konfigurasi Hill & Agent</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Isi detail hill baru. Hill akan otomatis dibuat di database, agent token auto-generated, dan script deploy di-generate.</p>
+
+        <div class="form-row">
+            <div class="fg">
+                <label>Target OS</label>
+                <select id="wz_os">
+                    <option value="ubuntu">Ubuntu / Debian</option>
+                    <option value="centos">CentOS / RHEL / Rocky</option>
+                    <option value="alpine">Alpine Linux</option>
+                    <option value="docker">Docker Container</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label>Deploy Mode</label>
+                <select id="wz_mode">
+                    <option value="standalone">Standalone Server (systemd)</option>
+                    <option value="container">Inside Docker Container</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border); margin:16px 0; padding-top:16px;">
+            <h4 style="margin-bottom:12px; color:var(--accent-cyan);">📡 Hill Info</h4>
+        </div>
+
+        <div class="form-row">
+            <div class="fg">
+                <label>Hill Name <span style="color:var(--accent-red);">*</span></label>
+                <input id="wz_hill_name" placeholder="Hill 5 - Crypto Vault">
+            </div>
+            <div class="fg">
+                <label>Deskripsi</label>
+                <input id="wz_hill_desc" placeholder="Vulnerable crypto service">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="fg" style="flex:2;">
+                <label>Hill IP / Hostname <span style="color:var(--accent-red);">*</span></label>
+                <div style="display:flex; gap:8px;">
+                    <input id="wz_hill_ip" placeholder="10.0.0.100" style="flex:1;">
+                    <button class="btn btn-sm btn-blue" onclick="wizPingHost()" id="wizPingBtn">📡 Ping</button>
+                </div>
+                <div id="wz_ping_result" style="font-size:11px; margin-top:4px;"></div>
+            </div>
+        </div>
+
+        <!-- SSH optional -->
+        <div style="border-top:1px solid var(--border); margin:16px 0; padding-top:16px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600;">
+                <input type="checkbox" id="wz_ssh_enabled" onchange="document.getElementById('wz_ssh_opts').style.display=this.checked?'block':'none'">
+                🔐 Configure SSH Access (opsional — untuk scorebot SSH verification)
+            </label>
+        </div>
+        <div id="wz_ssh_opts" style="display:none; border:1px dashed var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
+            <div class="form-row">
+                <div class="fg"><label>SSH User</label><input id="wz_ssh_user" value="root"></div>
+                <div class="fg"><label>SSH Password</label><input id="wz_ssh_pass" type="password" placeholder="••••••••"></div>
+                <div class="fg"><label>SSH Port</label><input type="number" id="wz_ssh_port" value="22"></div>
+            </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border); margin:16px 0; padding-top:16px;">
+            <h4 style="margin-bottom:12px; color:var(--accent-cyan);">🔑 Agent Configuration</h4>
+            <small style="color:var(--text-muted); font-size:11px;">Agent token akan otomatis di-generate setelah hill dibuat.</small>
+        </div>
+
+        <div class="form-row">
+            <div class="fg">
+                <label>KoTH Server URL</label>
+                <input id="wz_koth_server" value="" placeholder="http://YOUR_KOTH_SERVER:8000">
+                <small style="color:var(--text-muted); font-size:11px;">URL of your KoTH server (use VPC IP if hill is in same network)</small>
+            </div>
+            <div class="fg"><label>Report Interval (detik)</label><input type="number" id="wz_interval" value="10" min="5"></div>
+        </div>
+
+        <div class="form-row">
+            <div class="fg"><label>King File Path</label><input id="wz_king_file" value="/root/king.txt"></div>
+            <div class="fg">
+                <label>SLA Check Type</label>
+                <select id="wz_sla_type">
+                    <option value="">Tidak ada</option>
+                    <option value="http">HTTP</option>
+                    <option value="tcp">TCP</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="fg"><label>SLA Check Port</label><input type="number" id="wz_sla_port" placeholder="80"></div>
+            <div class="fg"><label>Base Points</label><input type="number" id="wz_base_pts" value="10"></div>
+        </div>
+        <div class="form-row">
+            <div class="fg"><label>Multiplier</label><input type="number" step="0.1" id="wz_multiplier" value="1.0"></div>
+            <div class="fg" id="wz_container_fg" style="display:none;">
+                <label>Container Name</label>
+                <input id="wz_container_name" placeholder="hill5-crypto-vault">
+                <small style="color:var(--text-muted); font-size:11px;">Nama container Docker di Pivot server</small>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn btn-primary" onclick="wizGoStep2()" id="wizGenBtn">🚀 Create Hill & Generate Script →</button>
+        </div>
+    </div>
+
+    <!-- STEP 2: GENERATED SCRIPT -->
+    <div class="card wiz-panel" id="wizStep2" style="display:none; border-top-left-radius:0; border-top-right-radius:0;">
+        <h3 style="margin-bottom:16px;">📜 Step 2 — Deploy Script</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Hill berhasil dibuat! Copy script di bawah dan jalankan di server target.</p>
+
+        <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+            <span class="badge badge-blue" id="wz_os_badge">Ubuntu</span>
+            <span class="badge badge-green" id="wz_mode_badge">Standalone</span>
+            <span class="badge badge-gray" id="wz_id_badge">ID: ?</span>
+        </div>
+
+        <div style="position:relative;">
+            <pre id="wizScriptOutput" style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:16px; font-size:12px; font-family:var(--font-mono); white-space:pre-wrap; word-break:break-all; max-height:600px; overflow-y:auto; color:var(--accent-green);"></pre>
+            <button class="btn btn-sm btn-blue" onclick="wizCopyScript()" style="position:absolute; top:8px; right:8px;">📋 Copy</button>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:16px;">
+            <button class="btn btn-ghost" onclick="wizGoStep(1)">← Kembali</button>
+            <button class="btn btn-primary" onclick="wizGoStep3()">Cek Status →</button>
+        </div>
+    </div>
+
+    <!-- STEP 3: VERIFIKASI -->
+    <div class="card wiz-panel" id="wizStep3" style="display:none; border-top-left-radius:0; border-top-right-radius:0;">
+        <h3 style="margin-bottom:16px;">✅ Step 3 — Verifikasi Agent</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Setelah menjalankan script, klik tombol di bawah untuk cek apakah agent sudah melapor ke server.</p>
+
+        <div class="card" style="background:var(--bg-secondary); text-align:center; padding:32px;">
+            <div id="wizVerifyIcon" style="font-size:48px; margin-bottom:12px;">⏳</div>
+            <div id="wizVerifyStatus" style="font-size:18px; font-weight:700; margin-bottom:8px; color:var(--text-muted);">Menunggu pengecekan...</div>
+            <div id="wizVerifyDetail" style="font-size:13px; color:var(--text-muted);"></div>
+        </div>
+
+        <div id="wizVerifyTable" style="display:none; margin-top:16px;">
+            <table class="tbl">
+                <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                <tbody id="wizVerifyBody"></tbody>
+            </table>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:16px;">
+            <button class="btn btn-ghost" onclick="wizGoStep(2)">← Kembali</button>
+            <button class="btn btn-primary" id="wizCheckBtn" onclick="wizCheckAgent()">🔍 Cek Agent Status</button>
+            <button class="btn btn-blue" id="wizAutoCheck" onclick="wizAutoCheckStart()" style="display:none;">🔄 Auto-Check (30s)</button>
+        </div>
+    </div>
+</div>
+
+<!-- ───── PAGE: ADMIN GUIDE ───── -->
+<div class="section-page" id="page-guide">
+    <h2 class="page-title">📖 Admin &amp; Organizer Guide</h2>
+    <div class="card" style="max-width:960px;">
+        <div id="guideContent" style="line-height:1.8; font-size:13px; color:var(--text-secondary);">
+            <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">KoTH CTF Platform — Admin &amp; Organizer Guide</p>
+
+            <!-- TOC -->
+            <details open style="margin-bottom:20px;">
+                <summary style="cursor:pointer; font-weight:700; color:var(--accent-cyan); font-size:14px;">📑 Table of Contents</summary>
+                <ol style="padding-left:20px; margin-top:8px; font-size:12px; columns:2;">
+                    <li><a href="#g1" style="color:var(--accent-blue);">Infrastructure Architecture</a></li>
+                    <li><a href="#g2" style="color:var(--accent-blue);">Admin Access</a></li>
+                    <li><a href="#g3" style="color:var(--accent-blue);">Pre-Event Checklist</a></li>
+                    <li><a href="#g4" style="color:var(--accent-blue);">Day-of-Event Flow</a></li>
+                    <li><a href="#g5" style="color:var(--accent-blue);">Game Lifecycle Control</a></li>
+                    <li><a href="#g6" style="color:var(--accent-blue);">Manajemen Tim</a></li>
+                    <li><a href="#g7" style="color:var(--accent-blue);">Manajemen Registrasi</a></li>
+                    <li><a href="#g8" style="color:var(--accent-blue);">Manajemen Hills</a></li>
+                    <li><a href="#g9" style="color:var(--accent-blue);">Scoreboard Control</a></li>
+                    <li><a href="#g10" style="color:var(--accent-blue);">Score Adjustment</a></li>
+                    <li><a href="#g11" style="color:var(--accent-blue);">Monitoring &amp; Dashboard</a></li>
+                    <li><a href="#g12" style="color:var(--accent-blue);">Announcement System</a></li>
+                    <li><a href="#g13" style="color:var(--accent-blue);">Konfigurasi Game</a></li>
+                    <li><a href="#g14" style="color:var(--accent-blue);">Audit Log</a></li>
+                    <li><a href="#g15" style="color:var(--accent-blue);">Export Data</a></li>
+                    <li><a href="#g16" style="color:var(--accent-blue);">Troubleshooting</a></li>
+                    <li><a href="#g17" style="color:var(--accent-blue);">API Reference</a></li>
+                    <li><a href="#g18" style="color:var(--accent-blue);">Server Access &amp; SSH</a></li>
+                </ol>
+            </details>
+
+            <style>
+                #guideContent h3 { color:var(--accent-green); font-size:15px; margin:24px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+                #guideContent h4 { color:var(--accent-cyan); font-size:13px; margin:16px 0 6px; }
+                #guideContent pre { background:var(--bg-primary); border:1px solid var(--border); border-radius:6px; padding:10px 14px; font-family:var(--font-mono); font-size:11px; overflow-x:auto; margin:8px 0 12px; color:var(--accent-green); white-space:pre-wrap; word-break:break-all; }
+                #guideContent code { background:rgba(59,130,246,.12); color:var(--accent-cyan); padding:1px 5px; border-radius:3px; font-family:var(--font-mono); font-size:11px; }
+                #guideContent pre code { background:none; color:inherit; padding:0; }
+                #guideContent table { width:100%; border-collapse:collapse; font-size:12px; margin:8px 0 14px; }
+                #guideContent th { text-align:left; padding:6px 10px; background:var(--bg-secondary); color:var(--text-muted); font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:.5px; }
+                #guideContent td { padding:6px 10px; border-bottom:1px solid var(--border); }
+                #guideContent .warn { background:rgba(249,115,22,.1); border-left:3px solid var(--accent-orange); padding:8px 12px; border-radius:0 6px 6px 0; margin:8px 0; font-size:12px; }
+                #guideContent .danger { background:rgba(239,68,68,.1); border-left:3px solid var(--accent-red); padding:8px 12px; border-radius:0 6px 6px 0; margin:8px 0; font-size:12px; }
+                #guideContent ul, #guideContent ol { padding-left:20px; margin:6px 0; }
+                #guideContent li { margin-bottom:4px; }
+            </style>
+
+            <!-- 1. Architecture -->
+            <h3 id="g1">1. Infrastructure Architecture</h3>
+            <h4>Server Inventory</h4>
+            <p>Configure your servers in <code>.env</code>. Example topology:</p>
+            <table>
+                <thead><tr><th>Server</th><th>Public IP</th><th>VPC IP</th><th>Role</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>KoTH Server</strong></td><td><code>YOUR_KOTH_IP</code></td><td>10.x.x.x</td><td>Scoreboard, API, Scorebot, PostgreSQL, Redis</td></tr>
+                    <tr><td><strong>Hill 1</strong></td><td><code>YOUR_HILL1_IP</code></td><td>10.x.x.x</td><td>Challenge server</td></tr>
+                    <tr><td><strong>Hill 2</strong></td><td><code>YOUR_HILL2_IP</code></td><td>10.x.x.x</td><td>Challenge server</td></tr>
+                    <tr><td><strong>VPN Server</strong></td><td><code>YOUR_VPN_IP</code></td><td>—</td><td>WireGuard VPN gateway</td></tr>
+                    <tr><td><strong>Pivot DMZ</strong></td><td><code>YOUR_PIVOT_IP</code></td><td>10.x.x.x</td><td>Hosts additional hills (containers)</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Network Segments</h4>
+            <table>
+                <thead><tr><th>Segment</th><th>CIDR</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td>VPN Network</td><td><code>10.10.0.0/24</code></td><td>Participants connect via WireGuard</td></tr>
+                    <tr><td>Hill Network</td><td><code>10.0.0.0/24</code></td><td>Challenge machines + Pivot</td></tr>
+                    <tr><td>Game Network</td><td><code>10.x.0.0/20</code></td><td>Internal VPC</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Docker Containers on KoTH Server</h4>
+            <pre>koth-scoreboard   → FastAPI app (:8000)
+koth-scorebot     → Go scorebot (:8080)
+koth-nginx        → Reverse proxy (:80)
+koth-postgres     → PostgreSQL 16 (:5432)
+koth-redis        → Redis 7 (:6379)</pre>
+
+            <h4>Hills Detail</h4>
+            <p>Hills are configured in the database via the admin panel. Example layout:</p>
+            <table>
+                <thead><tr><th>Hill</th><th>IP</th><th>SSH Port</th><th>SLA Check</th><th>Base Pts</th><th>Mult.</th><th>Pivot?</th></tr></thead>
+                <tbody>
+                    <tr><td>Hill 1 — Example</td><td>HILL_VPC_IP</td><td>22</td><td>HTTP (:80)</td><td>10</td><td>1.0×</td><td>No</td></tr>
+                    <tr><td>Hill 2 — Example</td><td>HILL_VPC_IP</td><td>22</td><td>TCP (:9999)</td><td>10</td><td>1.0×</td><td>No</td></tr>
+                    <tr><td>Hill 3 — Example</td><td>PIVOT_VPC_IP</td><td>2210</td><td>HTTP (:8080)</td><td>10</td><td>1.5×</td><td>Yes</td></tr>
+                    <tr><td>Hill 4 — Example</td><td>PIVOT_VPC_IP</td><td>2211</td><td>TCP (:27017)</td><td>10</td><td>1.5×</td><td>Yes</td></tr>
+                </tbody>
+            </table>
+
+            <!-- 2. Admin Access -->
+            <h3 id="g2">2. Admin Access</h3>
+            <h4>Via Web (Organizer Console)</h4>
+            <ol>
+                <li>Open <code>http://YOUR_SERVER/organizer</code></li>
+                <li>Enter your Admin Token (set via <code>API_ADMIN_TOKEN</code> in <code>.env</code>)</li>
+                <li>The organizer panel has sidebar navigation with all control features</li>
+            </ol>
+            <h4>Via API (curl)</h4>
+            <p>All admin endpoints require the header:</p>
+            <pre>-H "X-Admin-Token: YOUR_ADMIN_TOKEN"</pre>
+
+            <!-- 3. Pre-Event Checklist -->
+            <h3 id="g3">3. Pre-Event Checklist</h3>
+            <h4>Day Before</h4>
+            <ul>
+                <li>All Docker containers on KoTH server running (<code>docker ps</code>)</li>
+                <li>All Hills accessible and SLA OK</li>
+                <li>VPN server running, WireGuard configs generated</li>
+                <li>Scorebot healthcheck all hills: <code>curl http://YOUR_SERVER:8080/api/v1/batch-check</code></li>
+                <li>Participant registration ready / registration code set</li>
+                <li>Test start → stop game, verify scoring works</li>
+                <li>Backup database: <code>docker exec koth-postgres pg_dump -U koth_admin koth_ctf > backup.sql</code></li>
+            </ul>
+            <h4>Verify Hills</h4>
+            <pre>curl -s http://YOUR_SERVER:8080/api/v1/batch-check | python3 -m json.tool</pre>
+            <h4>Verify Agent Status</h4>
+            <pre>curl -s http://YOUR_SERVER:8000/api/agent/status | python3 -m json.tool</pre>
+
+            <!-- 4. Day-of-Event Flow -->
+            <h3 id="g4">4. Day-of-Event Flow</h3>
+            <p>Adapt this timeline to your event schedule:</p>
+            <table>
+                <thead><tr><th>Time</th><th>Action</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>T-2h</strong></td><td>Verify all servers UP — <code>docker ps</code></td></tr>
+                    <tr><td><strong>T-1.5h</strong></td><td>Enable registration</td></tr>
+                    <tr><td><strong>T-1h</strong></td><td>Gate open — participants register</td></tr>
+                    <tr><td><strong>T-30m</strong></td><td>Technical briefing</td></tr>
+                    <tr><td><strong>T-5m</strong></td><td>Disable registration</td></tr>
+                    <tr><td><strong>T-2m</strong></td><td>Broadcast: "Game starts in 2 minutes!"</td></tr>
+                    <tr><td style="color:var(--accent-green);"><strong>T=0</strong></td><td style="color:var(--accent-green);font-weight:700;">🚀 START GAME</td></tr>
+                    <tr><td><em>T+0-5m</em></td><td><em>Grace period 5 min (no scoring)</em></td></tr>
+                    <tr><td><strong>T+5m</strong></td><td>Tick #1 begins</td></tr>
+                    <tr><td style="color:var(--accent-orange);"><strong>T-30m end</strong></td><td style="color:var(--accent-orange);">Scoreboard auto-freeze</td></tr>
+                    <tr><td style="color:var(--accent-red);"><strong>T=end</strong></td><td style="color:var(--accent-red);font-weight:700;">🏁 GAME OVER</td></tr>
+                    <tr><td><strong>T+5m end</strong></td><td>Unfreeze scoreboard</td></tr>
+                    <tr><td><strong>T+10m end</strong></td><td>Export data &amp; announce winner</td></tr>
+                </tbody>
+            </table>
+
+            <!-- 5. Game Lifecycle -->
+            <h3 id="g5">5. Game Lifecycle Control</h3>
+            <h4>Start Game</h4>
+            <pre>curl -X POST http://YOUR_SERVER/api/admin/game/control \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN" \
+  -d '{"action": "start"}'</pre>
+            <p>After start, there is a <strong>5-minute grace period</strong> before the first tick begins.</p>
+            <h4>Pause / Resume / Stop</h4>
+            <pre># Pause
+curl -X POST .../api/admin/game/control -d '{"action": "pause"}'
+# Resume
+curl -X POST .../api/admin/game/control -d '{"action": "resume"}'
+# Stop (PERMANENT!)
+curl -X POST .../api/admin/game/control -d '{"action": "stop"}'</pre>
+            <div class="warn">⚠️ Stop bersifat final. Game tidak bisa di-resume setelah stop.</div>
+            <h4>Status Game</h4>
+            <table>
+                <thead><tr><th>Status</th><th>Keterangan</th></tr></thead>
+                <tbody>
+                    <tr><td><code>idle</code></td><td>Game belum dimulai</td></tr>
+                    <tr><td><code>grace_period</code></td><td>Dalam masa grace period (5 menit)</td></tr>
+                    <tr><td><code>running</code></td><td>Game berjalan, scoring aktif</td></tr>
+                    <tr><td><code>paused</code></td><td>Game di-pause</td></tr>
+                    <tr><td><code>stopped</code></td><td>Game selesai</td></tr>
+                </tbody>
+            </table>
+
+            <!-- 6. Team Management -->
+            <h3 id="g6">6. Team Management</h3>
+            <h4>Create Team</h4>
+            <pre>curl -X POST http://YOUR_SERVER/api/teams \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN" \
+  -d '{"name":"team-alpha","display_name":"Team Alpha","category":"default","vpn_ip":"10.10.0.10"}'</pre>
+            <h4>Bulk Create Teams</h4>
+            <pre>curl -X POST http://YOUR_SERVER/api/teams/bulk \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN" \
+  -d '{"teams":[
+    {"name":"team-alpha","display_name":"Team Alpha","category":"default"},
+    {"name":"team-bravo","display_name":"Team Bravo","category":"default"}
+  ]}'</pre>
+            <h4>Team Categories</h4>
+            <p>Categories are configurable. The default category is <code>default</code>. You can define custom categories (e.g., <code>military</code>, <code>civilian</code>) to suit your event.</p>
+
+            <!-- 7. Registration -->
+            <h3 id="g7">7. Registration Management</h3>
+            <p>Toggle ON/OFF via Organizer Console or API:</p>
+            <pre>curl -X PUT http://YOUR_SERVER/api/admin/registration/toggle \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN"</pre>
+            <p>Registration code is set via <code>REGISTRATION_CODE</code> in <code>.env</code></p>
+            <div class="warn">⚠️ Share the registration code during briefing, not before.</div>
+
+            <!-- 8. Hills -->
+            <h3 id="g8">8. Hill Management</h3>
+            <h4>Toggle Hill Active/Inactive</h4>
+            <pre>curl -X PUT http://YOUR_SERVER/api/admin/hill/3/toggle \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN"</pre>
+            <p>Useful if there are technical issues on a hill.</p>
+            <h4>Regenerate Agent Token</h4>
+            <pre>curl -X POST http://YOUR_SERVER/api/admin/hills/3/agent-token \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN"</pre>
+
+            <!-- 9. Scoreboard Control -->
+            <h3 id="g9">9. Scoreboard Control</h3>
+            <h4>Freeze / Unfreeze</h4>
+            <pre># Freeze
+curl -X POST http://YOUR_SERVER/api/admin/scoreboard/freeze \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN"
+
+# Unfreeze
+curl -X POST http://YOUR_SERVER/api/admin/scoreboard/unfreeze \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN"</pre>
+            <p><strong>Auto-freeze</strong>: Scoreboard automatically freezes 30 minutes before game end. After game stop, manually unfreeze to reveal final scores.</p>
+
+            <!-- 10. Score Adjustment -->
+            <h3 id="g10">10. Score Adjustment</h3>
+            <pre># Add 100 points to team ID 5
+curl -X POST http://YOUR_SERVER/api/admin/score/adjust \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN" \
+  -d '{"team_id":5,"points":100,"reason":"Bonus challenge"}'
+
+# Deduct 50 points (penalty)
+curl -X POST .../api/admin/score/adjust \
+  -d '{"team_id":3,"points":-50,"reason":"Penalty: service destruction"}'</pre>
+            <p>All adjustments are recorded in the audit log with the reason.</p>
+
+            <!-- 11. Monitoring -->
+            <h3 id="g11">11. Monitoring &amp; Dashboard</h3>
+            <h4>Dashboard Stats</h4>
+            <pre>curl -s http://YOUR_SERVER/api/admin/stats \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN" | python3 -m json.tool</pre>
+            <h4>Force Tick (Manual)</h4>
+            <pre>curl -X POST http://YOUR_SERVER/api/admin/game/tick \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN"</pre>
+            <p>Trigger tick scoring immediately without waiting for the normal interval.</p>
+
+            <!-- 12. Announcement -->
+            <h3 id="g12">12. Announcement System</h3>
+            <pre># Info
+curl -X POST http://YOUR_SERVER/api/admin/announcement \
+  -d '{"message":"Game starts in 5 minutes!","type":"info"}'
+
+# Warning
+curl -X POST .../api/admin/announcement \
+  -d '{"message":"Hill 3 under maintenance","type":"warning"}'
+
+# Danger
+curl -X POST .../api/admin/announcement \
+  -d '{"message":"Team XYZ received a penalty!","type":"danger"}'</pre>
+            <table>
+                <thead><tr><th>Type</th><th>Warna</th><th>Penggunaan</th></tr></thead>
+                <tbody>
+                    <tr><td><code>info</code></td><td>Biru</td><td>Informasi umum</td></tr>
+                    <tr><td><code>warning</code></td><td>Orange</td><td>Peringatan</td></tr>
+                    <tr><td><code>danger</code></td><td>Merah</td><td>Peringatan serius / penalty</td></tr>
+                </tbody>
+            </table>
+
+            <!-- 13. Config -->
+            <h3 id="g13">13. Konfigurasi Game</h3>
+            <table>
+                <thead><tr><th>Key</th><th>Default</th><th>Keterangan</th></tr></thead>
+                <tbody>
+                    <tr><td><code>tick_interval</code></td><td>60</td><td>Interval scoring dalam detik</td></tr>
+                    <tr><td><code>grace_period</code></td><td>300</td><td>Periode awal tanpa scoring (5 menit)</td></tr>
+                    <tr><td><code>game_duration</code></td><td>21600</td><td>Durasi total game (6 jam)</td></tr>
+                    <tr><td><code>freeze_before_end</code></td><td>1800</td><td>Freeze scoreboard X detik sebelum end (30 min)</td></tr>
+                    <tr><td><code>first_blood_bonus</code></td><td>50</td><td>Bonus poin untuk first blood per hill</td></tr>
+                    <tr><td><code>defense_streak_bonus</code></td><td>5</td><td>Bonus per tick setelah 3× berturut-turut</td></tr>
+                    <tr><td><code>base_points</code></td><td>10</td><td>Poin dasar per tick per hill</td></tr>
+                </tbody>
+            </table>
+            <pre>curl -X PUT http://YOUR_SERVER/api/admin/config/tick_interval \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN" \
+  -d '{"value": "60"}'</pre>
+
+            <!-- 14. Audit Log -->
+            <h3 id="g14">14. Audit Log</h3>
+            <pre>curl -s "http://YOUR_SERVER/api/admin/audit?limit=50" \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN" | python3 -m json.tool</pre>
+            <h4>Event Types</h4>
+            <table>
+                <thead><tr><th>Event Type</th><th>Keterangan</th></tr></thead>
+                <tbody>
+                    <tr><td><code>game_started</code></td><td>Game dimulai</td></tr>
+                    <tr><td><code>game_paused</code></td><td>Game di-pause</td></tr>
+                    <tr><td><code>game_resumed</code></td><td>Game di-resume</td></tr>
+                    <tr><td><code>game_stopped</code></td><td>Game dihentikan</td></tr>
+                    <tr><td><code>game_reset</code></td><td>Game di-reset</td></tr>
+                    <tr><td><code>score_adjusted</code></td><td>Poin di-adjust manual</td></tr>
+                    <tr><td><code>hill_toggled</code></td><td>Hill di-enable/disable</td></tr>
+                    <tr><td><code>registration_toggled</code></td><td>Status registrasi diubah</td></tr>
+                    <tr><td><code>tick_forced</code></td><td>Tick dipaksa manual</td></tr>
+                    <tr><td><code>announcement_sent</code></td><td>Pengumuman dikirim</td></tr>
+                    <tr><td><code>scoreboard_frozen</code></td><td>Scoreboard di-freeze</td></tr>
+                    <tr><td><code>scoreboard_unfrozen</code></td><td>Scoreboard di-unfreeze</td></tr>
+                </tbody>
+            </table>
+
+            <!-- 15. Export -->
+            <h3 id="g15">15. Export Data</h3>
+            <pre>curl -s http://YOUR_SERVER/api/admin/teams/export \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN" | python3 -m json.tool</pre>
+            <p>Gunakan menu <strong>💾 Export Data</strong> di sidebar untuk download langsung dalam format CSV / JSON.</p>
+
+            <!-- 16. Troubleshooting -->
+            <h3 id="g16">16. Troubleshooting</h3>
+            <h4>Hill SLA Failing</h4>
+            <pre># Test from KoTH server (replace IPs with your hill VPC IPs)
+curl -s -o /dev/null -w "%{http_code}" http://HILL1_VPC_IP:80
+nc -zv HILL2_VPC_IP 9999
+curl -s -o /dev/null -w "%{http_code}" http://PIVOT_VPC_IP:8080
+nc -zv PIVOT_VPC_IP 27017</pre>
+            <h4>Restart Container on Hill</h4>
+            <pre># Example: restart a hill container
+ssh root@HILL1_PUBLIC_IP "docker restart container-name"
+# Pivot server containers
+ssh root@PIVOT_PUBLIC_IP "docker restart container-name"</pre>
+            <h4>Scorebot Error</h4>
+            <pre>docker logs --tail 50 koth-scorebot
+docker restart koth-scorebot</pre>
+            <h4>Agent Not Reporting</h4>
+            <pre># Check status
+curl http://YOUR_SERVER/api/agent/status
+# Restart agent on a hill
+ssh root@HILL_PUBLIC_IP "systemctl restart koth-agent"</pre>
+            <h4>Game Reset (DESTRUCTIVE!)</h4>
+            <div class="danger">⚠️ EXTREME CAUTION: Reset deletes ALL scoring data. Teams remain but all points reset to 0.</div>
+            <pre># Stop first!
+curl -X POST .../api/admin/game/control -d '{"action":"stop"}'
+# Reset
+curl -X POST http://YOUR_SERVER/api/admin/game/reset \
+  -H "X-Admin-Token: YOUR_ADMIN_TOKEN"</pre>
+
+            <!-- 17. API Reference -->
+            <h3 id="g17">17. API Reference Lengkap</h3>
+            <h4>Public Endpoints (No Auth)</h4>
+            <table>
+                <thead><tr><th>Method</th><th>Endpoint</th><th>Keterangan</th></tr></thead>
+                <tbody>
+                    <tr><td>GET</td><td><code>/api/scoreboard</code></td><td>Full scoreboard</td></tr>
+                    <tr><td>GET</td><td><code>/api/scoreboard/leaderboard</code></td><td>Leaderboard (filter: <code>?category=default</code>)</td></tr>
+                    <tr><td>GET</td><td><code>/api/scoreboard/ticks</code></td><td>Recent ticks</td></tr>
+                    <tr><td>GET</td><td><code>/api/scoreboard/first-bloods</code></td><td>First blood list</td></tr>
+                    <tr><td>GET</td><td><code>/api/scoreboard/timeline</code></td><td>Score timeline (charts)</td></tr>
+                    <tr><td>GET</td><td><code>/api/hills</code></td><td>List active hills</td></tr>
+                    <tr><td>GET</td><td><code>/api/teams</code></td><td>List active teams</td></tr>
+                    <tr><td>WS</td><td><code>/ws/scoreboard</code></td><td>WebSocket live updates</td></tr>
+                </tbody>
+            </table>
+            <h4>Admin Endpoints (require <code>X-Admin-Token</code>)</h4>
+            <table>
+                <thead><tr><th>Method</th><th>Endpoint</th><th>Keterangan</th></tr></thead>
+                <tbody>
+                    <tr><td>POST</td><td><code>/api/admin/game/control</code></td><td>Start/pause/resume/stop</td></tr>
+                    <tr><td>GET</td><td><code>/api/admin/game/status</code></td><td>Game status</td></tr>
+                    <tr><td>POST</td><td><code>/api/admin/score/adjust</code></td><td>Manual score adjust</td></tr>
+                    <tr><td>POST</td><td><code>/api/admin/game/reset</code></td><td>Reset all scoring data</td></tr>
+                    <tr><td>GET</td><td><code>/api/admin/config</code></td><td>List config</td></tr>
+                    <tr><td>PUT</td><td><code>/api/admin/config/{key}</code></td><td>Update config value</td></tr>
+                    <tr><td>GET</td><td><code>/api/admin/audit</code></td><td>Audit log</td></tr>
+                    <tr><td>PUT</td><td><code>/api/admin/hill/{id}/toggle</code></td><td>Enable/disable hill</td></tr>
+                    <tr><td>PUT</td><td><code>/api/admin/registration/toggle</code></td><td>Toggle registration</td></tr>
+                    <tr><td>POST</td><td><code>/api/admin/game/tick</code></td><td>Force immediate tick</td></tr>
+                    <tr><td>POST</td><td><code>/api/admin/announcement</code></td><td>Broadcast message</td></tr>
+                    <tr><td>GET</td><td><code>/api/admin/teams/export</code></td><td>Export teams + scores</td></tr>
+                    <tr><td>POST</td><td><code>/api/admin/scoreboard/freeze</code></td><td>Freeze scoreboard</td></tr>
+                    <tr><td>POST</td><td><code>/api/admin/scoreboard/unfreeze</code></td><td>Unfreeze scoreboard</td></tr>
+                    <tr><td>GET</td><td><code>/api/admin/stats</code></td><td>Dashboard stats</td></tr>
+                    <tr><td>GET</td><td><code>/api/admin/verification/status</code></td><td>Dual-verification status</td></tr>
+                </tbody>
+            </table>
+
+            <!-- 18. SSH -->
+            <h3 id="g18">18. Server Access &amp; SSH</h3>
+            <p>Configure SSH access for your servers. Use SSH keys for production deployments.</p>
+            <table>
+                <thead><tr><th>Server</th><th>Command</th><th>Notes</th></tr></thead>
+                <tbody>
+                    <tr><td>KoTH</td><td><code>ssh root@YOUR_KOTH_IP</code></td><td>Set in <code>.env</code></td></tr>
+                    <tr><td>Hill 1</td><td><code>ssh root@YOUR_HILL1_IP</code></td><td>Set in <code>.env</code></td></tr>
+                    <tr><td>Hill 2</td><td><code>ssh root@YOUR_HILL2_IP</code></td><td>Set in <code>.env</code></td></tr>
+                    <tr><td>VPN</td><td><code>ssh root@YOUR_VPN_IP</code></td><td>Set in <code>.env</code></td></tr>
+                    <tr><td>Pivot DMZ</td><td><code>ssh root@YOUR_PIVOT_IP</code></td><td>Set in <code>.env</code></td></tr>
+                </tbody>
+            </table>
+            <h4>Useful Docker Commands</h4>
+            <pre># Status semua container
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+# Logs (tail)
+docker logs --tail 100 -f koth-scoreboard
+docker logs --tail 100 -f koth-scorebot
+
+# Restart services
+docker restart koth-scoreboard koth-scorebot</pre>
+
+            <!-- Quick Reference -->
+            <h3 style="color:var(--accent-green);">✅ Quick Reference Card</h3>
+            <pre style="color:var(--text-primary); font-size:11px;">
+┌──────────────────────────────────────────────────────────┐
+│  KoTH CTF Platform — Admin Quick Reference               │
+├──────────────────────────────────────────────────────────┤
+│  SCOREBOARD:  http://YOUR_SERVER                         │
+│  ORGANIZER:   .../organizer                              │
+│  ADMIN TOKEN: (set in .env as API_ADMIN_TOKEN)           │
+│  REG CODE:    (set in .env as REGISTRATION_CODE)         │
+│                                                          │
+│  START:   POST /api/admin/game/control {"action":"start"}│
+│  PAUSE:   POST /api/admin/game/control {"action":"pause"}│
+│  RESUME:  ...{"action":"resume"}                         │
+│  STOP:    ...{"action":"stop"}                           │
+│  FREEZE:  POST /api/admin/scoreboard/freeze              │
+│  UNFREEZE:POST /api/admin/scoreboard/unfreeze            │
+│                                                          │
+│  All admin requests need header:                         │
+│  X-Admin-Token: YOUR_ADMIN_TOKEN                         │
+└──────────────────────────────────────────────────────────┘</pre>
+
+        </div>
+    </div>
+</div>
+
+</main>
+</div><!-- eo-wrap -->
+
+<!-- ════════════ TOAST CONTAINER ════════════ -->
+<div id="toastBox"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   KoTH CTF Platform — Event Organizer JS
+   ══════════════════════════════════════════ */
+const API = window.location.origin + '/api';
+let TOKEN = '';
+let refreshTimer = null;
+
+// ── Realtime Countdown State ────────────────────
+let _gameStatus = 'not_started';
+let _remainingSec = 0;
+let _elapsedSec = 0;
+let _countdownTimer = null;
+
+function startCountdown() {
+    if (_countdownTimer) return;
+    _countdownTimer = setInterval(() => {
+        if (_gameStatus === 'running') {
+            if (_remainingSec > 0) _remainingSec--;
+            _elapsedSec++;
+        }
+        // Don't increment when finished — values are frozen from server
+        renderTimers();
+    }, 1000);
+}
+
+function renderTimers() {
+    const cls = {running:'running', paused:'paused', finished:'stopped'}[_gameStatus] || 'stopped';
+    const isInactive = (_gameStatus === 'not_started' || _gameStatus === 'finished');
+
+    // Dashboard timer
+    const dashTmr = document.getElementById('dashTimer');
+    if (dashTmr) {
+        dashTmr.className = 'big-timer ' + cls;
+        if (isInactive) {
+            dashTmr.textContent = '--:--:--';
+        } else {
+            dashTmr.textContent = fmtTime(_elapsedSec);
+        }
+    }
+    const dashRem = document.getElementById('dashRemaining');
+    if (dashRem) {
+        if (_gameStatus === 'finished') {
+            dashRem.textContent = '🏁 GAME SELESAI';
+        } else if (_gameStatus === 'not_started') {
+            dashRem.textContent = 'Menunggu game dimulai';
+        } else {
+            dashRem.textContent = `Sisa: ${fmtTime(_remainingSec)}`;
+        }
+    }
+
+    // Game Control timer
+    const gcTmr = document.getElementById('gcTimer');
+    if (gcTmr) {
+        gcTmr.className = 'big-timer ' + cls;
+        if (isInactive) {
+            gcTmr.textContent = '--:--:--';
+        } else {
+            gcTmr.textContent = fmtTime(_elapsedSec);
+        }
+    }
+}
+
+// ── Auth ────────────────────────────────────────
+async function doLogin() {
+    TOKEN = document.getElementById('tokenInput').value.trim();
+    if (!TOKEN) return;
+    try {
+        const r = await api('/admin/stats');
+        // Persist token in sessionStorage
+        sessionStorage.setItem('koth_role', 'admin');
+        sessionStorage.setItem('koth_admin_token', TOKEN);
+        document.getElementById('authOverlay').style.display = 'none';
+        initApp();
+    } catch(e) {
+        document.getElementById('authErr').style.display = 'block';
+    }
+}
+
+function doLogout() {
+    sessionStorage.removeItem('koth_role');
+    sessionStorage.removeItem('koth_admin_token');
+    TOKEN = '';
+    if (refreshTimer) clearInterval(refreshTimer);
+    if (_countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
+    window.location.href = '/login';
+}
+
+// Auto-login from sessionStorage on page load
+(async function autoLogin() {
+    const savedToken = sessionStorage.getItem('koth_admin_token');
+    if (savedToken) {
+        TOKEN = savedToken;
+        try {
+            await api('/admin/stats');
+            document.getElementById('authOverlay').style.display = 'none';
+            initApp();
+            return;
+        } catch(e) {
+            // Saved token invalid — clear and show login
+            sessionStorage.removeItem('koth_admin_token');
+            sessionStorage.removeItem('koth_role');
+            TOKEN = '';
+        }
+    }
+    // Show auth overlay (already visible by default)
+})();
+
+function initApp() {
+    loadDashboard();
+    refreshTimer = setInterval(loadDashboard, 30000);
+    // Sidebar nav
+    document.querySelectorAll('.sidebar a[data-page]').forEach(a => {
+        a.addEventListener('click', e => {
+            e.preventDefault();
+            document.querySelectorAll('.sidebar a').forEach(x => x.classList.remove('active'));
+            a.classList.add('active');
+            document.querySelectorAll('.section-page').forEach(p => p.classList.remove('active'));
+            const page = a.dataset.page;
+            document.getElementById('page-' + page).classList.add('active');
+            loadPage(page);
+        });
+    });
+}
+
+function loadPage(page) {
+    const loaders = {
+        dashboard: loadDashboard,
+        gamecontrol: loadGameControl,
+        ticks: loadTicks,
+        teams: loadTeams,
+        hills: loadHills,
+        scores: loadScores,
+        announce: loadAnnouncements,
+        registration: loadRegistration,
+        config: loadConfig,
+        audit: loadAudit,
+        verification: loadVerificationPage,
+        topology: loadTopologyEditor,
+        deploywizard: loadDeployWizard,
+        export: ()=>{},
+        guide: ()=>{},
+    };
+    (loaders[page] || (()=>{}))();
+}
+
+// ── API Helper ──────────────────────────────────
+async function api(path, opts = {}) {
+    opts.headers = { ...opts.headers, 'X-Admin-Token': TOKEN, 'Content-Type': 'application/json' };
+    const r = await fetch(API + path, opts);
+    if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.detail || `HTTP ${r.status}`);
+    }
+    return r.json();
+}
+
+function toast(msg, type = 'success') {
+    const el = document.createElement('div');
+    el.className = 'eo-toast ' + type;
+    el.textContent = msg;
+    document.getElementById('toastBox').appendChild(el);
+    setTimeout(() => el.remove(), 4500);
+}
+
+function fmtTime(s) {
+    if (!s || s < 0) s = 0;
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = Math.floor(s%60);
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function esc(s) { if(!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// Convert UTC ISO string to WIB (UTC+7) display
+function toWIB(isoStr, opts) {
+    if (!isoStr) return '';
+    const d = new Date(isoStr.endsWith('Z') || isoStr.includes('+') ? isoStr : isoStr + 'Z');
+    return d.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', ...(opts||{}) });
+}
+function toWIBTime(isoStr) {
+    return toWIB(isoStr, { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+function confirmAction(msg, keyword, fn) {
+    const input = prompt(msg);
+    if (input === keyword) fn();
+    else if (input !== null) toast('Konfirmasi salah', 'error');
+}
+
+function statusBadge(status) {
+    const map = { running:'badge-green', paused:'badge-orange', not_started:'badge-gray', finished:'badge-red' };
+    return `<span class="badge ${map[status]||'badge-gray'}">${status.toUpperCase().replace('_',' ')}</span>`;
+}
+
+// ── Dashboard ───────────────────────────────────
+let _dashLoading = false;
+async function loadDashboard() {
+    if (_dashLoading) return; // prevent concurrent calls
+    _dashLoading = true;
+    try {
+        // Use only admin stats for game status (single source of truth)
+        const stats = await api('/admin/stats');
+
+        // Sync countdown state from server
+        _gameStatus = stats.game_status;
+        _remainingSec = stats.remaining_seconds || 0;
+        _elapsedSec = stats.elapsed_seconds || 0;
+        startCountdown();
+
+        // Header badge
+        document.getElementById('headerStatus').className = 'badge ' + ({running:'badge-green',paused:'badge-orange',not_started:'badge-gray',finished:'badge-red'}[stats.game_status]||'badge-gray');
+        document.getElementById('headerStatus').textContent = stats.game_status.toUpperCase().replace('_',' ');
+        // Stats grid
+        document.getElementById('dashStats').innerHTML = `
+            <div class="stat-box green"><div class="val">${stats.game_status.toUpperCase().replace('_',' ')}</div><div class="lbl">Status</div></div>
+            <div class="stat-box cyan"><div class="val">#${stats.current_tick}</div><div class="lbl">Tick</div></div>
+            <div class="stat-box blue"><div class="val">${stats.teams_count}</div><div class="lbl">Teams</div></div>
+            <div class="stat-box purple"><div class="val">${stats.hills_count}</div><div class="lbl">Hills</div></div>
+            <div class="stat-box orange"><div class="val">${stats.first_bloods_count}</div><div class="lbl">First Bloods</div></div>
+            <div class="stat-box cyan"><div class="val">${stats.ws_connections}</div><div class="lbl">WS Clients</div></div>
+            <div class="stat-box ${stats.is_frozen?'red':'green'}"><div class="val">${stats.is_frozen?'FROZEN':'LIVE'}</div><div class="lbl">Scoreboard</div></div>
+            <div class="stat-box ${stats.registration_enabled?'green':'red'}"><div class="val">${stats.registration_enabled?'OPEN':'CLOSED'}</div><div class="lbl">Registration</div></div>
+        `;
+        // Timer — rendered by countdown, just update badge
+        document.getElementById('dashBadge').innerHTML = statusBadge(stats.game_status);
+        renderTimers();
+
+        // Fetch scoreboard for hills & teams display (separate, non-blocking)
+        try {
+            const scoreboard = await fetch(API + '/scoreboard').then(r=>r.json());
+            // Hills
+            const htb = document.querySelector('#dashHillsTbl tbody');
+            htb.innerHTML = scoreboard.hills.map(h => `<tr>
+                <td>${esc(h.hill_name)}</td>
+                <td class="mono">${h.current_king||'<span style="color:var(--text-muted)">nobody</span>'}</td>
+                <td>${h.sla_status?'<span class="badge badge-green">UP</span>':'<span class="badge badge-red">DOWN</span>'}</td>
+                <td class="mono">${h.multiplier}x</td>
+            </tr>`).join('');
+            // Top 5
+            const ttb = document.querySelector('#dashTopTbl tbody');
+            ttb.innerHTML = scoreboard.teams.slice(0,5).map((t,i) => `<tr>
+                <td>${i+1}</td>
+                <td>${esc(t.display_name||t.team_name)}</td>
+                <td class="mono" style="font-weight:700; color:var(--accent-green);">${t.total_points.toLocaleString()}</td>
+                <td><span class="badge badge-blue">${(t.category||'default').toUpperCase()}</span></td>
+            </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text-muted)">No teams yet</td></tr>';
+        } catch(e2) { console.error('Scoreboard fetch:', e2); }
+    } catch(e) { console.error('Dashboard:', e); }
+    finally { _dashLoading = false; }
+}
+
+// ── Game Control ────────────────────────────────
+let _gcLoading = false;
+async function loadGameControl() {
+    if (_gcLoading) return; // prevent concurrent calls
+    _gcLoading = true;
+    try {
+        const s = await api('/admin/stats');
+        // Sync countdown state
+        _gameStatus = s.game_status;
+        _remainingSec = s.remaining_seconds || 0;
+        _elapsedSec = s.elapsed_seconds || 0;
+        startCountdown();
+
+        document.getElementById('gcBadge').innerHTML = statusBadge(s.game_status);
+        renderTimers();
+        const sisaText = (_gameStatus === 'not_started' || _gameStatus === 'finished') ? '--:--:--' : fmtTime(_remainingSec);
+        document.getElementById('gcInfo').innerHTML = `Tick #${s.current_tick} &middot; Sisa ${sisaText} &middot; Frozen: ${s.is_frozen?'YES':'No'}`;
+    } catch(e) {}
+    finally { _gcLoading = false; }
+}
+
+async function gameCtrl(action) {
+    try {
+        const d = await api('/admin/game/control', { method:'POST', body:JSON.stringify({action}) });
+        toast(d.detail); loadGameControl(); loadDashboard();
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── Pre-Flight Check System ──
+const PF_CHECK_DEFS = [
+    { id: 'database',  icon: '🗄️', label: 'PostgreSQL Database' },
+    { id: 'redis',     icon: '⚡', label: 'Redis Cache' },
+    { id: 'hills',     icon: '⛰️', label: 'Active Hills' },
+    { id: 'scorebot',  icon: '🤖', label: 'Scorebot Service' },
+    { id: 'agents',    icon: '📡', label: 'Hill Agents' },
+    { id: 'teams',     icon: '👥', label: 'Registered Teams' },
+    { id: 'config',    icon: '⚙️', label: 'Game Configuration' },
+];
+
+function openPreflightModal() {
+    const modal = document.getElementById('preflightModal');
+    modal.style.display = 'flex';
+    runPreflightChecks();
+}
+
+function closePreflightModal() {
+    document.getElementById('preflightModal').style.display = 'none';
+}
+
+document.getElementById('preflightModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closePreflightModal();
+});
+
+async function runPreflightChecks() {
+    const container = document.getElementById('pfChecks');
+    const summaryEl = document.getElementById('pfSummary');
+    const actionsEl = document.getElementById('pfActions');
+    summaryEl.style.display = 'none';
+    actionsEl.style.display = 'none';
+
+    // Render initial pending items
+    container.innerHTML = PF_CHECK_DEFS.map(c =>
+        `<div class="pf-item pending" id="pf-${c.id}">
+            <div class="pf-icon">⏳</div>
+            <div style="flex:1;">
+                <div class="pf-label">${c.icon} ${c.label}</div>
+                <div class="pf-detail">Waiting...</div>
+            </div>
+        </div>`
+    ).join('');
+
+    // Animate checking state one by one, then fetch
+    for (const c of PF_CHECK_DEFS) {
+        const el = document.getElementById(`pf-${c.id}`);
+        el.className = 'pf-item checking';
+        el.querySelector('.pf-icon').textContent = '⟳';
+        el.querySelector('.pf-detail').textContent = 'Checking...';
+        await sleep(120); // brief visual stagger
+    }
+
+    // Fetch preflight results from backend
+    let result;
+    try {
+        result = await api('/admin/game/preflight');
+    } catch(e) {
+        container.innerHTML = `<div style="color:var(--accent-red); text-align:center; padding:20px;">❌ Failed to run preflight: ${esc(e.message)}</div>`;
+        actionsEl.style.display = 'flex';
+        actionsEl.innerHTML = `<button class="btn btn-ghost" onclick="closePreflightModal()">Close</button>
+            <button class="btn btn-primary" onclick="runPreflightChecks()">🔄 Retry</button>`;
+        return;
+    }
+
+    // Update each check item with real results (animated)
+    const checksMap = {};
+    for (const c of result.checks) checksMap[c.id] = c;
+
+    for (let i = 0; i < PF_CHECK_DEFS.length; i++) {
+        const def = PF_CHECK_DEFS[i];
+        const data = checksMap[def.id];
+        const el = document.getElementById(`pf-${def.id}`);
+
+        await sleep(200); // stagger animation
+
+        if (data) {
+            const statusIcon = data.status === 'pass' ? '✅' : data.status === 'fail' ? '❌' : '⚠️';
+            el.className = `pf-item ${data.status}`;
+            el.querySelector('.pf-icon').textContent = statusIcon;
+            el.querySelector('.pf-label').textContent = `${def.icon} ${data.label}`;
+            el.querySelector('.pf-detail').textContent = data.detail;
+        } else {
+            el.className = 'pf-item warning';
+            el.querySelector('.pf-icon').textContent = '❓';
+            el.querySelector('.pf-detail').textContent = 'No result returned';
+        }
+    }
+
+    // Show summary
+    await sleep(300);
+    summaryEl.style.display = 'block';
+    if (result.fail_count === 0 && result.warn_count === 0) {
+        summaryEl.className = 'pf-summary ready';
+        summaryEl.innerHTML = '🎯 All Systems Ready — Good to go!';
+    } else if (result.fail_count === 0) {
+        summaryEl.className = 'pf-summary warnings';
+        summaryEl.innerHTML = `⚠️ ${result.warn_count} warning(s) — Game can still start`;
+    } else {
+        summaryEl.className = 'pf-summary issues';
+        summaryEl.innerHTML = `❌ ${result.fail_count} critical issue(s) — Fix before starting`;
+    }
+
+    // Show action buttons
+    actionsEl.style.display = 'flex';
+    actionsEl.innerHTML = `
+        <button class="btn btn-ghost" onclick="closePreflightModal()">Cancel</button>
+        <button class="btn btn-blue" onclick="runPreflightChecks()">🔄 Re-check</button>
+        ${result.can_start
+            ? `<button class="btn btn-primary" onclick="confirmStartGame()" id="btnConfirmStart">▶️ Confirm Start Game</button>`
+            : `<button class="btn btn-danger" onclick="confirmStartGame()" id="btnConfirmStart" title="Override — start despite issues">⚠️ Force Start</button>`
+        }`;
+}
+
+async function confirmStartGame() {
+    const btn = document.getElementById('btnConfirmStart');
+    btn.disabled = true;
+    btn.textContent = '⏳ Starting...';
+    try {
+        const d = await api('/admin/game/control', { method:'POST', body:JSON.stringify({action:'start'}) });
+        toast('🎮 ' + d.detail, 'success');
+        closePreflightModal();
+        loadGameControl();
+        loadDashboard();
+    } catch(e) {
+        toast(e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '▶️ Retry Start';
+    }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function resetGame() {
+    try {
+        const d = await api('/admin/game/reset', {method:'POST'});
+        toast(d.detail); loadGameControl(); loadDashboard();
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+async function freezeBoard() {
+    try { const d = await api('/admin/scoreboard/freeze',{method:'POST'}); toast(d.detail); loadDashboard(); }
+    catch(e) { toast(e.message,'error'); }
+}
+async function unfreezeBoard() {
+    try { const d = await api('/admin/scoreboard/unfreeze',{method:'POST'}); toast(d.detail); loadDashboard(); }
+    catch(e) { toast(e.message,'error'); }
+}
+
+// ── Ticks ───────────────────────────────────────
+async function loadTicks() {
+    try {
+        const data = await fetch(API+'/scoreboard/ticks?limit=30').then(r=>r.json());
+        document.getElementById('ticksBody').innerHTML = (data||[]).map(t => `<tr>
+            <td class="mono">#${t.tick_number}</td>
+            <td class="mono" style="font-size:11px;">${t.started_at ? toWIBTime(t.started_at) : '-'}</td>
+            <td><span class="badge ${t.status==='completed'?'badge-green':'badge-orange'}">${t.status}</span></td>
+            <td class="mono">${t.completed_at && t.started_at ? Math.round((new Date(t.completed_at)-new Date(t.started_at))/1000)+'s' : '-'}</td>
+        </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text-muted)">Belum ada tick</td></tr>';
+    } catch(e) {}
+}
+
+async function forceTick() {
+    const el = document.getElementById('tickResult');
+    el.textContent = '⏳ Running...'; el.style.color = 'var(--accent-orange)';
+    try {
+        const d = await api('/admin/game/tick', {method:'POST'});
+        el.textContent = '✅ ' + d.detail; el.style.color = 'var(--accent-green)';
+        toast(d.detail); loadTicks(); loadDashboard();
+    } catch(e) { el.textContent = '❌ ' + e.message; el.style.color = 'var(--accent-red)'; toast(e.message,'error'); }
+}
+
+// ── Teams ───────────────────────────────────────
+async function loadTeams() {
+    try {
+        const teams = await api('/admin/teams/export');
+        document.getElementById('teamCount').textContent = `(${teams.length} teams)`;
+        // Populate adj dropdown
+        const sel = document.getElementById('adj_team');
+        sel.innerHTML = '<option value="">-- Pilih --</option>' + teams.map(t => `<option value="${t.id}">#${t.id} ${esc(t.display_name||t.name)}</option>`).join('');
+        document.getElementById('teamsBody').innerHTML = teams.map(t => `<tr>
+            <td class="mono">${t.id}</td>
+            <td class="mono">${esc(t.name)}</td>
+            <td>${esc(t.display_name)}</td>
+            <td><span class="badge badge-blue">${(t.category||'default').toUpperCase()}</span></td>
+            <td class="mono">${t.vpn_ip||'-'}</td>
+            <td>${t.is_active?'<span class="badge badge-green">Active</span>':'<span class="badge badge-red">Inactive</span>'}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="deactivateTeam(${t.id},'${esc(t.name)}')">🗑️</button></td>
+        </tr>`).join('') || '<tr><td colspan="7" style="color:var(--text-muted)">No teams yet</td></tr>';
+    } catch(e) { console.error(e); }
+}
+
+async function createTeam() {
+    const name = document.getElementById('t_name').value.trim();
+    if (!name) { toast('Team name required','error'); return; }
+    try {
+        const d = await api('/teams', { method:'POST', body:JSON.stringify({
+            name,
+            display_name: document.getElementById('t_display').value.trim() || name,
+            category: document.getElementById('t_cat').value,
+            vpn_ip: document.getElementById('t_vpn').value.trim() || null,
+        })});
+        toast(`Team "${d.name}" created (ID: ${d.id})`);
+        ['t_name','t_display','t_vpn'].forEach(id => document.getElementById(id).value = '');
+        loadTeams();
+    } catch(e) { toast(e.message,'error'); }
+}
+
+async function bulkTeams() {
+    try {
+        const data = JSON.parse(document.getElementById('t_bulk').value);
+        const d = await api('/teams/bulk', {method:'POST', body:JSON.stringify(data)});
+        toast(`${d.length} teams created`);
+        document.getElementById('t_bulk').value = '';
+        loadTeams();
+    } catch(e) { toast(e.message,'error'); }
+}
+
+async function deactivateTeam(id, name) {
+    if (!confirm(`Deactivate team "${name}"?`)) return;
+    try {
+        await api('/teams/'+id, {method:'DELETE'});
+        toast(`Team ${name} deactivated`); loadTeams();
+    } catch(e) { toast(e.message,'error'); }
+}
+
+// ── VPN Config Generation ───────────────────────
+async function generateVpnConfigs() {
+    const btn = document.getElementById('btnGenVpn');
+    const status = document.getElementById('vpnGenStatus');
+    btn.disabled = true;
+    status.textContent = '⏳ Generating configs...';
+    try {
+        const d = await api('/admin/vpn/generate', { method:'POST' });
+        status.textContent = `✅ ${d.teams_configured} team configs generated`;
+        toast(`VPN configs generated for ${d.teams_configured} teams`);
+        // Show result table
+        const tbody = document.getElementById('vpnResultBody');
+        tbody.innerHTML = d.team_assignments.map(t =>
+            `<tr><td>${esc(t.team_name)}</td><td class="mono">${t.vpn_ip}</td><td><button class="btn btn-sm btn-blue" onclick="downloadTeamVpn(${t.team_id})">⬇️</button></td></tr>`
+        ).join('');
+        document.getElementById('vpnGenResult').style.display = 'block';
+        loadTeams(); // Refresh to show updated VPN IPs
+    } catch(e) {
+        status.textContent = '❌ ' + e.message;
+        toast(e.message, 'error');
+    }
+    btn.disabled = false;
+}
+
+async function downloadServerConfig() {
+    try {
+        const resp = await fetch(API + '/admin/vpn/server-config', {
+            headers: { 'X-Admin-Token': TOKEN }
+        });
+        if (!resp.ok) { const e = await resp.json().catch(()=>({})); toast(e.detail||'Failed','error'); return; }
+        const text = await resp.text();
+        const blob = new Blob([text], { type:'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'wg0.conf';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch(e) { toast('Download failed: '+e.message,'error'); }
+}
+
+async function downloadTeamVpn(teamId) {
+    try {
+        const resp = await fetch(API + '/admin/vpn/team-config/' + teamId, {
+            headers: { 'X-Admin-Token': TOKEN }
+        });
+        if (!resp.ok) { const e = await resp.json().catch(()=>({})); toast(e.detail||'Failed','error'); return; }
+        const disp = resp.headers.get('Content-Disposition') || '';
+        const match = disp.match(/filename="?([^"]+)"?/);
+        const filename = match ? match[1] : `wg-team${teamId}.conf`;
+        const text = await resp.text();
+        const blob = new Blob([text], { type:'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch(e) { toast('Download failed: '+e.message,'error'); }
+}
+
+// ── Hills ───────────────────────────────────────
+async function loadHills() {
+    loadAgentTokens();
+    try {
+        const hills = await api('/admin/hills/all');
+        document.getElementById('hillsBody').innerHTML = hills.map(h => `<tr style="${h.is_active?'':'opacity:.5;background:rgba(239,68,68,.05);'}">
+            <td class="mono">${h.id}</td>
+            <td>${esc(h.name)}</td>
+            <td class="mono">${h.ip_address}</td>
+            <td>${h.sla_check_type}</td>
+            <td class="mono">${h.base_points}</td>
+            <td class="mono">${h.multiplier}x</td>
+            <td>${h.is_behind_pivot?'<span class="badge badge-orange">Yes</span>':'No'}</td>
+            <td class="mono">${h.current_king||'<span style="color:var(--text-muted)">nobody</span>'}</td>
+            <td>${h.is_active?'<span class="badge badge-green">Active</span>':'<span class="badge badge-red">Disabled</span>'}</td>
+            <td style="white-space:nowrap;">
+                <button class="btn btn-sm btn-blue" onclick='openEditHillModal(${JSON.stringify(h).replace(/'/g,"&#39;")})' title="Edit">✏️</button>
+                <button class="btn btn-sm btn-warning" onclick="resetKing(${h.id},'${esc(h.name)}')" title="Reset King">👑</button>
+                <button class="btn btn-sm ${h.is_active?'btn-ghost':'btn-green'}" onclick="toggleHill(${h.id})" title="${h.is_active?'Disable':'Enable'}">${h.is_active?'⏸️':'▶️'}</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteHill(${h.id},'${esc(h.name)}')" title="Delete">🗑️</button>
+            </td>
+        </tr>`).join('');
+    } catch(e) {}
+}
+
+async function createHill() {
+    const name = document.getElementById('h_name').value.trim();
+    const ip = document.getElementById('h_ip').value.trim();
+    if (!name || !ip) { toast('Name dan IP required','error'); return; }
+    try {
+        const d = await api('/hills', {method:'POST', body:JSON.stringify({
+            name,
+            description: document.getElementById('h_desc').value.trim(),
+            ip_address: ip,
+            ssh_port: parseInt(document.getElementById('h_ssh').value)||22,
+            sla_check_type: document.getElementById('h_sla_type').value,
+            sla_check_url: document.getElementById('h_sla_url').value.trim()||null,
+            sla_check_port: parseInt(document.getElementById('h_sla_port').value)||null,
+            base_points: parseInt(document.getElementById('h_pts').value)||10,
+            multiplier: parseFloat(document.getElementById('h_mult').value)||1.0,
+            king_file_path: document.getElementById('h_king').value.trim()||'/root/king.txt',
+            is_behind_pivot: document.getElementById('h_pivot').value==='true',
+        })});
+        toast(`Hill "${d.name}" created (ID: ${d.id})`);
+        ['h_name','h_ip','h_desc','h_sla_url'].forEach(id=>document.getElementById(id).value='');
+        closeHillModal();
+        loadHills();
+    } catch(e) { toast(e.message,'error'); }
+}
+
+async function toggleHill(id) {
+    try { const d = await api(`/admin/hill/${id}/toggle`,{method:'PUT'}); toast(d.detail); loadHills(); loadDashboard(); }
+    catch(e) { toast(e.message,'error'); }
+}
+
+async function deleteHill(id, name) {
+    if (!confirm(`DELETE hill "${name}" dan semua score-nya? Aksi ini tidak bisa di-undo!`)) return;
+    try { const d = await api(`/admin/hill/${id}`,{method:'DELETE'}); toast(d.detail); loadHills(); loadDashboard(); }
+    catch(e) { toast(e.message,'error'); }
+}
+
+async function resetKing(id, name) {
+    if (!confirm(`Reset king hill "${name}" ke nobody?`)) return;
+    try { const d = await api(`/admin/hill/${id}/reset-king`,{method:'POST'}); toast(d.detail); loadHills(); loadDashboard(); }
+    catch(e) { toast(e.message,'error'); }
+}
+
+function openEditHillModal(h) {
+    document.getElementById('he_id').value = h.id;
+    document.getElementById('he_title').textContent = `#${h.id} ${h.name}`;
+    document.getElementById('he_name').value = h.name || '';
+    document.getElementById('he_ip').value = h.ip_address || '';
+    document.getElementById('he_desc').value = h.description || '';
+    document.getElementById('he_ssh_port').value = h.ssh_port || 22;
+    document.getElementById('he_ssh_user').value = h.ssh_user || '';
+    document.getElementById('he_ssh_pass').value = h.ssh_pass || '';
+    document.getElementById('he_sla_type').value = h.sla_check_type || '';
+    document.getElementById('he_sla_url').value = h.sla_check_url || '';
+    document.getElementById('he_sla_port').value = h.sla_check_port || '';
+    document.getElementById('he_king').value = h.king_file_path || '/root/king.txt';
+    document.getElementById('he_pts').value = h.base_points || 10;
+    document.getElementById('he_mult').value = h.multiplier || 1.0;
+    document.getElementById('he_pivot').value = h.is_behind_pivot ? 'true' : 'false';
+    document.getElementById('hillEditModal').style.display = 'flex';
+}
+function closeEditHillModal() {
+    document.getElementById('hillEditModal').style.display = 'none';
+}
+async function saveEditHill() {
+    const id = document.getElementById('he_id').value;
+    const payload = {
+        name: document.getElementById('he_name').value.trim(),
+        ip_address: document.getElementById('he_ip').value.trim(),
+        description: document.getElementById('he_desc').value.trim() || null,
+        ssh_port: parseInt(document.getElementById('he_ssh_port').value) || 22,
+        ssh_user: document.getElementById('he_ssh_user').value.trim() || null,
+        ssh_pass: document.getElementById('he_ssh_pass').value.trim() || null,
+        sla_check_type: document.getElementById('he_sla_type').value || null,
+        sla_check_url: document.getElementById('he_sla_url').value.trim() || null,
+        sla_check_port: parseInt(document.getElementById('he_sla_port').value) || null,
+        king_file_path: document.getElementById('he_king').value.trim() || '/root/king.txt',
+        base_points: parseInt(document.getElementById('he_pts').value) || 10,
+        multiplier: parseFloat(document.getElementById('he_mult').value) || 1.0,
+        is_behind_pivot: document.getElementById('he_pivot').value === 'true',
+    };
+    if (!payload.name || !payload.ip_address) { toast('Name dan IP wajib diisi!', 'error'); return; }
+    try {
+        const d = await api(`/admin/hill/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        toast(d.detail);
+        closeEditHillModal();
+        loadHills();
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+function openHillModal() {
+    document.getElementById('hillModal').style.display = 'flex';
+}
+function closeHillModal() {
+    document.getElementById('hillModal').style.display = 'none';
+}
+// Close modal on backdrop click
+document.getElementById('hillModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeHillModal();
+});
+
+// ── Scores ──────────────────────────────────────
+async function loadScores() {
+    loadTeams(); // populate dropdown
+    try {
+        const sb = await fetch(API+'/scoreboard').then(r=>r.json());
+        document.getElementById('standingsBody').innerHTML = sb.teams.map((t,i) => `<tr>
+            <td>${i+1}</td>
+            <td>${esc(t.display_name||t.team_name)}</td>
+            <td class="mono" style="font-weight:700; color:var(--accent-green);">${t.total_points.toLocaleString()}</td>
+            <td class="mono">${t.hills_owned}</td>
+            <td class="mono">${t.total_ticks_as_king}</td>
+            <td class="mono">${t.first_bloods}</td>
+        </tr>`).join('') || '<tr><td colspan="6" style="color:var(--text-muted)">Belum ada data</td></tr>';
+    } catch(e) {}
+}
+
+async function adjustScore() {
+    const teamId = parseInt(document.getElementById('adj_team').value);
+    const pts = parseInt(document.getElementById('adj_pts').value);
+    const reason = document.getElementById('adj_reason').value.trim();
+    if (!teamId || isNaN(pts) || !reason) { toast('Semua field harus diisi','error'); return; }
+    try {
+        const d = await api('/admin/score/adjust', {method:'POST', body:JSON.stringify({team_id:teamId, points:pts, reason})});
+        toast(d.detail); document.getElementById('adj_pts').value=''; document.getElementById('adj_reason').value='';
+        loadScores(); loadDashboard();
+    } catch(e) { toast(e.message,'error'); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// ── Topology Canvas Editor (draw.io style) ───────────────────
+// ══════════════════════════════════════════════════════════════
+const TOPO_ICONS = [
+    {cat:'Infra', items:['🌐','🏆','🔀','🏔️','💻','🛡️','🏰','🗄️','🔌','⚡','🔥','💎','📡','🖥️','💾','🔒','☁️','🐳','🐧','🕸️']},
+    {cat:'Status', items:['✅','❌','⚠️','🔴','🟢','🟡','🔵','⏳','🚀','🎯']},
+];
+const TOPO_LINK_STYLES = ['solid','dashed','dotted'];
+const TOPO_LINK_COLORS = ['#6b7280','#3b82f6','#22c55e','#ef4444','#f59e0b','#a855f7','#06b6d4'];
+
+let topoState = { nodes:[], links:[], labels:[] };
+let topoSel = { type:null, idx:-1 };
+let topoDrag = { active:false, ox:0, oy:0 };
+let topoLinkMode = false;
+let topoLinkFrom = -1;
+let topoZoom = 1;
+let topoPan = { x:0, y:0 };
+let topoPanning = false;
+let topoPanStart = { x:0, y:0, px:0, py:0 };
+let topoSaveTimer = null;
+let topoCanvas, topoCtx;
+
+function topoDefaultState() {
+    return {
+        nodes: [
+            { id:'vpn',  x:200, y:100, icon:'🌐', label:'VPN Server',  w:100, h:70 },
+            { id:'koth', x:500, y:100, icon:'🏆', label:'KoTH Server', w:100, h:70 },
+            { id:'pivot',x:500, y:350, icon:'🔀', label:'Pivot DMZ',   w:100, h:70 },
+            { id:'h1',   x:100, y:350, icon:'🏔️', label:'Hill 1',      w:100, h:70 },
+            { id:'h2',   x:300, y:350, icon:'🏔️', label:'Hill 2',      w:100, h:70 },
+            { id:'h3',   x:700, y:350, icon:'🏔️', label:'Hill 3',      w:100, h:70 },
+            { id:'h4',   x:900, y:350, icon:'🏔️', label:'Hill 4',      w:100, h:70 },
+            { id:'you',  x:200, y:550, icon:'💻', label:'Your Team',   w:100, h:70 },
+        ],
+        links: [
+            { from:'you', to:'vpn', color:'#6b7280', style:'solid', label:'' },
+            { from:'vpn', to:'koth', color:'#3b82f6', style:'solid', label:'' },
+            { from:'vpn', to:'h1', color:'#22c55e', style:'solid', label:'' },
+            { from:'vpn', to:'h2', color:'#22c55e', style:'solid', label:'' },
+            { from:'vpn', to:'pivot', color:'#f59e0b', style:'dashed', label:'' },
+            { from:'pivot', to:'h3', color:'#22c55e', style:'solid', label:'' },
+            { from:'pivot', to:'h4', color:'#22c55e', style:'solid', label:'' },
+        ],
+        labels: []
+    };
+}
+
+async function loadTopologyEditor() {
+    topoCanvas = document.getElementById('topoCanvas');
+    topoCtx = topoCanvas.getContext('2d');
+    // HiDPI
+    const dpr = window.devicePixelRatio || 1;
+    const rect = topoCanvas.getBoundingClientRect();
+    topoCanvas.width = rect.width * dpr;
+    topoCanvas.height = rect.height * dpr;
+    topoCtx.scale(dpr, dpr);
+    topoCanvas._w = rect.width;
+    topoCanvas._h = rect.height;
+
+    // Load from server
+    try {
+        const configs = await api('/admin/config');
+        const tc = configs.find(c => c.key === 'topology_canvas');
+        if (tc && tc.value) {
+            const parsed = JSON.parse(tc.value);
+            if (parsed.nodes && parsed.nodes.length > 0) {
+                topoState = parsed;
+            } else {
+                topoState = topoDefaultState();
+            }
+        } else {
+            topoState = topoDefaultState();
+        }
+    } catch(e) { topoState = topoDefaultState(); }
+
+    // Also keep old topology_config in sync for dashboard
+    topoSetupEvents();
+    topoDraw();
+}
+
+function topoSetupEvents() {
+    const c = topoCanvas;
+    c.addEventListener('mousedown', topoMouseDown);
+    c.addEventListener('mousemove', topoMouseMove);
+    c.addEventListener('mouseup', topoMouseUp);
+    c.addEventListener('dblclick', topoDblClick);
+    c.addEventListener('wheel', topoWheel, {passive:false});
+    c.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', topoKeyDown);
+}
+
+function topoScreenToWorld(sx, sy) {
+    return { x: (sx - topoPan.x) / topoZoom, y: (sy - topoPan.y) / topoZoom };
+}
+
+function topoWorldToScreen(wx, wy) {
+    return { x: wx * topoZoom + topoPan.x, y: wy * topoZoom + topoPan.y };
+}
+
+function topoHitNode(wx, wy) {
+    for (let i = topoState.nodes.length - 1; i >= 0; i--) {
+        const n = topoState.nodes[i];
+        if (wx >= n.x - n.w/2 && wx <= n.x + n.w/2 && wy >= n.y - n.h/2 && wy <= n.y + n.h/2) return i;
+    }
+    return -1;
+}
+
+function topoHitLabel(wx, wy) {
+    for (let i = (topoState.labels||[]).length - 1; i >= 0; i--) {
+        const lb = topoState.labels[i];
+        const tw = topoCtx.measureText(lb.text).width + 20;
+        if (wx >= lb.x - tw/2 && wx <= lb.x + tw/2 && wy >= lb.y - 12 && wy <= lb.y + 12) return i;
+    }
+    return -1;
+}
+
+function topoHitLink(wx, wy) {
+    for (let i = topoState.links.length - 1; i >= 0; i--) {
+        const lk = topoState.links[i];
+        const fn = topoState.nodes.find(n => n.id === lk.from);
+        const tn = topoState.nodes.find(n => n.id === lk.to);
+        if (!fn || !tn) continue;
+        const dist = topoPointToLineDist(wx, wy, fn.x, fn.y, tn.x, tn.y);
+        if (dist < 8) return i;
+    }
+    return -1;
+}
+
+function topoPointToLineDist(px, py, x1, y1, x2, y2) {
+    const dx = x2 - x1, dy = y2 - y1;
+    const lenSq = dx*dx + dy*dy;
+    if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+    let t = ((px - x1)*dx + (py - y1)*dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (x1 + t*dx), py - (y1 + t*dy));
+}
+
+function topoMouseDown(e) {
+    const rect = topoCanvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+    const w = topoScreenToWorld(sx, sy);
+
+    // Middle mouse or right = pan
+    if (e.button === 1 || e.button === 2) {
+        topoPanning = true;
+        topoPanStart = { x: e.clientX, y: e.clientY, px: topoPan.x, py: topoPan.y };
+        topoCanvas.style.cursor = 'grabbing';
+        return;
+    }
+
+    if (topoLinkMode) {
+        const ni = topoHitNode(w.x, w.y);
+        if (ni >= 0) {
+            if (topoLinkFrom < 0) {
+                topoLinkFrom = ni;
+                topoSel = { type:'node', idx:ni };
+                topoDraw();
+                return;
+            } else if (ni !== topoLinkFrom) {
+                topoState.links.push({
+                    from: topoState.nodes[topoLinkFrom].id,
+                    to: topoState.nodes[ni].id,
+                    color: '#6b7280', style: 'solid', label: ''
+                });
+                topoLinkMode = false; topoLinkFrom = -1;
+                document.getElementById('topoLinkBtn').classList.remove('btn-warning');
+                document.getElementById('topoLinkBtn').classList.add('btn-blue');
+                topoAutoSave();
+                topoDraw();
+                return;
+            }
+        }
+        return;
+    }
+
+    // Check node hit
+    const ni = topoHitNode(w.x, w.y);
+    if (ni >= 0) {
+        topoSel = { type:'node', idx:ni };
+        topoDrag = { active:true, ox: w.x - topoState.nodes[ni].x, oy: w.y - topoState.nodes[ni].y };
+        topoCanvas.style.cursor = 'move';
+        topoUpdateButtons();
+        topoDraw();
+        return;
+    }
+
+    // Check label hit
+    const li = topoHitLabel(w.x, w.y);
+    if (li >= 0) {
+        topoSel = { type:'label', idx:li };
+        const lb = topoState.labels[li];
+        topoDrag = { active:true, ox: w.x - lb.x, oy: w.y - lb.y };
+        topoCanvas.style.cursor = 'move';
+        topoUpdateButtons();
+        topoDraw();
+        return;
+    }
+
+    // Check link hit
+    const lki = topoHitLink(w.x, w.y);
+    if (lki >= 0) {
+        topoSel = { type:'link', idx:lki };
+        topoUpdateButtons();
+        topoDraw();
+        return;
+    }
+
+    // Deselect + pan
+    topoSel = { type:null, idx:-1 };
+    topoPanning = true;
+    topoPanStart = { x: e.clientX, y: e.clientY, px: topoPan.x, py: topoPan.y };
+    topoCanvas.style.cursor = 'grabbing';
+    topoUpdateButtons();
+    topoDraw();
+}
+
+function topoMouseMove(e) {
+    if (topoPanning) {
+        topoPan.x = topoPanStart.px + (e.clientX - topoPanStart.x);
+        topoPan.y = topoPanStart.py + (e.clientY - topoPanStart.y);
+        topoDraw();
+        return;
+    }
+    if (!topoDrag.active) return;
+    const rect = topoCanvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+    const w = topoScreenToWorld(sx, sy);
+
+    if (topoSel.type === 'node') {
+        const n = topoState.nodes[topoSel.idx];
+        n.x = Math.round(w.x - topoDrag.ox);
+        n.y = Math.round(w.y - topoDrag.oy);
+    } else if (topoSel.type === 'label') {
+        const lb = topoState.labels[topoSel.idx];
+        lb.x = Math.round(w.x - topoDrag.ox);
+        lb.y = Math.round(w.y - topoDrag.oy);
+    }
+    topoDraw();
+}
+
+function topoMouseUp(e) {
+    if (topoPanning) { topoPanning = false; topoCanvas.style.cursor = 'default'; return; }
+    if (topoDrag.active) {
+        topoDrag.active = false;
+        topoCanvas.style.cursor = 'default';
+        topoAutoSave();
+    }
+}
+
+function topoDblClick(e) {
+    const rect = topoCanvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+    const w = topoScreenToWorld(sx, sy);
+    const ni = topoHitNode(w.x, w.y);
+    if (ni >= 0) { topoSel = { type:'node', idx:ni }; topoEditSelected(); return; }
+    const li = topoHitLabel(w.x, w.y);
+    if (li >= 0) { topoSel = { type:'label', idx:li }; topoEditSelected(); return; }
+    const lki = topoHitLink(w.x, w.y);
+    if (lki >= 0) { topoSel = { type:'link', idx:lki }; topoEditSelected(); return; }
+}
+
+function topoWheel(e) {
+    e.preventDefault();
+    const rect = topoCanvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+    const oldZ = topoZoom;
+    topoZoom *= e.deltaY < 0 ? 1.1 : 0.9;
+    topoZoom = Math.max(0.2, Math.min(3, topoZoom));
+    topoPan.x = sx - (sx - topoPan.x) * (topoZoom / oldZ);
+    topoPan.y = sy - (sy - topoPan.y) * (topoZoom / oldZ);
+    topoDraw();
+}
+
+function topoKeyDown(e) {
+    if (!document.getElementById('page-topology').classList.contains('active')) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'Delete' || e.key === 'Backspace') { topoDeleteSelected(); }
+}
+
+function topoUpdateButtons() {
+    document.getElementById('topoDelBtn').disabled = topoSel.type === null;
+    document.getElementById('topoEditBtn').disabled = topoSel.type === null;
+}
+
+function topoDraw() {
+    const ctx = topoCtx;
+    const W = topoCanvas._w, H = topoCanvas._h;
+    ctx.clearRect(0, 0, W, H);
+
+    // Background grid
+    ctx.save();
+    ctx.translate(topoPan.x, topoPan.y);
+    ctx.scale(topoZoom, topoZoom);
+
+    // Draw grid
+    ctx.strokeStyle = 'rgba(100,116,139,.08)';
+    ctx.lineWidth = 1 / topoZoom;
+    const gridSize = 40;
+    const startX = Math.floor(-topoPan.x / topoZoom / gridSize) * gridSize - gridSize;
+    const startY = Math.floor(-topoPan.y / topoZoom / gridSize) * gridSize - gridSize;
+    const endX = startX + W / topoZoom + gridSize * 2;
+    const endY = startY + H / topoZoom + gridSize * 2;
+    for (let x = startX; x < endX; x += gridSize) {
+        ctx.beginPath(); ctx.moveTo(x, startY); ctx.lineTo(x, endY); ctx.stroke();
+    }
+    for (let y = startY; y < endY; y += gridSize) {
+        ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(endX, y); ctx.stroke();
+    }
+
+    // Draw links
+    topoState.links.forEach((lk, i) => {
+        const fn = topoState.nodes.find(n => n.id === lk.from);
+        const tn = topoState.nodes.find(n => n.id === lk.to);
+        if (!fn || !tn) return;
+        ctx.beginPath();
+        ctx.strokeStyle = lk.color || '#6b7280';
+        ctx.lineWidth = (topoSel.type==='link' && topoSel.idx===i) ? 4 : 2;
+        if (lk.style === 'dashed') ctx.setLineDash([8,4]);
+        else if (lk.style === 'dotted') ctx.setLineDash([3,3]);
+        else ctx.setLineDash([]);
+        ctx.moveTo(fn.x, fn.y);
+        ctx.lineTo(tn.x, tn.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Arrow
+        const angle = Math.atan2(tn.y - fn.y, tn.x - fn.x);
+        const mx = (fn.x + tn.x)/2, my = (fn.y + tn.y)/2;
+        ctx.fillStyle = lk.color || '#6b7280';
+        ctx.beginPath();
+        ctx.moveTo(mx + 8*Math.cos(angle), my + 8*Math.sin(angle));
+        ctx.lineTo(mx - 8*Math.cos(angle) + 6*Math.cos(angle+Math.PI/2), my - 8*Math.sin(angle) + 6*Math.sin(angle+Math.PI/2));
+        ctx.lineTo(mx - 8*Math.cos(angle) - 6*Math.cos(angle+Math.PI/2), my - 8*Math.sin(angle) - 6*Math.sin(angle+Math.PI/2));
+        ctx.fill();
+        // Link label
+        if (lk.label) {
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(lk.label, mx, my - 10);
+        }
+        // Selection highlight
+        if (topoSel.type==='link' && topoSel.idx===i) {
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4,2]);
+            ctx.beginPath(); ctx.moveTo(fn.x, fn.y); ctx.lineTo(tn.x, tn.y); ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    });
+
+    // Draw nodes
+    topoState.nodes.forEach((n, i) => {
+        const sel = topoSel.type==='node' && topoSel.idx===i;
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,.3)';
+        ctx.beginPath();
+        ctx.roundRect(n.x - n.w/2 + 2, n.y - n.h/2 + 2, n.w, n.h, 8);
+        ctx.fill();
+        // Body
+        ctx.fillStyle = sel ? 'rgba(59,130,246,.15)' : 'rgba(30,41,59,.95)';
+        ctx.strokeStyle = sel ? '#3b82f6' : 'rgba(100,116,139,.3)';
+        ctx.lineWidth = sel ? 2 : 1;
+        ctx.beginPath();
+        ctx.roundRect(n.x - n.w/2, n.y - n.h/2, n.w, n.h, 8);
+        ctx.fill(); ctx.stroke();
+        // Icon
+        ctx.font = '28px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(n.icon, n.x, n.y - 8);
+        // Label
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText(n.label.substring(0, 16), n.x, n.y + 24);
+    });
+
+    // Draw text labels
+    (topoState.labels||[]).forEach((lb, i) => {
+        const sel = topoSel.type==='label' && topoSel.idx===i;
+        ctx.fillStyle = sel ? '#3b82f6' : (lb.color || '#94a3b8');
+        ctx.font = (lb.fontSize || 13) + 'px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(lb.text, lb.x, lb.y);
+        if (sel) {
+            const tw = ctx.measureText(lb.text).width + 8;
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3,2]);
+            ctx.strokeRect(lb.x - tw/2, lb.y - 10, tw, 20);
+            ctx.setLineDash([]);
+        }
+    });
+
+    ctx.restore();
+}
+
+function topoAddNode() {
+    const id = 'node_' + Date.now();
+    const cx = (-topoPan.x + topoCanvas._w/2) / topoZoom;
+    const cy = (-topoPan.y + topoCanvas._h/2) / topoZoom;
+    topoState.nodes.push({ id, x:Math.round(cx), y:Math.round(cy), icon:'🖥️', label:'New Node', w:100, h:70 });
+    topoSel = { type:'node', idx: topoState.nodes.length-1 };
+    topoUpdateButtons();
+    topoAutoSave();
+    topoDraw();
+    topoEditSelected();
+}
+
+function topoStartLink() {
+    topoLinkMode = !topoLinkMode;
+    topoLinkFrom = -1;
+    const btn = document.getElementById('topoLinkBtn');
+    if (topoLinkMode) {
+        btn.classList.remove('btn-blue'); btn.classList.add('btn-warning');
+        btn.textContent = '🔗 Click 2 nodes...';
+        topoCanvas.style.cursor = 'crosshair';
+    } else {
+        btn.classList.remove('btn-warning'); btn.classList.add('btn-blue');
+        btn.textContent = '🔗 Add Link';
+        topoCanvas.style.cursor = 'default';
+    }
+}
+
+function topoAddLabel() {
+    const text = prompt('Enter text:');
+    if (!text) return;
+    if (!topoState.labels) topoState.labels = [];
+    const cx = (-topoPan.x + topoCanvas._w/2) / topoZoom;
+    const cy = (-topoPan.y + topoCanvas._h/2) / topoZoom;
+    topoState.labels.push({ text, x:Math.round(cx), y:Math.round(cy), color:'#94a3b8', fontSize:13 });
+    topoSel = { type:'label', idx: topoState.labels.length-1 };
+    topoUpdateButtons();
+    topoAutoSave();
+    topoDraw();
+}
+
+function topoDeleteSelected() {
+    if (topoSel.type === 'node') {
+        const nodeId = topoState.nodes[topoSel.idx].id;
+        topoState.nodes.splice(topoSel.idx, 1);
+        topoState.links = topoState.links.filter(l => l.from !== nodeId && l.to !== nodeId);
+    } else if (topoSel.type === 'link') {
+        topoState.links.splice(topoSel.idx, 1);
+    } else if (topoSel.type === 'label') {
+        topoState.labels.splice(topoSel.idx, 1);
+    } else return;
+    topoSel = { type:null, idx:-1 };
+    topoUpdateButtons();
+    topoAutoSave();
+    topoDraw();
+}
+
+function topoEditSelected() {
+    const fields = document.getElementById('topoEditFields');
+    const title = document.getElementById('topoEditTitle');
+    if (topoSel.type === 'node') {
+        const n = topoState.nodes[topoSel.idx];
+        title.textContent = '✏️ Edit Node';
+        const iconGrid = TOPO_ICONS.map(cat =>
+            `<div style="margin-bottom:8px;"><span style="font-size:11px;color:var(--text-muted);">${cat.cat}</span><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">${cat.items.map(ic =>
+                `<span class="topo-icon-pick" onclick="document.getElementById('teIcon').value=this.textContent" style="cursor:pointer;font-size:20px;padding:4px;border-radius:4px;border:1px solid transparent;${ic===n.icon?'border-color:var(--accent-blue);background:rgba(59,130,246,.15);':''}">${ic}</span>`
+            ).join('')}</div></div>`
+        ).join('');
+        fields.innerHTML = `
+            <div class="fg"><label>Icon</label><input id="teIcon" value="${n.icon}" style="font-size:24px;text-align:center;width:60px;"></div>
+            ${iconGrid}
+            <div class="fg"><label>Label</label><input id="teLabel" value="${esc(n.label)}"></div>
+            <div class="form-row">
+                <div class="fg"><label>Width</label><input type="number" id="teW" value="${n.w}" min="40"></div>
+                <div class="fg"><label>Height</label><input type="number" id="teH" value="${n.h}" min="40"></div>
+            </div>`;
+    } else if (topoSel.type === 'link') {
+        const lk = topoState.links[topoSel.idx];
+        title.textContent = '✏️ Edit Link';
+        const colorOpts = TOPO_LINK_COLORS.map(c =>
+            `<span onclick="document.getElementById('teLinkColor').value=this.dataset.c" data-c="${c}" style="display:inline-block;width:24px;height:24px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${c===lk.color?'#fff':'transparent'};"></span>`
+        ).join(' ');
+        fields.innerHTML = `
+            <div class="fg"><label>Label (optional)</label><input id="teLinkLabel" value="${esc(lk.label||'')}"></div>
+            <div class="fg"><label>Style</label><select id="teLinkStyle">${TOPO_LINK_STYLES.map(s=>`<option value="${s}" ${s===lk.style?'selected':''}>${s}</option>`).join('')}</select></div>
+            <div class="fg"><label>Color</label><div style="display:flex;gap:6px;margin-bottom:6px;">${colorOpts}</div><input id="teLinkColor" value="${lk.color||'#6b7280'}" style="width:100px;"></div>`;
+    } else if (topoSel.type === 'label') {
+        const lb = topoState.labels[topoSel.idx];
+        title.textContent = '✏️ Edit Text';
+        fields.innerHTML = `
+            <div class="fg"><label>Text</label><input id="teLblText" value="${esc(lb.text)}"></div>
+            <div class="form-row">
+                <div class="fg"><label>Font Size</label><input type="number" id="teLblSize" value="${lb.fontSize||13}" min="8" max="48"></div>
+                <div class="fg"><label>Color</label><input id="teLblColor" value="${lb.color||'#94a3b8'}"></div>
+            </div>`;
+    } else return;
+    document.getElementById('topoEditModal').style.display = 'flex';
+}
+
+function topoEditSave() {
+    if (topoSel.type === 'node') {
+        const n = topoState.nodes[topoSel.idx];
+        n.icon = document.getElementById('teIcon').value.trim() || n.icon;
+        n.label = document.getElementById('teLabel').value.trim() || n.label;
+        n.w = parseInt(document.getElementById('teW').value) || n.w;
+        n.h = parseInt(document.getElementById('teH').value) || n.h;
+    } else if (topoSel.type === 'link') {
+        const lk = topoState.links[topoSel.idx];
+        lk.label = document.getElementById('teLinkLabel').value.trim();
+        lk.style = document.getElementById('teLinkStyle').value;
+        lk.color = document.getElementById('teLinkColor').value.trim() || lk.color;
+    } else if (topoSel.type === 'label') {
+        const lb = topoState.labels[topoSel.idx];
+        lb.text = document.getElementById('teLblText').value.trim() || lb.text;
+        lb.fontSize = parseInt(document.getElementById('teLblSize').value) || 13;
+        lb.color = document.getElementById('teLblColor').value.trim() || lb.color;
+    }
+    topoEditClose();
+    topoAutoSave();
+    topoDraw();
+}
+
+function topoEditClose() {
+    document.getElementById('topoEditModal').style.display = 'none';
+}
+
+function topoZoomIn() { topoZoom = Math.min(3, topoZoom * 1.2); topoDraw(); }
+function topoZoomOut() { topoZoom = Math.max(0.2, topoZoom / 1.2); topoDraw(); }
+function topoResetView() { topoZoom = 1; topoPan = {x:0,y:0}; topoDraw(); }
+
+function topoAutoSave() {
+    const el = document.getElementById('topoSaveStatus');
+    el.textContent = '⏳ Saving...';
+    el.style.color = 'var(--accent-orange)';
+    clearTimeout(topoSaveTimer);
+    topoSaveTimer = setTimeout(async () => {
+        try {
+            await api('/admin/config/topology_canvas?value=' + encodeURIComponent(JSON.stringify(topoState)), {method:'PUT'});
+            // Also update old topology_config for dashboard compat
+            const legacyCfg = {};
+            topoState.nodes.forEach(n => { legacyCfg[n.id] = { icon: n.icon, label: n.label }; });
+            await api('/admin/config/topology_config?value=' + encodeURIComponent(JSON.stringify(legacyCfg)), {method:'PUT'});
+            el.textContent = '✓ Saved';
+            el.style.color = 'var(--accent-green)';
+        } catch(e) {
+            el.textContent = '✗ Save failed';
+            el.style.color = 'var(--accent-red)';
+        }
+    }, 800);
+}
+
+async function topoApply() {
+    const el = document.getElementById('topoSaveStatus');
+    try {
+        const legacyCfg = {};
+        topoState.nodes.forEach(n => { legacyCfg[n.id] = { icon: n.icon, label: n.label }; });
+        await api('/admin/config/topology_canvas?value=' + encodeURIComponent(JSON.stringify(topoState)), {method:'PUT'});
+        await api('/admin/config/topology_config?value=' + encodeURIComponent(JSON.stringify(legacyCfg)), {method:'PUT'});
+        el.textContent = '✓ Applied!';
+        el.style.color = 'var(--accent-green)';
+        toast('Topology applied to dashboard!');
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+function topoReset() {
+    if (!confirm('Reset topology ke default? Semua perubahan akan hilang.')) return;
+    topoState = topoDefaultState();
+    topoSel = { type:null, idx:-1 };
+    topoAutoSave();
+    topoDraw();
+    toast('Topology reset to default');
+}
+
+// ── Announcements ───────────────────────────────
+async function sendAnnouncement() {
+    const msg = document.getElementById('ann_msg').value.trim();
+    if (!msg) { toast('Pesan kosong','error'); return; }
+    try {
+        await api('/admin/announcement', {method:'POST', body:JSON.stringify({message:msg, type:document.getElementById('ann_type').value})});
+        toast('Announcement sent!'); document.getElementById('ann_msg').value='';
+        loadAnnouncements();
+    } catch(e) { toast(e.message,'error'); }
+}
+
+let annSelectedIds = new Set();
+
+async function loadAnnouncements() {
+    try {
+        const anns = await api('/admin/announcements');
+        const tbody = document.getElementById('annBody');
+        annSelectedIds.clear();
+        annUpdateBulkUI();
+        document.getElementById('annSelectAll').checked = false;
+        if (!anns.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-muted);text-align:center;">Belum ada pengumuman</td></tr>';
+            return;
+        }
+        tbody.innerHTML = anns.map(a => {
+            const typeBadge = a.type==='danger'?'badge-red':a.type==='warning'?'badge-orange':'badge-blue';
+            const typeIcon = a.type==='danger'?'🚨':a.type==='warning'?'⚠️':'ℹ️';
+            return `<tr>
+                <td><input type="checkbox" class="ann-chk" data-id="${a.id}" onchange="annToggleOne(${a.id}, this.checked)"></td>
+                <td class="mono">${a.id}</td>
+                <td><span class="badge ${typeBadge}">${typeIcon} ${a.type}</span></td>
+                <td style="max-width:300px;word-break:break-word;">${esc(a.message)}</td>
+                <td style="font-size:11px;color:var(--text-muted);">${a.created_at?toWIB(a.created_at):'-'}</td>
+                <td>
+                    <button class="btn btn-sm btn-ghost" onclick='openAnnEditModal(${JSON.stringify(a).replace(/'/g,"&#39;")})' title="Edit">✏️</button>
+                    <button class="btn btn-sm btn-ghost" onclick="deleteAnnouncement(${a.id})" title="Delete" style="color:var(--accent-red);">🗑️</button>
+                </td>
+            </tr>`;
+        }).join('');
+    } catch(e) { console.error('loadAnnouncements', e); }
+}
+
+function annToggleAll(checked) {
+    annSelectedIds.clear();
+    document.querySelectorAll('.ann-chk').forEach(cb => {
+        cb.checked = checked;
+        if (checked) annSelectedIds.add(parseInt(cb.dataset.id));
+    });
+    annUpdateBulkUI();
+}
+
+function annToggleOne(id, checked) {
+    if (checked) annSelectedIds.add(id); else annSelectedIds.delete(id);
+    const allCbs = document.querySelectorAll('.ann-chk');
+    document.getElementById('annSelectAll').checked = allCbs.length > 0 && annSelectedIds.size === allCbs.length;
+    annUpdateBulkUI();
+}
+
+function annUpdateBulkUI() {
+    const el = document.getElementById('annBulkActions');
+    document.getElementById('annSelCount').textContent = annSelectedIds.size;
+    el.style.display = annSelectedIds.size > 0 ? 'inline-flex' : 'none';
+}
+
+function annClearSelection() {
+    annSelectedIds.clear();
+    document.querySelectorAll('.ann-chk').forEach(cb => cb.checked = false);
+    document.getElementById('annSelectAll').checked = false;
+    annUpdateBulkUI();
+}
+
+async function annBulkDelete() {
+    if (!confirm(`Hapus ${annSelectedIds.size} announcement terpilih?`)) return;
+    try {
+        const r = await api('/admin/announcements/bulk', {method:'DELETE', body:JSON.stringify({ids: [...annSelectedIds]})});
+        toast(r.detail || 'Deleted!');
+        loadAnnouncements();
+    } catch(e) { toast(e.message,'error'); }
+}
+
+async function annDeleteAll() {
+    if (!confirm('⚠️ Hapus SEMUA announcement? Aksi ini tidak bisa di-undo!')) return;
+    if (!confirm('Yakin? Semua pengumuman akan dihapus permanen.')) return;
+    try {
+        const r = await api('/admin/announcements/bulk', {method:'DELETE', body:JSON.stringify({ids: []})});
+        toast(r.detail || 'All deleted!');
+        loadAnnouncements();
+    } catch(e) { toast(e.message,'error'); }
+}
+
+function openAnnEditModal(a) {
+    document.getElementById('annEditId').value = a.id;
+    document.getElementById('annEditMsg').value = a.message;
+    document.getElementById('annEditType').value = a.type || 'info';
+    document.getElementById('annEditModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('annEditMsg').focus(), 100);
+}
+function closeAnnEditModal() {
+    document.getElementById('annEditModal').style.display = 'none';
+}
+
+async function saveAnnEdit() {
+    const id = document.getElementById('annEditId').value;
+    const message = document.getElementById('annEditMsg').value.trim();
+    const type = document.getElementById('annEditType').value;
+    if (!message) { toast('Pesan kosong','error'); return; }
+    try {
+        const r = await api(`/admin/announcement/${id}`, {method:'PUT', body:JSON.stringify({message, type})});
+        toast(r.detail || 'Updated!');
+        closeAnnEditModal();
+        loadAnnouncements();
+    } catch(e) { toast(e.message,'error'); }
+}
+
+async function deleteAnnouncement(id) {
+    if (!confirm('Hapus announcement #' + id + '?')) return;
+    try {
+        const r = await api(`/admin/announcement/${id}`, {method:'DELETE'});
+        toast(r.detail || 'Deleted!');
+        loadAnnouncements();
+    } catch(e) { toast(e.message,'error'); }
+}
+
+// ── Registration ────────────────────────────────
+async function loadRegistration() {
+    try {
+        const d = await api('/admin/registration/status');
+        document.getElementById('regStatus').className = 'badge ' + (d.registration_enabled ? 'badge-green' : 'badge-red');
+        document.getElementById('regStatus').textContent = d.registration_enabled ? 'OPEN' : 'CLOSED';
+        document.getElementById('regCode').value = d.registration_code;
+    } catch(e) {}
+}
+
+async function toggleRegistration() {
+    try {
+        const d = await api('/admin/registration/toggle', {method:'PUT'});
+        toast(d.detail); loadRegistration(); loadDashboard();
+    } catch(e) { toast(e.message,'error'); }
+}
+
+// ── Config ──────────────────────────────────────
+async function loadConfig() {
+    try {
+        const configs = await api('/admin/config');
+        document.getElementById('configBody').innerHTML = configs.map(c => `<tr>
+            <td class="mono" style="font-weight:700;">${esc(c.key)}</td>
+            <td><input id="cfg-${c.key}" value="${esc(c.value)}" style="padding:6px 10px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:4px; color:var(--text-primary); font-family:var(--font-mono); font-size:12px; width:200px;"></td>
+            <td style="font-size:12px; color:var(--text-muted);">${esc(c.description||'')}</td>
+            <td><button class="btn btn-sm btn-ghost" onclick="updateConfig('${c.key}')">💾 Save</button></td>
+        </tr>`).join('');
+    } catch(e) {}
+}
+
+async function updateConfig(key) {
+    const val = document.getElementById('cfg-'+key).value;
+    try {
+        await api(`/admin/config/${key}?value=${encodeURIComponent(val)}`, {method:'PUT'});
+        toast(`Config '${key}' updated`); loadConfig();
+    } catch(e) { toast(e.message,'error'); }
+}
+
+// ── Audit ───────────────────────────────────────
+async function loadAudit() {
+    const filter = document.getElementById('auditFilter')?.value || '';
+    try {
+        const url = '/admin/audit?limit=200' + (filter ? `&event_type=${filter}` : '');
+        const logs = await api(url);
+        document.getElementById('auditFeed').innerHTML = logs.map(l => `<div class="audit-row">
+            <span class="at">${l.created_at ? toWIB(l.created_at, {hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'short'}) : ''}</span>
+            <span class="ae">[${l.event_type}]</span>
+            <span class="ad">${esc(JSON.stringify(l.details))}</span>
+        </div>`).join('') || '<p style="color:var(--text-muted)">Belum ada log</p>';
+    } catch(e) {}
+}
+
+// ── Export ───────────────────────────────────────
+async function exportTeamsCSV() {
+    try {
+        const data = await api('/admin/teams/export');
+        const headers = ['id','name','display_name','category','vpn_ip','token','is_active','total_points','hills_owned','total_ticks_as_king','first_bloods','created_at'];
+        let csv = headers.join(',') + '\n';
+        data.forEach(t => { csv += headers.map(h => `"${(t[h]??'').toString().replace(/"/g,'""')}"`).join(',') + '\n'; });
+        downloadFile(csv, 'teams-export.csv', 'text/csv');
+        toast('CSV downloaded');
+    } catch(e) { toast(e.message,'error'); }
+}
+
+async function exportTeamsJSON() {
+    try {
+        const data = await api('/admin/teams/export');
+        downloadFile(JSON.stringify(data,null,2), 'teams-export.json', 'application/json');
+        toast('JSON downloaded');
+    } catch(e) { toast(e.message,'error'); }
+}
+
+async function exportScoreboard() {
+    try {
+        const data = await fetch(API+'/scoreboard').then(r=>r.json());
+        downloadFile(JSON.stringify(data,null,2), 'scoreboard-snapshot.json', 'application/json');
+        toast('Scoreboard snapshot downloaded');
+    } catch(e) { toast(e.message,'error'); }
+}
+
+function downloadFile(content, filename, mime) {
+    const blob = new Blob([content], {type: mime});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+// ── Connection Status (Dual-Check) ───────────────────
+function loadVerificationPage() {
+    loadAgentStatus();
+    loadVerification();
+}
+
+async function loadAgentStatus() {
+    try {
+        const statuses = await api('/agent/status');
+        const grid = document.getElementById('agentStatusGrid');
+        grid.innerHTML = statuses.map(s => {
+            const alive = s.agent_alive;
+            const border = alive ? 'var(--accent-green)' : 'var(--accent-red)';
+            const icon = alive ? '🟢' : '🔴';
+            const secAgo = s.seconds_since_report != null ? `${s.seconds_since_report}s ago` : 'never';
+            return `<div style="background:var(--bg-secondary); border:1px solid ${border}; border-radius:8px; padding:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <strong style="color:var(--text-primary);">${icon} ${esc(s.hill_name)}</strong>
+                    <span class="badge ${alive ? 'badge-green' : 'badge-red'}">${alive ? 'ALIVE' : 'DEAD'}</span>
+                </div>
+                <div style="font-size:12px; color:var(--text-muted);">
+                    <div>King: <span class="mono" style="color:${s.last_king_name ? 'var(--accent-cyan)' : 'var(--text-muted)'};">${esc(s.last_king_name) || '(empty)'}</span></div>
+                    <div>Last report: <span class="mono">${secAgo}</span></div>
+                </div>
+            </div>`;
+        }).join('') || '<div style="color:var(--text-muted);">No hills configured</div>';
+    } catch(e) {
+        document.getElementById('agentStatusGrid').innerHTML = '<div style="color:var(--accent-red);">Failed to load agent status</div>';
+    }
+}
+
+async function loadAgentTokens() {
+    try {
+        const hills = await api('/admin/hills/agents');
+        // Render in Hills page
+        const hillBody = document.getElementById('hillAgentTokenBody');
+        if (hillBody) hillBody.innerHTML = hills.map(h => {
+            const hasToken = !!h.agent_token;
+            return `<tr>
+                <td>${esc(h.name)}</td>
+                <td class="mono">${h.ip_address}</td>
+                <td><code style="font-size:11px; background:var(--bg-secondary); padding:2px 6px; border-radius:4px; word-break:break-all; ${hasToken?'color:var(--accent-green)':'color:var(--text-muted)'}">${hasToken ? esc(h.agent_token) : '(not set)'}</code></td>
+                <td>${h.is_active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-red">Inactive</span>'}</td>
+                <td>
+                    <button class="btn btn-sm btn-purple" onclick="generateAgentToken(${h.hill_id}, '${esc(h.name)}')">${hasToken ? '🔄 Regen' : '🔑 Generate'}</button>
+                    ${hasToken ? `<button class="btn btn-sm btn-ghost" onclick="copyToken('${esc(h.agent_token)}')" title="Copy">📋</button>` : ''}
+                </td>
+            </tr>`;
+        }).join('');
+    } catch(e) { console.error('Agent tokens:', e); }
+}
+
+async function generateAgentToken(hillId, hillName) {
+    if (!confirm(`Generate agent token baru untuk ${hillName}?\nToken lama akan di-replace.`)) return;
+    try {
+        const d = await api(`/admin/hills/${hillId}/agent-token`, {method: 'POST'});
+        toast(`Token generated for ${d.hill_name}`);
+        loadAgentTokens();
+        // Show deploy command
+        const cmd = `./deploy.sh ${d.hill_name.includes('IP') ? 'HILL_IP' : 'HILL_IP'} ${hillId} "${d.agent_token}"`;
+        console.log('Deploy command:', cmd);
+    } catch(e) { toast(e.message, 'error'); }
+}
+
+function copyToClipboard(text, successMsg) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => toast(successMsg || 'Copied!')).catch(() => fallbackCopy(text, successMsg));
+    } else {
+        fallbackCopy(text, successMsg);
+    }
+}
+function fallbackCopy(text, successMsg) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;left:-9999px;';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); toast(successMsg || 'Copied!'); }
+    catch(e) { toast('Copy failed', 'error'); }
+    document.body.removeChild(ta);
+}
+function copyToken(token) {
+    copyToClipboard(token, 'Token copied!');
+}
+
+async function loadVerification() {
+    const limit = document.getElementById('verifyLimit')?.value || 10;
+    try {
+        const data = await api(`/admin/verification/status?limit=${limit}`);
+
+        // Summary
+        if (data.summary) {
+            document.getElementById('vsBoth').textContent = data.summary.both_verified_count || 0;
+            document.getElementById('vsPartial').textContent =
+                (data.summary.ssh_verified_count || 0) + (data.summary.agent_verified_count || 0)
+                - 2 * (data.summary.both_verified_count || 0);
+            document.getElementById('vsNone').textContent = data.summary.none_verified_count || 0;
+            document.getElementById('vsTotal').textContent = data.summary.total_checks || 0;
+        }
+
+        // Per-tick details
+        const container = document.getElementById('verifyTickList');
+        if (!data.ticks || data.ticks.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-muted);">Belum ada tick data</p>';
+            return;
+        }
+
+        container.innerHTML = data.ticks.map(tick => {
+            const rows = (tick.results || []).map(r => {
+                const vc = r.verification_count || 0;
+                let badge, color;
+                if (vc >= 2) {
+                    badge = '✅ 2/2'; color = 'var(--accent-green)';
+                } else if (vc === 1) {
+                    badge = '⚠️ 1/2'; color = 'var(--accent-orange)';
+                } else {
+                    badge = '❌ 0/2'; color = 'var(--accent-red)';
+                }
+
+                const sshIcon = r.ssh_verified ? '✅' : '❌';
+                const agentIcon = r.agent_verified ? '✅' : '❌';
+
+                return `<tr>
+                    <td>${esc(r.hill_name)}</td>
+                    <td style="text-align:center;"><span style="font-weight:700; color:${color};">${badge}</span></td>
+                    <td style="text-align:center;">${sshIcon} <span class="mono" style="font-size:11px; color:var(--text-muted);">${esc(r.ssh_king_name) || '-'}</span></td>
+                    <td style="text-align:center;">${agentIcon} <span class="mono" style="font-size:11px; color:var(--text-muted);">${esc(r.agent_king_name) || '-'}</span></td>
+                    <td class="mono" style="color:${r.king_team_name ? 'var(--accent-cyan)' : 'var(--text-muted)'};">${esc(r.king_team_name) || '(none)'}</td>
+                    <td>${r.sla_status ? '<span class="badge badge-green">UP</span>' : '<span class="badge badge-red">DOWN</span>'}</td>
+                    <td class="mono" style="color:var(--accent-green); font-weight:700;">${r.points_awarded}</td>
+                    <td class="mono" style="font-size:11px; color:var(--text-muted);">${r.error_message ? '<span title="'+esc(r.error_message)+'" style="color:var(--accent-red); cursor:help;">⚠ error</span>' : '-'}</td>
+                </tr>`;
+            }).join('');
+
+            return `<div style="margin-bottom:16px; border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+                <div style="background:var(--bg-secondary); padding:10px 16px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:700; color:var(--text-primary); font-family:var(--font-mono);">Tick #${tick.tick_number}</span>
+                    <span style="font-size:11px; color:var(--text-muted);">${tick.started_at ? toWIB(tick.started_at) : ''}</span>
+                    <span class="badge ${tick.status==='completed' ? 'badge-green' : 'badge-orange'}">${tick.status}</span>
+                </div>
+                <table class="tbl" style="margin:0; border:none;">
+                    <thead><tr>
+                        <th>Hill</th>
+                        <th style="text-align:center;">Verify</th>
+                        <th style="text-align:center;">SSH</th>
+                        <th style="text-align:center;">Agent</th>
+                        <th>King</th>
+                        <th>SLA</th>
+                        <th>Points</th>
+                        <th>Error</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+        }).join('');
+
+    } catch(e) {
+        console.error('Verification:', e);
+        document.getElementById('verifyTickList').innerHTML = '<p style="color:var(--accent-red);">Failed to load verification data</p>';
+    }
+}
+
+// ══════════════════════════════════════════════════
+// ── Deploy Wizard (Refactored — auto ID, auto token, ping) ──
+// ══════════════════════════════════════════════════
+let wizConfig = {};
+let wizAutoInterval = null;
+
+function loadDeployWizard() {
+    // Container mode toggle
+    document.getElementById('wz_mode').onchange = function() {
+        document.getElementById('wz_container_fg').style.display = this.value === 'container' ? '' : 'none';
+    };
+}
+
+function wizSetStep(n) {
+    document.querySelectorAll('#wizardStepper .wiz-step').forEach(el => {
+        const s = parseInt(el.dataset.step);
+        el.classList.remove('active','done');
+        if (s < n) el.classList.add('done');
+        if (s === n) el.classList.add('active');
+    });
+    [1,2,3].forEach(i => {
+        document.getElementById('wizStep'+i).style.display = i===n ? 'block' : 'none';
+    });
+}
+
+function wizGoStep(n) { wizSetStep(n); }
+
+async function wizPingHost() {
+    const ip = document.getElementById('wz_hill_ip').value.trim();
+    if (!ip) { toast('Masukkan IP/hostname dulu!', 'error'); return; }
+    const btn = document.getElementById('wizPingBtn');
+    const res = document.getElementById('wz_ping_result');
+    btn.disabled = true; btn.textContent = '⏳ Pinging...';
+    res.innerHTML = '<span style="color:var(--accent-blue);">Pinging ' + esc(ip) + '...</span>';
+    try {
+        const d = await api('/admin/hills/check-reachability', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ host: ip })
+        });
+        if (d.reachable) {
+            res.innerHTML = `<span style="color:var(--accent-green);">✅ Reachable — RTT: ${d.rtt || '?'}</span>`;
+        } else {
+            res.innerHTML = `<span style="color:var(--accent-red);">❌ Unreachable — ${esc(d.output||'timeout')}</span>`;
+        }
+    } catch(e) {
+        res.innerHTML = `<span style="color:var(--accent-red);">❌ Error: ${esc(e.message)}</span>`;
+    } finally {
+        btn.disabled = false; btn.textContent = '📡 Ping';
+    }
+}
+
+async function wizGoStep2() {
+    const hillName = document.getElementById('wz_hill_name').value.trim();
+    const hillIp = document.getElementById('wz_hill_ip').value.trim();
+
+    if (!hillName || !hillIp) {
+        toast('Hill Name dan IP wajib diisi!', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('wizGenBtn');
+    btn.disabled = true; btn.textContent = '⏳ Creating hill...';
+
+    try {
+        // 1. Build hill creation payload
+        const sshEnabled = document.getElementById('wz_ssh_enabled').checked;
+        const hillPayload = {
+            name: hillName,
+            description: document.getElementById('wz_hill_desc').value.trim() || null,
+            ip_address: hillIp,
+            sla_check_type: document.getElementById('wz_sla_type').value || 'http',
+            base_points: parseInt(document.getElementById('wz_base_pts').value) || 10,
+            multiplier: parseFloat(document.getElementById('wz_multiplier').value) || 1.0,
+            is_behind_pivot: document.getElementById('wz_mode').value === 'container',
+            king_file_path: document.getElementById('wz_king_file').value.trim() || '/root/king.txt',
+            ssh_port: sshEnabled ? (parseInt(document.getElementById('wz_ssh_port').value) || 22) : 22,
+            ssh_user: sshEnabled ? (document.getElementById('wz_ssh_user').value.trim() || null) : null,
+            ssh_pass: sshEnabled ? (document.getElementById('wz_ssh_pass').value.trim() || null) : null,
+        };
+        const slaPort = parseInt(document.getElementById('wz_sla_port').value);
+        if (slaPort) hillPayload.sla_check_port = slaPort;
+
+        // 2. Create hill in DB (auto-increment ID)
+        btn.textContent = '⏳ Creating hill in DB...';
+        const hill = await api('/hills', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(hillPayload)
+        });
+        const hillId = hill.id;
+        toast(`Hill #${hillId} "${hillName}" created!`);
+
+        // 3. Auto-generate agent token
+        btn.textContent = '⏳ Generating agent token...';
+        const tokenResp = await api(`/admin/hills/${hillId}/agent-token`, { method: 'POST' });
+        const agentToken = tokenResp.agent_token;
+        toast(`Agent token generated for Hill #${hillId}`);
+
+        // 4. Build wizConfig
+        wizConfig = {
+            os: document.getElementById('wz_os').value,
+            mode: document.getElementById('wz_mode').value,
+            hillId,
+            hillName,
+            hillIp,
+            sshPort: sshEnabled ? (parseInt(document.getElementById('wz_ssh_port').value) || 22) : 22,
+            agentToken,
+            kothServer: document.getElementById('wz_koth_server').value.trim(),
+            interval: parseInt(document.getElementById('wz_interval').value) || 10,
+            kingFile: document.getElementById('wz_king_file').value.trim() || '/root/king.txt',
+            slaType: document.getElementById('wz_sla_type').value,
+            slaPort: slaPort || 0,
+            containerName: document.getElementById('wz_container_name').value.trim(),
+        };
+
+        // 5. Generate script
+        const script = wizGenerateScript(wizConfig);
+        document.getElementById('wizScriptOutput').textContent = script;
+
+        // 6. Update badges
+        const osLabels = { ubuntu:'Ubuntu/Debian', centos:'CentOS/RHEL', alpine:'Alpine', docker:'Docker' };
+        document.getElementById('wz_os_badge').textContent = osLabels[wizConfig.os] || wizConfig.os;
+        document.getElementById('wz_mode_badge').textContent = wizConfig.mode === 'standalone' ? 'Standalone (systemd)' : 'Docker Container';
+        document.getElementById('wz_id_badge').textContent = `ID: ${hillId}`;
+
+        wizSetStep(2);
+    } catch(e) {
+        toast('Error: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false; btn.textContent = '🚀 Create Hill & Generate Script →';
+    }
+}
+
+function wizGoStep3() {
+    document.getElementById('wizVerifyIcon').textContent = '⏳';
+    document.getElementById('wizVerifyStatus').textContent = 'Menunggu pengecekan...';
+    document.getElementById('wizVerifyStatus').style.color = 'var(--text-muted)';
+    document.getElementById('wizVerifyDetail').textContent = 'Klik "Cek Agent Status" setelah menjalankan script di server.';
+    document.getElementById('wizVerifyTable').style.display = 'none';
+    document.getElementById('wizAutoCheck').style.display = 'inline-flex';
+    if (wizAutoInterval) { clearInterval(wizAutoInterval); wizAutoInterval = null; }
+    wizSetStep(3);
+}
+
+function wizGenerateScript(cfg) {
+    const envLines = [
+        `HILL_ID="${cfg.hillId}"`,
+        `AGENT_TOKEN="${cfg.agentToken}"`,
+        `KOTH_SERVER="${cfg.kothServer}"`,
+        `REPORT_INTERVAL="${cfg.interval}"`,
+        `KING_FILE="${cfg.kingFile}"`,
+    ];
+    if (cfg.slaType && cfg.slaPort) {
+        envLines.push(`SLA_CHECK_PORT="${cfg.slaPort}"`);
+        envLines.push(`SLA_CHECK_TYPE="${cfg.slaType}"`);
+    }
+    if (cfg.mode === 'container') return wizScriptContainer(cfg, envLines);
+    return wizScriptStandalone(cfg, envLines);
+}
+
+function wizScriptStandalone(cfg, envLines) {
+    const slaEnvLines = (cfg.slaType && cfg.slaPort) ?
+        `Environment="SLA_CHECK_PORT=${cfg.slaPort}"\nEnvironment="SLA_CHECK_TYPE=${cfg.slaType}"` : '# No SLA check configured';
+
+    let preInstall = '';
+    if (cfg.os === 'centos') {
+        preInstall = `# Install dependencies (CentOS/RHEL)\nyum install -y curl wget`;
+    } else if (cfg.os === 'alpine') {
+        preInstall = `# Install dependencies (Alpine)\napk add --no-cache curl wget bash`;
+    } else {
+        preInstall = `# Install dependencies (Ubuntu/Debian)\napt-get update -qq && apt-get install -y -qq curl wget`;
+    }
+
+    return `#!/bin/bash
+# ══════════════════════════════════════════════════════════════
+# KoTH CTF — Hill Agent Deploy Script
+# Hill: ${cfg.hillName} (ID: ${cfg.hillId})
+# Target: ${cfg.hillIp}
+# OS: ${cfg.os} | Mode: standalone (systemd)
+# Generated: ${new Date().toISOString()}
+# ══════════════════════════════════════════════════════════════
+set -euo pipefail
+
+echo "═══════════════════════════════════════════════════"
+echo "  🧙 KoTH CTF — Hill Agent Installer"
+echo "  Hill: ${cfg.hillName} (ID: ${cfg.hillId})"
+echo "═══════════════════════════════════════════════════"
+
+${preInstall}
+
+# Create directory
+mkdir -p /opt/koth
+
+# Download agent binary from KoTH server
+echo "[1/4] Downloading hill-agent binary..."
+wget -q -O /opt/koth/hill-agent "${cfg.kothServer}/static/hill-agent-linux" \\
+  || curl -fsSL -o /opt/koth/hill-agent "${cfg.kothServer}/static/hill-agent-linux"
+chmod +x /opt/koth/hill-agent
+echo "  ✓ Binary downloaded"
+
+# Create king.txt if it doesn't exist
+if [ ! -f "${cfg.kingFile}" ]; then
+    echo "nobody" > "${cfg.kingFile}"
+    echo "  ✓ Created ${cfg.kingFile} with default 'nobody'"
+fi
+
+# Create systemd service
+echo "[2/4] Installing systemd service..."
+cat > /etc/systemd/system/koth-agent.service << 'EOF'
+[Unit]
+Description=KoTH CTF - Hill Agent (${cfg.hillName})
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/koth/hill-agent
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=koth-agent
+
+Environment="HILL_ID=${cfg.hillId}"
+Environment="AGENT_TOKEN=${cfg.agentToken}"
+Environment="KOTH_SERVER=${cfg.kothServer}"
+Environment="REPORT_INTERVAL=${cfg.interval}"
+Environment="KING_FILE=${cfg.kingFile}"
+${slaEnvLines}
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadOnlyPaths=${cfg.kingFile}
+ReadWritePaths=/opt/koth
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Enable and start
+echo "[3/4] Starting agent service..."
+systemctl daemon-reload
+systemctl enable koth-agent
+systemctl restart koth-agent
+
+# Verify
+echo "[4/4] Verifying..."
+sleep 2
+if systemctl is-active --quiet koth-agent; then
+    echo ""
+    echo "═══════════════════════════════════════════════════"
+    echo "  ✅ Hill Agent deployed successfully!"
+    echo "  Hill: ${cfg.hillName} (ID: ${cfg.hillId})"
+    echo "  Service: koth-agent.service"
+    echo "  Status: \\$(systemctl is-active koth-agent)"
+    echo "  Logs: journalctl -u koth-agent -f"
+    echo "═══════════════════════════════════════════════════"
+else
+    echo ""
+    echo "  ❌ Agent failed to start! Check logs:"
+    echo "  journalctl -u koth-agent --no-pager -n 20"
+    exit 1
+fi`;
+}
+
+function wizScriptContainer(cfg, envLines) {
+    const containerName = cfg.containerName || `hill${cfg.hillId}-agent`;
+    const envExport = envLines.map(e => `export ${e}`).join('\n');
+
+    return `#!/bin/bash
+# ══════════════════════════════════════════════════════════════
+# KoTH CTF — Hill Agent Deploy Script (Container Mode)
+# Hill: ${cfg.hillName} (ID: ${cfg.hillId})
+# Container: ${containerName}
+# Generated: ${new Date().toISOString()}
+# ══════════════════════════════════════════════════════════════
+set -euo pipefail
+
+CONTAINER="${containerName}"
+
+echo "═══════════════════════════════════════════════════"
+echo "  🧙 KoTH CTF — Container Agent Installer"
+echo "  Hill: ${cfg.hillName} (ID: ${cfg.hillId})"
+echo "  Container: \\$CONTAINER"
+echo "═══════════════════════════════════════════════════"
+
+# Step 1: Copy agent binary into container
+echo "[1/3] Copying agent binary into container..."
+docker cp /opt/koth/hill-agent-linux "\\$CONTAINER":/opt/koth/hill-agent 2>/dev/null \\
+  || { echo "  Binary not found locally, downloading..."; \\
+       wget -q -O /tmp/hill-agent-linux "${cfg.kothServer}/static/hill-agent-linux"; \\
+       docker exec "\\$CONTAINER" mkdir -p /opt/koth; \\
+       docker cp /tmp/hill-agent-linux "\\$CONTAINER":/opt/koth/hill-agent; }
+docker exec "\\$CONTAINER" chmod +x /opt/koth/hill-agent
+echo "  ✓ Binary ready"
+
+# Step 2: Create run-agent script inside container
+echo "[2/3] Creating run-agent script..."
+docker exec "\\$CONTAINER" bash -c 'cat > /opt/koth/run-agent.sh << '"'"'INNEREOF'"'"'
+#!/bin/bash
+${envExport}
+
+echo "Starting KoTH Hill Agent (Hill ${cfg.hillId})..."
+while true; do
+    /opt/koth/hill-agent
+    echo "Agent exited, restarting in 5s..."
+    sleep 5
+done
+INNEREOF'
+docker exec "\\$CONTAINER" chmod +x /opt/koth/run-agent.sh
+
+# Step 3: Create king.txt if needed and start agent
+echo "[3/3] Starting agent..."
+docker exec "\\$CONTAINER" bash -c '[ -f "${cfg.kingFile}" ] || echo "nobody" > "${cfg.kingFile}"'
+docker exec -d "\\$CONTAINER" bash /opt/koth/run-agent.sh
+
+# Verify
+sleep 3
+if docker exec "\\$CONTAINER" pgrep -f hill-agent > /dev/null 2>&1; then
+    echo ""
+    echo "═══════════════════════════════════════════════════"
+    echo "  ✅ Hill Agent deployed in container!"
+    echo "  Hill: ${cfg.hillName} (ID: ${cfg.hillId})"
+    echo "  Container: \\$CONTAINER"
+    echo "  Check logs: docker exec \\$CONTAINER cat /opt/koth/agent.log"
+    echo ""
+    echo "  ⚠️  IMPORTANT: Agent will be lost if container restarts."
+    echo "  Add to docker-compose or startup script!"
+    echo "═══════════════════════════════════════════════════"
+else
+    echo ""
+    echo "  ❌ Agent failed to start in container!"
+    echo "  Check manually: docker exec -it \\$CONTAINER bash"
+    exit 1
+fi`;
+}
+
+function wizCopyScript() {
+    const text = document.getElementById('wizScriptOutput').textContent;
+    copyToClipboard(text, 'Script copied to clipboard!');
+}
+
+async function wizCheckAgent() {
+    const btn = document.getElementById('wizCheckBtn');
+    btn.disabled = true;
+    btn.textContent = '🔄 Checking...';
+
+    document.getElementById('wizVerifyIcon').textContent = '🔄';
+    document.getElementById('wizVerifyStatus').textContent = 'Memeriksa status agent...';
+    document.getElementById('wizVerifyStatus').style.color = 'var(--accent-blue)';
+
+    try {
+        const agents = await api('/agent/status');
+        const hillId = wizConfig.hillId;
+        const agent = agents.find(a => a.hill_id === hillId);
+
+        if (agent && agent.agent_alive) {
+            document.getElementById('wizVerifyIcon').textContent = '✅';
+            document.getElementById('wizVerifyStatus').textContent = 'Agent ONLINE!';
+            document.getElementById('wizVerifyStatus').style.color = 'var(--accent-green)';
+            document.getElementById('wizVerifyDetail').textContent = `Hill #${hillId} agent berhasil melapor ke server.`;
+
+            document.getElementById('wizVerifyTable').style.display = 'block';
+            document.getElementById('wizVerifyBody').innerHTML = [
+                ['Hill ID', agent.hill_id],
+                ['Hill Name', agent.hill_name || wizConfig.hillName],
+                ['Agent Alive', agent.agent_alive ? '✅ Yes' : '❌ No'],
+                ['Last Report', agent.last_report_at ? toWIB(agent.last_report_at) : 'Never'],
+                ['Current King', agent.king_name || '(nobody)'],
+                ['SLA Status', agent.sla_status ? '✅ UP' : '❌ DOWN'],
+            ].map(([k,v]) => `<tr><td style="font-weight:600;">${k}</td><td class="mono">${v}</td></tr>`).join('');
+
+            if (wizAutoInterval) { clearInterval(wizAutoInterval); wizAutoInterval = null; }
+            document.getElementById('wizAutoCheck').style.display = 'none';
+        } else if (agent) {
+            document.getElementById('wizVerifyIcon').textContent = '⚠️';
+            document.getElementById('wizVerifyStatus').textContent = 'Agent ditemukan tapi OFFLINE';
+            document.getElementById('wizVerifyStatus').style.color = 'var(--accent-orange)';
+            document.getElementById('wizVerifyDetail').textContent = `Hill #${hillId} terdaftar tapi belum melapor. Last report: ${agent.last_report_at ? toWIB(agent.last_report_at) : 'never'}.`;
+        } else {
+            document.getElementById('wizVerifyIcon').textContent = '❌';
+            document.getElementById('wizVerifyStatus').textContent = 'Agent belum terdeteksi';
+            document.getElementById('wizVerifyStatus').style.color = 'var(--accent-red)';
+            document.getElementById('wizVerifyDetail').textContent = `Hill #${hillId} belum pernah melapor. Pastikan script sudah dijalankan.`;
+        }
+    } catch(e) {
+        document.getElementById('wizVerifyIcon').textContent = '❌';
+        document.getElementById('wizVerifyStatus').textContent = 'Gagal cek status';
+        document.getElementById('wizVerifyStatus').style.color = 'var(--accent-red)';
+        document.getElementById('wizVerifyDetail').textContent = e.message;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Cek Agent Status';
+    }
+}
+
+function wizAutoCheckStart() {
+    const btn = document.getElementById('wizAutoCheck');
+    if (wizAutoInterval) {
+        clearInterval(wizAutoInterval);
+        wizAutoInterval = null;
+        btn.textContent = '🔄 Auto-Check (30s)';
+        btn.classList.remove('btn-warning');
+        btn.classList.add('btn-blue');
+        toast('Auto-check stopped');
+        return;
+    }
+    wizAutoInterval = setInterval(wizCheckAgent, 30000);
+    btn.textContent = '⏹️ Stop Auto-Check';
+    btn.classList.remove('btn-blue');
+    btn.classList.add('btn-warning');
+    toast('Auto-check setiap 30 detik...');
+    wizCheckAgent();
+}
+</script>
+</body>
+</html>

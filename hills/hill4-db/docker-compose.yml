@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  hill4-db:
+    build: .
+    container_name: hill4-data-vault
+    hostname: hill4-db
+    restart: unless-stopped
+    ports:
+      - "2222:22"      # SSH for teams
+      - "27017:27017"  # Data Vault TCP service (SLA check target)
+      - "6379:6379"    # Redis (intentionally exposed)
+    volumes:
+      - vault-data:/opt/vault/data
+      - vault-backups:/opt/vault/backups
+      - /root/king.txt:/root/king.txt  # Host king.txt mounted
+    environment:
+      - SERVICE_NAME=data-vault
+    privileged: true
+
+volumes:
+  vault-data:
+  vault-backups:

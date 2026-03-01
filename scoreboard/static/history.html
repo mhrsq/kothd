@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoTH CTF — Point History</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        .history-page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 32px;
+        }
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .chart-card h2 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+        .team-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .team-selector label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        .team-selector select {
+            padding: 8px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            min-width: 200px;
+        }
+        .team-selector select:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 16px;
+        }
+        .detail-table th {
+            text-align: left;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+        .detail-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-mono);
+        }
+        .detail-table tr:hover { background: var(--bg-hover); }
+        .points-badge {
+            background: rgba(34,197,94,0.15);
+            color: var(--accent-green);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+        .king-badge {
+            background: rgba(250,204,21,0.15);
+            color: var(--accent-gold);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .nav-links {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .nav-links a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-size: 13px;
+            margin: 0 12px;
+        }
+        .nav-links a:hover { text-decoration: underline; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .stat-box {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 12px 16px;
+            text-align: center;
+        }
+        .stat-box .stat-val {
+            font-size: 24px;
+            font-weight: 900;
+            font-family: var(--font-mono);
+            color: var(--accent-green);
+        }
+        .stat-box .stat-lbl {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header provided by global navbar.js -->
+
+    <div class="history-page">
+        <!-- All Teams Cumulative Chart -->
+        <div class="chart-card">
+            <h2>📈 All Teams — Cumulative Points Over Time</h2>
+            <div class="chart-wrapper">
+                <canvas id="all-teams-chart"></canvas>
+            </div>
+            <p id="all-teams-nodata" class="no-data" style="display:none;">
+                Belum ada data. Game belum dimulai atau belum ada tick yang diproses.
+            </p>
+        </div>
+
+        <!-- Per-Team Detail -->
+        <div class="chart-card">
+            <h2>🔍 Team Detail — Point Breakdown</h2>
+            <div class="team-selector">
+                <label for="team-select">Pilih Team:</label>
+                <select id="team-select" onchange="loadTeamHistory()">
+                    <option value="">-- Pilih Team --</option>
+                </select>
+            </div>
+
+            <div id="team-stats" style="display:none;">
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-val" id="stat-total">0</div>
+                        <div class="stat-lbl">Total Points</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-val" id="stat-ticks">0</div>
+                        <div class="stat-lbl">Ticks as King</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-val" id="stat-hills">0</div>
+                        <div class="stat-lbl">Hills Held</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-val" id="stat-avg">0</div>
+                        <div class="stat-lbl">Avg Pts/Tick</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-wrapper" style="height:300px;">
+                <canvas id="team-chart"></canvas>
+            </div>
+
+            <div id="team-detail-table-wrap">
+                <table class="detail-table" id="team-detail-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Tick</th>
+                            <th>Hill</th>
+                            <th>Points</th>
+                            <th>Cumulative</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="team-detail-body"></tbody>
+                </table>
+            </div>
+            <p id="team-nodata" class="no-data">
+                Pilih team untuk melihat detail history point.
+            </p>
+        </div>
+
+        <div class="nav-links">
+            <a href="/">🏠 Scoreboard</a>
+            <a href="/register">📝 Register</a>
+            <a href="/admin">🛡️ Admin</a>
+        </div>
+    </div>
+
+    <script>
+    const API_BASE = window.location.origin + '/api';
+
+    // Color palette for chart lines
+    const TEAM_COLORS = [
+        '#22c55e', '#3b82f6', '#ef4444', '#f97316', '#a855f7',
+        '#06b6d4', '#eab308', '#ec4899', '#14b8a6', '#f43f5e',
+        '#8b5cf6', '#10b981', '#f59e0b', '#6366f1', '#84cc16',
+        '#e879f9', '#2dd4bf', '#fb923c', '#38bdf8', '#c084fc',
+    ];
+
+    let allTeamsChart = null;
+    let teamChart = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadAllTeamsTimeline();
+        loadTeamList();
+        // Auto-refresh every 30s
+        setInterval(loadAllTeamsTimeline, 30000);
+    });
+
+    // ─── All Teams Timeline ─────────────────────────────────────────
+
+    async function loadAllTeamsTimeline() {
+        try {
+            const r = await fetch(`${API_BASE}/scoreboard/history/all`);
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const data = await r.json();
+
+            if (!data.ticks || data.ticks.length === 0) {
+                document.getElementById('all-teams-nodata').style.display = 'block';
+                return;
+            }
+            document.getElementById('all-teams-nodata').style.display = 'none';
+
+            const labels = data.ticks.map(t => `#${t}`);
+            const datasets = data.teams
+                .filter(t => {
+                    // Only show teams that have some points
+                    return t.points.some(p => p > 0);
+                })
+                .map((team, idx) => ({
+                    label: team.display_name || team.team_name,
+                    data: team.points,
+                    borderColor: TEAM_COLORS[idx % TEAM_COLORS.length],
+                    backgroundColor: TEAM_COLORS[idx % TEAM_COLORS.length] + '20',
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: data.ticks.length > 50 ? 0 : 3,
+                    pointHoverRadius: 5,
+                    fill: false,
+                }));
+
+            if (allTeamsChart) {
+                allTeamsChart.data.labels = labels;
+                allTeamsChart.data.datasets = datasets;
+                allTeamsChart.update();
+            } else {
+                const ctx = document.getElementById('all-teams-chart').getContext('2d');
+                allTeamsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels, datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    color: '#94a3b8',
+                                    font: { family: "'Inter', sans-serif", size: 11 },
+                                    usePointStyle: true,
+                                    pointStyle: 'circle',
+                                },
+                            },
+                            tooltip: {
+                                backgroundColor: '#1a2332',
+                                titleColor: '#e2e8f0',
+                                bodyColor: '#94a3b8',
+                                borderColor: '#2a3a4e',
+                                borderWidth: 1,
+                            },
+                        },
+                        scales: {
+                            x: {
+                                title: { display: true, text: 'Tick', color: '#64748b' },
+                                ticks: { color: '#64748b', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+                                grid: { color: '#1e293b' },
+                            },
+                            y: {
+                                title: { display: true, text: 'Cumulative Points', color: '#64748b' },
+                                ticks: { color: '#64748b', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+                                grid: { color: '#1e293b' },
+                                beginAtZero: true,
+                            },
+                        },
+                    },
+                });
+            }
+        } catch(e) {
+            console.error('Failed to load all teams timeline:', e);
+            document.getElementById('all-teams-nodata').style.display = 'block';
+        }
+    }
+
+    // ─── Team List ──────────────────────────────────────────────────
+
+    async function loadTeamList() {
+        try {
+            const r = await fetch(`${API_BASE}/teams`);
+            const teams = await r.json();
+            const select = document.getElementById('team-select');
+
+            teams.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = `#${t.id} ${t.display_name || t.name} (${t.category || 'default'})`;
+                select.appendChild(opt);
+            });
+        } catch(e) {
+            console.error('Failed to load teams:', e);
+        }
+    }
+
+    // ─── Per-Team History ───────────────────────────────────────────
+
+    async function loadTeamHistory() {
+        const teamId = document.getElementById('team-select').value;
+        if (!teamId) {
+            document.getElementById('team-nodata').style.display = 'block';
+            document.getElementById('team-nodata').textContent = 'Pilih team untuk melihat detail history point.';
+            document.getElementById('team-detail-table').style.display = 'none';
+            document.getElementById('team-stats').style.display = 'none';
+            if (teamChart) { teamChart.destroy(); teamChart = null; }
+            return;
+        }
+
+        try {
+            const r = await fetch(`${API_BASE}/scoreboard/history/team/${teamId}`);
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const data = await r.json();
+
+            if (!data.history || data.history.length === 0) {
+                document.getElementById('team-nodata').style.display = 'block';
+                document.getElementById('team-nodata').textContent =
+                    `${data.display_name || data.team_name} belum memiliki point. Belum menjadi king di hill manapun.`;
+                document.getElementById('team-detail-table').style.display = 'none';
+                document.getElementById('team-stats').style.display = 'none';
+                if (teamChart) { teamChart.destroy(); teamChart = null; }
+                return;
+            }
+
+            document.getElementById('team-nodata').style.display = 'none';
+            document.getElementById('team-detail-table').style.display = 'table';
+            document.getElementById('team-stats').style.display = 'block';
+
+            // Stats
+            const uniqueHills = new Set(data.history.map(h => h.hill_id)).size;
+            const avgPts = data.history.length > 0
+                ? (data.total_points / data.history.length).toFixed(1)
+                : 0;
+            document.getElementById('stat-total').textContent = data.total_points.toLocaleString();
+            document.getElementById('stat-ticks').textContent = data.history.length;
+            document.getElementById('stat-hills').textContent = uniqueHills;
+            document.getElementById('stat-avg').textContent = avgPts;
+
+            // Build cumulative per-tick (aggregate multi-hill ticks)
+            const tickMap = new Map();
+            data.history.forEach(h => {
+                if (!tickMap.has(h.tick_number)) {
+                    tickMap.set(h.tick_number, { pts: 0, cumulative: h.cumulative_points });
+                }
+                const entry = tickMap.get(h.tick_number);
+                entry.pts += h.points_this_tick;
+                entry.cumulative = Math.max(entry.cumulative, h.cumulative_points);
+            });
+
+            const tickLabels = [...tickMap.keys()].map(t => `#${t}`);
+            const cumulativeData = [...tickMap.values()].map(v => v.cumulative);
+            const perTickData = [...tickMap.values()].map(v => v.pts);
+
+            // Chart
+            if (teamChart) { teamChart.destroy(); }
+            const ctx = document.getElementById('team-chart').getContext('2d');
+            teamChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: tickLabels,
+                    datasets: [
+                        {
+                            label: 'Cumulative Points',
+                            data: cumulativeData,
+                            type: 'line',
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34,197,94,0.1)',
+                            tension: 0.3,
+                            borderWidth: 2,
+                            fill: true,
+                            yAxisID: 'y',
+                            order: 1,
+                        },
+                        {
+                            label: 'Points This Tick',
+                            data: perTickData,
+                            backgroundColor: 'rgba(59,130,246,0.6)',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            yAxisID: 'y1',
+                            order: 2,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8', font: { family: "'Inter', sans-serif", size: 11 } },
+                        },
+                        tooltip: {
+                            backgroundColor: '#1a2332',
+                            titleColor: '#e2e8f0',
+                            bodyColor: '#94a3b8',
+                            borderColor: '#2a3a4e',
+                            borderWidth: 1,
+                        },
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#64748b', font: { family: "'JetBrains Mono', monospace", size: 10 } },
+                            grid: { color: '#1e293b' },
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: 'Cumulative', color: '#22c55e' },
+                            ticks: { color: '#22c55e' },
+                            grid: { color: '#1e293b' },
+                            beginAtZero: true,
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: 'Per Tick', color: '#3b82f6' },
+                            ticks: { color: '#3b82f6' },
+                            grid: { drawOnChartArea: false },
+                            beginAtZero: true,
+                        },
+                    },
+                },
+            });
+
+            // Table
+            const tbody = document.getElementById('team-detail-body');
+            tbody.innerHTML = data.history.map(h => `
+                <tr>
+                    <td>#${h.tick_number}</td>
+                    <td>${escHtml(h.hill_name || '-')}</td>
+                    <td><span class="points-badge">+${h.points_this_tick}</span></td>
+                    <td>${h.cumulative_points.toLocaleString()}</td>
+                    <td style="color:var(--text-muted); font-size:11px;">
+                        ${h.timestamp ? new Date(h.timestamp).toLocaleTimeString('id-ID') : '-'}
+                    </td>
+                </tr>
+            `).join('');
+
+        } catch(e) {
+            console.error('Failed to load team history:', e);
+            document.getElementById('team-nodata').style.display = 'block';
+            document.getElementById('team-nodata').textContent = 'Gagal memuat data: ' + e.message;
+        }
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+    </script>
+    <script src="/static/js/navbar.js"></script>
+</body>
+</html>

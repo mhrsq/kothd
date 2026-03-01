@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  web-fortress:
+    build: .
+    container_name: hill1-web-fortress
+    hostname: web-fortress
+    ports:
+      - "80:80"      # Nginx → Flask (SLA check target)
+      - "2222:22"    # SSH for teams (host SSH stays on 22 for agent)
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - web-data:/opt/webapp/data
+      - /root/king.txt:/root/king.txt  # Host king.txt mounted into container
+    environment:
+      - FLASK_ENV=production
+
+volumes:
+  web-data:

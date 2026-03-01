@@ -1,0 +1,43 @@
+version: '3.8'
+
+# Pivot DMZ: Runs Hill 3 (API Gateway) and Hill 4 (Data Vault)
+# Both share the host IP (set PIVOT_DMZ_IP in .env), differentiated by ports
+# Scorebot SSHes to port 2210 (Hill 3) and 2211 (Hill 4)
+
+services:
+  hill3-api:
+    build:
+      context: ./hill3-api
+    container_name: hill3-api-gateway
+    hostname: hill3-api
+    restart: unless-stopped
+    ports:
+      - "2210:22"    # SSH (scorebot reads king.txt here)
+      - "8080:8080"  # API (SLA check target)
+    volumes:
+      - api-data:/opt/api/data
+    environment:
+      - SERVICE_NAME=api-gateway
+    privileged: true
+
+  hill4-db:
+    build:
+      context: ./hill4-db
+    container_name: hill4-data-vault
+    hostname: hill4-db
+    restart: unless-stopped
+    ports:
+      - "2211:22"      # SSH (scorebot reads king.txt here)
+      - "27017:27017"  # Data Vault TCP (SLA check target)
+      - "6379:6379"    # Redis (intentionally exposed)
+    volumes:
+      - vault-data:/opt/vault/data
+      - vault-backups:/opt/vault/backups
+    environment:
+      - SERVICE_NAME=data-vault
+    privileged: true
+
+volumes:
+  api-data:
+  vault-data:
+  vault-backups:

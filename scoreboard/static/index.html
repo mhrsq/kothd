@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoTH CTF — Live Scoreboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+</head>
+<body>
+    <!-- Timer/Tick bar (below global navbar) -->
+    <div class="game-bar">
+        <div class="game-bar-inner">
+            <div class="game-timer" id="game-timer">
+                <span class="timer-label">WAKTU</span>
+                <span class="timer-value" id="timer-display">--:--:--</span>
+            </div>
+            <div class="tick-counter">
+                <span class="tick-label">TICK</span>
+                <span class="tick-value" id="tick-display">#0</span>
+            </div>
+        </div>
+    </div>
+    <style>
+        .game-bar{background:linear-gradient(135deg,#0f172a,#1a2332);border-bottom:1px solid #2a3a4e;padding:10px 32px;}
+        .game-bar-inner{max-width:1400px;margin:0 auto;display:flex;justify-content:center;gap:40px;}
+    </style>
+
+    <!-- ── Main Content ── -->
+    <main class="main">
+        <!-- Hill Status Cards -->
+        <section class="hills-section">
+            <h2 class="section-title">🏔️ Hill Status</h2>
+            <div class="hills-grid" id="hills-grid">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- Leaderboard -->
+        <section class="leaderboard-section">
+            <div class="leaderboard-header">
+                <h2 class="section-title">🏆 Leaderboard</h2>
+                <div class="category-tabs">
+                    <button class="tab active" data-category="all" onclick="filterCategory('all')">All</button>
+                    <!-- Category tabs populated dynamically -->
+                </div>
+            </div>
+            <div class="leaderboard-table-wrap">
+                <table class="leaderboard-table" id="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th class="col-rank">#</th>
+                            <th class="col-team">Team</th>
+                            <th class="col-cat">Kategori</th>
+                            <th class="col-points">Points</th>
+                            <th class="col-hills">Hills</th>
+                            <th class="col-ticks">Ticks King</th>
+                            <th class="col-fb">First Blood</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Event Feed -->
+        <section class="events-section">
+            <h2 class="section-title">📡 Live Feed</h2>
+            <div class="event-feed" id="event-feed">
+                <div class="event-item system">
+                    <span class="event-time">--:--:--</span>
+                    <span class="event-text">Menunggu koneksi ke server...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- First Bloods -->
+        <section class="first-bloods-section">
+            <h2 class="section-title">🩸 First Bloods</h2>
+            <div class="first-bloods-grid" id="first-bloods-grid">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+    </main>
+
+    <!-- ── Footer ── -->
+    <footer class="footer">
+        <p>KoTH CTF Platform — Powered by kothd</p>
+    </footer>
+
+    <!-- ── Notification Toast ── -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/static/js/navbar.js"></script>
+    <script src="/static/js/scoreboard.js"></script>
+</body>
+</html>

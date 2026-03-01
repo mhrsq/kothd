@@ -1,0 +1,32 @@
+[Unit]
+Description=KoTH CTF - Hill Agent (Dual-Verification)
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/koth/hill-agent
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=koth-agent
+
+# Environment — these MUST be set per-hill
+Environment="HILL_ID=1"
+Environment="AGENT_TOKEN=CHANGE_ME"
+Environment="KOTH_SERVER=http://YOUR_KOTH_SERVER:8000"
+Environment="REPORT_INTERVAL=10"
+Environment="KING_FILE=/root/king.txt"
+# Optional SLA check (set port + type)
+# Environment="SLA_CHECK_PORT=80"
+# Environment="SLA_CHECK_TYPE=http"
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadOnlyPaths=/root/king.txt
+ReadWritePaths=/opt/koth
+
+[Install]
+WantedBy=multi-user.target
