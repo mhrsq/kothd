@@ -14,8 +14,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application
 COPY . .
 
-# Create keys directory
-RUN mkdir -p /app/keys
+# Create non-root user and keys directory
+RUN groupadd -r koth && useradd -r -g koth -d /app -s /sbin/nologin koth && \
+    mkdir -p /app/keys && \
+    chown -R koth:koth /app
+
+USER koth
 
 EXPOSE 8000
 

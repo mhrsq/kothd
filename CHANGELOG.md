@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] — 2026-03-02
+
+### Added
+
+- **Deployment Automation** — `scripts/deploy.sh` for one-command server deployment (installs Docker, clones repo, generates env, builds, starts)
+- **Secure Env Generator** — `scripts/generate-env.sh` generates `.env` with cryptographically random passwords via `openssl rand`
+- **Smoke Test** — `scripts/smoke-test.sh` validates all services, DB, Redis, API endpoints, and config security
+- **SSH Key Generation** — Deploy script auto-creates ed25519 keypair for scorebot
+
+### Changed
+
+- **Docker Compose hardened** — Resource limits (memory/CPU) on all 5 services, `no-new-privileges` security opt, read-only volume mounts, Redis memory cap with LRU eviction, Nginx tmpfs for temp/cache
+- **Scoreboard Dockerfile** — Runs as non-root `koth` user instead of root
+- **Scorebot Dockerfile** — Runs as non-root `koth` user instead of root
+- **Hill Agent Dockerfile** — Runs as non-root `koth` user instead of root
+- **Removed obsolete `version` key** from docker-compose.yml (deprecated in Compose v2)
+
+### Security
+
+- All containers now run as unprivileged users
+- `no-new-privileges` prevents privilege escalation in containers
+- Application code mounted read-only in production
+- `.env` file generated with `chmod 600`
+- Smoke test checks for default/weak passwords
+
+---
+
 ## [1.1.0] — 2026-03-02
 
 ### Added

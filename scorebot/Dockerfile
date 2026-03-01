@@ -12,10 +12,14 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o scorebot .
 # ── Runtime stage ──
 FROM alpine:3.20
 
-RUN apk add --no-cache ca-certificates openssh-client
+RUN apk add --no-cache ca-certificates openssh-client && \
+    addgroup -S koth && adduser -S -G koth -h /app koth
 
 WORKDIR /app
 COPY --from=builder /build/scorebot /app/scorebot
+RUN mkdir -p /app/keys && chown -R koth:koth /app
+
+USER koth
 
 EXPOSE 8081
 

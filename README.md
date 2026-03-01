@@ -64,38 +64,57 @@ A production-ready **King of the Hill** (KoTH) CTF engine built for live competi
 - Docker & Docker Compose v2
 - Git
 
-### 1. Clone & Configure
+### Option A: One-Command Server Deploy
+
+```bash
+# From a fresh Ubuntu/Debian server (as root):
+curl -fsSL https://raw.githubusercontent.com/mhrsq/kothd/main/scripts/deploy.sh | bash
+```
+
+Or via SSH:
+
+```bash
+ssh root@YOUR_SERVER 'bash -s' < scripts/deploy.sh
+```
+
+This clones the repo, installs Docker, generates a secure `.env`, builds images, and starts all services.
+
+### Option B: Manual Setup
 
 ```bash
 git clone https://github.com/mhrsq/kothd.git
 cd kothd
-cp .env.example .env
-# Edit .env — fill in all CHANGE_ME values
-```
 
-### 2. Deploy
+# Generate secure .env with random passwords
+bash scripts/generate-env.sh
 
-```bash
+# Build and start
 docker compose up -d
 ```
 
-This starts 5 containers: `scoreboard`, `scorebot`, `nginx`, `db`, `redis`.
+### Verify Deployment
 
-### 3. Access
+```bash
+bash scripts/smoke-test.sh
+```
+
+This checks all containers, database, Redis, API endpoints, and `.env` security.
+
+### Access
 
 | URL | Description |
 |-----|-------------|
-| `http://localhost` | Scoreboard (public) |
-| `http://localhost/admin.html` | Admin panel |
-| `http://localhost/organizer.html` | Organizer dashboard |
-| `http://localhost/dashboard.html` | Participant dashboard |
+| `http://YOUR_SERVER` | Scoreboard (public) |
+| `http://YOUR_SERVER/admin.html` | Admin panel |
+| `http://YOUR_SERVER/organizer.html` | Organizer dashboard |
+| `http://YOUR_SERVER/dashboard.html` | Participant dashboard |
 
-### 4. Register Teams
+### Register Teams
 
 Via admin panel or API:
 
 ```bash
-curl -X POST http://localhost/api/teams/bulk \
+curl -X POST http://YOUR_SERVER/api/teams/bulk \
   -H "X-Admin-Token: YOUR_ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -106,10 +125,10 @@ curl -X POST http://localhost/api/teams/bulk \
   }'
 ```
 
-### 5. Start Game
+### Start Game
 
 ```bash
-curl -X POST http://localhost/api/admin/game/control \
+curl -X POST http://YOUR_SERVER/api/admin/game/control \
   -H "X-Admin-Token: YOUR_ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"action": "start"}'
@@ -172,12 +191,46 @@ kothd/
 │   ├── hill4-db/         # Data Vault (NoSQL injection, Redis)
 │   └── pivot-dmz/        # Multi-hill host config
 ├── nginx/                # Reverse proxy configuration
-├── scripts/              # Deployment & maintenance scripts
+├── scripts/              # Deployment & automation scripts
+│   ├── deploy.sh         # One-command server deployment
+│   ├── generate-env.sh   # Secure .env generator
+│   ├── smoke-test.sh     # Post-deploy health checks
 ├── docs/                 # Documentation
 ├── docker-compose.yml    # Main platform deployment
 ├── .env.example          # Configuration template
 └── LICENSE               # MIT License
 ```
+
+## Deployment
+
+### Scripts
+
+| Script | Description |
+|--------|-------------|
+| `scripts/deploy.sh` | Full server deployment (Docker install, clone, env gen, build, start) |
+| `scripts/generate-env.sh` | Generate `.env` with cryptographically random passwords |
+| `scripts/smoke-test.sh` | Post-deployment health check (containers, DB, Redis, API, config) |
+
+### Docker Security
+
+The platform includes production-grade Docker hardening:
+
+- **Non-root containers** — All services run as unprivileged `koth` user
+- **Resource limits** — Memory and CPU constraints on every container
+- **No-new-privileges** — Prevents privilege escalation inside containers
+- **Read-only mounts** — Application code and config mounted as read-only
+- **tmpfs** — Nginx temp/cache uses memory-backed filesystem
+- **Redis memory cap** — `maxmemory 256mb` with LRU eviction policy
+
+### Server Requirements
+
+| Resource | Minimum | Recommended |
+|----------|---------|-------------|
+| CPU | 2 cores | 4 cores |
+| RAM | 2 GB | 4 GB |
+| Disk | 10 GB | 20 GB |
+| OS | Ubuntu 22.04+ / Debian 12+ | Ubuntu 24.04 |
+| Ports | 80 (HTTP) | 80, 443 (HTTPS) |
 
 ## Configuration
 

@@ -13,9 +13,13 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o hill-agent .
 # ─── Minimal runtime ────────────────────────────────────────────────────────
 FROM alpine:3.20
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates && \
+    addgroup -S koth && adduser -S -G koth -h /app koth
 
 WORKDIR /app
 COPY --from=builder /build/hill-agent .
+RUN chown -R koth:koth /app
+
+USER koth
 
 ENTRYPOINT ["./hill-agent"]
