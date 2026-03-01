@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS hills (
     description TEXT,
     ip_address VARCHAR(45) NOT NULL,
     ssh_port INTEGER DEFAULT 22,
+    ssh_user VARCHAR(64),               -- Per-hill SSH user (overrides global)
+    ssh_pass VARCHAR(128),              -- Per-hill SSH password (overrides global)
     sla_check_url VARCHAR(256),
     sla_check_port INTEGER,
     sla_check_type VARCHAR(32) DEFAULT 'http',  -- 'http', 'tcp', 'custom'
@@ -30,6 +32,7 @@ CREATE TABLE IF NOT EXISTS hills (
     multiplier FLOAT DEFAULT 1.0,
     is_behind_pivot BOOLEAN DEFAULT false,
     is_active BOOLEAN DEFAULT true,
+    agent_token VARCHAR(128),           -- Per-hill agent auth token
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -55,6 +58,12 @@ CREATE TABLE IF NOT EXISTS tick_results (
     check_duration_ms INTEGER,
     error_message TEXT,
     checked_at TIMESTAMP DEFAULT NOW(),
+    -- Dual-verification fields
+    ssh_verified BOOLEAN DEFAULT false,
+    agent_verified BOOLEAN DEFAULT false,
+    ssh_king_name VARCHAR(64),
+    agent_king_name VARCHAR(64),
+    verification_count INTEGER DEFAULT 0,
     UNIQUE(tick_id, hill_id)
 );
 
