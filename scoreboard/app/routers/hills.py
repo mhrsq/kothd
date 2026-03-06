@@ -166,6 +166,7 @@ async def create_hill(
         base_points=body.base_points,
         multiplier=body.multiplier,
         is_behind_pivot=body.is_behind_pivot,
+        agent_token=body.agent_token,
     )
     db.add(hill)
 

@@ -56,6 +56,7 @@ class HillCreate(HillBase):
     sla_check_url: Optional[str] = Field(None, max_length=256, pattern=r"^https?://[a-zA-Z0-9._:/-]+$")
     sla_check_port: Optional[int] = Field(None, ge=1, le=65535)
     king_file_path: str = Field("/root/king.txt", max_length=256, pattern=r"^/[a-zA-Z0-9._/-]+$")
+    agent_token: Optional[str] = Field(None, max_length=128, description="Pre-set agent token for hill agent")
 
 class HillUpdate(BaseModel):
     """All fields optional — only provided fields are updated"""
