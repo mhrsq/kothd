@@ -1408,19 +1408,19 @@
             <!-- ═══ 17. Troubleshooting ═══ -->
             <h3 id="g17">17. Troubleshooting</h3>
             <h4>Hill SLA Gagal</h4>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Cek <span class="menu-ref">🔍 Connection Status</span> ?hill mana yang error</div></div>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Cek <span class="menu-ref">🔍 Connection Status</span> — lihat hill mana yang error</div></div>
             <div class="step-box"><div class="sn">2</div><div class="sb">SSH ke hill server, cek service: <code>docker ps</code>, <code>systemctl status koth-agent</code></div></div>
             <div class="step-box"><div class="sn">3</div><div class="sb">Jika perlu, nonaktifkan hill sementara: <span class="menu-ref">🏔️ Hills</span> → Toggle off</div></div>
             <h4>Scorebot Error</h4>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Ceog: <code>docker logs --tail 50 koth-scorebot</code></div></div>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Cek log: <code>docker logs --tail 50 koth-scorebot</code></div></div>
             <div class="step-box"><div class="sn">2</div><div class="sb">Restart: <code>docker restart koth-scorebot</code></div></div>
             <h4>Scoreboard App Error</h4>
             <div class="step-box"><div class="sn">1</div><div class="sb">Cek log: <code>docker logs --tail 50 koth-scoreboard</code></div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Restart: <code>docker restart koth-scoreboard</codediv></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Restart: <code>docker restart koth-scoreboard</code></div></div>
             <h4>Game Reset (⚠️ DESTRUKTIF!)</h4>
             <div class="danger">⚠️ EXTREME CAUTION: Reset menghapus SEMUA data scoring. Tim tetap ada tapi semua poin jadi 0.</div>
             <div class="step-box"><div class="sn">1</div><div class="sb">Stop game terlebih dahulu via <span class="menu-ref">🎮 Game Control</span> → Stop</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Gunakan API: <code>POST /api/admin/game/reset</code> dengan header ode>X-Admin-Token</code></div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Gunakan API: <code>POST /api/admin/game/reset</code> dengan header <code>X-Admin-Token</code></div></div>
 
             <!-- ═══ 18. API Reference ═══ -->
             <h3 id="g18">18. API Reference</h3>
@@ -1429,12 +1429,12 @@
             <table>
                 <thead><tr><th>Method</th><th>Endpoint</th><th>Keterangan</th></tr></thead>
                 <tbody>
-                    <tr><td>GET</td><td><code>/api/scoreboard</code></td><td>Full scd</td></tr>
+                    <tr><td>GET</td><td><code>/api/scoreboard</code></td><td>Full scoreboard</td></tr>
                     <tr><td>GET</td><td><code>/api/scoreboard/leaderboard</code></td><td>Leaderboard (filter: <code>?category=</code>)</td></tr>
                     <tr><td>GET</td><td><code>/api/scoreboard/ticks</code></td><td>Recent ticks</td></tr>
                     <tr><td>GET</td><td><code>/api/scoreboard/first-bloods</code></td><td>First blood list</td></tr>
                     <tr><td>GET</td><td><code>/api/scoreboard/timeline</code></td><td>Score timeline</td></tr>
-                    <><td>GET</td><td><code>/api/scoreboard/event-info</code></td><td>Event details (public)</td></tr>
+                    <tr><td>GET</td><td><code>/api/scoreboard/event-info</code></td><td>Event details (public)</td></tr>
                     <tr><td>GET</td><td><code>/api/scoreboard/categories</code></td><td>Categories list (public)</td></tr>
                     <tr><td>GET</td><td><code>/api/hills</code></td><td>Active hills</td></tr>
                     <tr><td>GET</td><td><code>/api/teams</code></td><td>Active teams</td></tr>
@@ -1447,11 +1447,11 @@
                 <tbody>
                     <tr><td>POST</td><td><code>/api/admin/game/control</code></td><td>Start/pause/resume/stop</td></tr>
                     <tr><td>GET</td><td><code>/api/admin/game/status</code></td><td>Game status</td></tr>
-                    <tr>POST</td><td><code>/api/admin/game/tick</code></td><td>Force immediate tick</td></tr>
+                    <tr><td>POST</td><td><code>/api/admin/game/tick</code></td><td>Force immediate tick</td></tr>
                     <tr><td>POST</td><td><code>/api/admin/game/reset</code></td><td>Reset all scoring data</td></tr>
                     <tr><td>POST</td><td><code>/api/admin/score/adjust</code></td><td>Manual score adjust</td></tr>
                     <tr><td>GET</td><td><code>/api/admin/config</code></td><td>List config</td></tr>
-                    <tr><td>PUT</td><td><code>/api/admin/config/{key}</code></td><td>Updateonfig value</td></tr>
+                    <tr><td>PUT</td><td><code>/api/admin/config/{key}</code></td><td>Update config value</td></tr>
                     <tr><td>GET</td><td><code>/api/admin/event-details</code></td><td>Get event details</td></tr>
                     <tr><td>PUT</td><td><code>/api/admin/event-details</code></td><td>Update event details</td></tr>
                     <tr><td>GET</td><td><code>/api/admin/categories</code></td><td>Get categories</td></tr>
@@ -1460,7 +1460,7 @@
                     <tr><td>PUT</td><td><code>/api/admin/registration/toggle</code></td><td>Toggle registration</td></tr>
                     <tr><td>POST</td><td><code>/api/admin/announcement</code></td><td>Broadcast message</td></tr>
                     <tr><td>POST</td><td><code>/api/admin/scoreboard/freeze</code></td><td>Freeze scoreboard</td></tr>
-                    <tr><td>POST</td><td><code>/api/admin/scoreboard/unfreeze<code></td><td>Unfreeze scoreboard</td></tr>
+                    <tr><td>POST</td><td><code>/api/admin/scoreboard/unfreeze</code></td><td>Unfreeze scoreboard</td></tr>
                     <tr><td>GET</td><td><code>/api/admin/stats</code></td><td>Dashboard stats</td></tr>
                     <tr><td>GET</td><td><code>/api/admin/audit</code></td><td>Audit log</td></tr>
                     <tr><td>GET</td><td><code>/api/admin/teams/export</code></td><td>Export teams + scores</td></tr>
