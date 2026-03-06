@@ -426,6 +426,139 @@ async def update_config(
     return {"detail": f"Config '{key}' updated", "key": key, "value": value}
 
 
+# ─── Event Details ───────────────────────────────────────────────────────────
+
+# Event detail keys stored in game_config table
+_EVENT_DETAIL_KEYS = [
+    "event_name", "event_subtitle", "event_description",
+    "event_date", "event_location", "event_rules",
+    "event_organizer", "event_contact",
+]
+
+
+@router.get("/event-details")
+async def get_event_details(
+    db: AsyncSession = Depends(get_db),
+    _: bool = Depends(require_admin),
+):
+    """Get all event detail settings"""
+    result = await db.execute(
+        select(GameConfig).where(GameConfig.key.in_(_EVENT_DETAIL_KEYS))
+    )
+    configs = {c.key: c.value for c in result.scalars().all()}
+    # Fill defaults from settings
+    return {
+        "event_name": configs.get("event_name", settings.event_name),
+        "event_subtitle": configs.get("event_subtitle", settings.event_subtitle),
+        "event_description": configs.get("event_description", ""),
+        "event_date": configs.get("event_date", ""),
+        "event_location": configs.get("event_location", ""),
+        "event_rules": configs.get("event_rules", ""),
+        "event_organizer": configs.get("event_organizer", ""),
+        "event_contact": configs.get("event_contact", ""),
+    }
+
+
+@router.put("/event-details")
+async def update_event_details(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _: bool = Depends(require_admin),
+):
+    """Update event detail settings (batch)"""
+    body = await request.json()
+    updated = []
+    for key in _EVENT_DETAIL_KEYS:
+        if key in body:
+            value = str(body[key]).strip()
+            result = await db.execute(select(GameConfig).where(GameConfig.key == key))
+            config = result.scalar_one_or_none()
+            if config:
+                config.value = value
+                config.updated_at = datetime.utcnow()
+            else:
+                config = GameConfig(key=key, value=value, description=f"Event detail: {key}")
+                db.add(config)
+            updated.append(key)
+    if updated:
+        db.add(AuditLog(
+            event_type="event_details_updated",
+            actor="admin",
+            details={"updated_keys": updated},
+        ))
+        await db.commit()
+    return {"detail": f"Updated {len(updated)} event detail(s)", "updated": updated}
+
+
+# ─── Public Event Details (no auth) ─────────────────────────────────────────
+# This is mounted on the public router below
+
+
+# ─── Category Management ────────────────────────────────────────────────────
+
+@router.get("/categories")
+async def get_categories(
+    db: AsyncSession = Depends(get_db),
+    _: bool = Depends(require_admin),
+):
+    """Get all team categories"""
+    result = await db.execute(
+        select(GameConfig).where(GameConfig.key == "team_categories")
+    )
+    config = result.scalar_one_or_none()
+    if config and config.value:
+        try:
+            categories = json.loads(config.value)
+        except json.JSONDecodeError:
+            categories = [{"id": "default", "label": "Default"}]
+    else:
+        categories = [{"id": "default", "label": "Default"}]
+    return {"categories": categories}
+
+
+@router.put("/categories")
+async def update_categories(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    _: bool = Depends(require_admin),
+):
+    """Update team categories list"""
+    body = await request.json()
+    categories = body.get("categories", [])
+    # Validate
+    if not categories or not isinstance(categories, list):
+        raise HTTPException(status_code=400, detail="categories must be a non-empty array")
+    for cat in categories:
+        if not cat.get("id") or not cat.get("label"):
+            raise HTTPException(status_code=400, detail="Each category must have 'id' and 'label'")
+        # Sanitize id: lowercase, alphanumeric + dash + underscore
+        cat["id"] = cat["id"].lower().strip()
+    # Ensure "default" exists
+    ids = [c["id"] for c in categories]
+    if "default" not in ids:
+        categories.insert(0, {"id": "default", "label": "Default"})
+
+    value = json.dumps(categories)
+    result = await db.execute(select(GameConfig).where(GameConfig.key == "team_categories"))
+    config = result.scalar_one_or_none()
+    if config:
+        old_value = config.value
+        config.value = value
+        config.updated_at = datetime.utcnow()
+    else:
+        old_value = None
+        config = GameConfig(key="team_categories", value=value, description="Team category list (JSON)")
+        db.add(config)
+
+    db.add(AuditLog(
+        event_type="categories_updated",
+        actor="admin",
+        details={"old": old_value, "new": value},
+    ))
+    await db.commit()
+    return {"detail": "Categories updated", "categories": categories}
+
+
 # ─── Audit Log ───────────────────────────────────────────────────────────────
 
 @router.get("/audit")

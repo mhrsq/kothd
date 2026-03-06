@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.database import get_db
-from app.models import Team, TeamScore, AuditLog
+from app.models import Team, TeamScore, AuditLog, GameConfig
 from app.schemas import TeamRegisterRequest, TeamRegisterResponse
 from app.services.vpn_manager import generate_team_vpn_config, apply_peer_to_vpn_server
 
@@ -22,12 +22,26 @@ settings = get_settings()
 
 
 @router.get("/status")
-async def registration_status():
-    """Check if registration is open"""
+async def registration_status(db: AsyncSession = Depends(get_db)):
+    """Check if registration is open — returns dynamic categories from DB"""
+    import json as _json
+    result = await db.execute(
+        select(GameConfig).where(GameConfig.key == "team_categories")
+    )
+    config = result.scalar_one_or_none()
+    if config and config.value:
+        try:
+            cat_list = _json.loads(config.value)
+        except _json.JSONDecodeError:
+            cat_list = [{"id": "default", "label": "Default"}]
+    else:
+        cat_list = [{"id": "default", "label": "Default"}]
+    categories = [c["id"] for c in cat_list]
+    category_labels = {c["id"]: c["label"] for c in cat_list}
     return {
         "registration_enabled": settings.registration_enabled,
-        "categories": ["default"],
-        "category_labels": {"default": "Default"},
+        "categories": categories,
+        "category_labels": category_labels,
     }
 
 

@@ -722,3 +722,47 @@ async def get_announcements(
         }
         for a in result.scalars().all()
     ]
+
+
+# ─── Public Event Details ────────────────────────────────────────────────────
+
+@router.get("/event-info")
+async def get_public_event_info(db: AsyncSession = Depends(get_db)):
+    """Public endpoint: returns event details for dashboard / login page"""
+    from app.config import get_settings
+    _settings = get_settings()
+    _keys = [
+        "event_name", "event_subtitle", "event_description",
+        "event_date", "event_location", "event_rules",
+        "event_organizer", "event_contact",
+    ]
+    result = await db.execute(select(GameConfig).where(GameConfig.key.in_(_keys)))
+    configs = {c.key: c.value for c in result.scalars().all()}
+    return {
+        "event_name": configs.get("event_name", _settings.event_name),
+        "event_subtitle": configs.get("event_subtitle", _settings.event_subtitle),
+        "event_description": configs.get("event_description", ""),
+        "event_date": configs.get("event_date", ""),
+        "event_location": configs.get("event_location", ""),
+        "event_rules": configs.get("event_rules", ""),
+        "event_organizer": configs.get("event_organizer", ""),
+        "event_contact": configs.get("event_contact", ""),
+    }
+
+
+# ─── Public Categories ──────────────────────────────────────────────────────
+
+@router.get("/categories")
+async def get_public_categories(db: AsyncSession = Depends(get_db)):
+    """Public endpoint: returns available team categories for registration"""
+    import json as _json
+    result = await db.execute(select(GameConfig).where(GameConfig.key == "team_categories"))
+    config = result.scalar_one_or_none()
+    if config and config.value:
+        try:
+            categories = _json.loads(config.value)
+        except _json.JSONDecodeError:
+            categories = [{"id": "default", "label": "Default"}]
+    else:
+        categories = [{"id": "default", "label": "Default"}]
+    return {"categories": categories}

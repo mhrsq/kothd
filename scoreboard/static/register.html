@@ -246,7 +246,7 @@
     <script>
     const API_BASE = window.location.origin + '/api';
 
-    // Check registration status on load
+    // Check registration status on load & populate categories
     document.addEventListener('DOMContentLoaded', async () => {
         try {
             const r = await fetch(`${API_BASE}/register/status`);
@@ -254,6 +254,13 @@
             if (!d.registration_enabled) {
                 document.getElementById('register-form-card').style.display = 'none';
                 showAlert('Registrasi sudah ditutup. Hubungi panitia untuk informasi lebih lanjut.', 'closed');
+            }
+            // Populate category dropdown dynamically
+            if (d.categories && d.categories.length > 0 && d.category_labels) {
+                const sel = document.getElementById('reg-category');
+                sel.innerHTML = d.categories.map(id =>
+                    `<option value="${escHtml(id)}">${escHtml(d.category_labels[id] || id)}</option>`
+                ).join('');
             }
         } catch(e) {
             console.error('Failed to check registration status:', e);
