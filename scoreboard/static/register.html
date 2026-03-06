@@ -148,34 +148,22 @@
             color: var(--accent-orange);
             margin-top: 8px;
         }
-        .nav-links {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .nav-links a {
+
+        .back-link {
+            display: inline-block;
             color: var(--accent-cyan);
             text-decoration: none;
             font-size: 13px;
-            margin: 0 12px;
+            margin-bottom: 16px;
+            opacity: 0.8;
+            transition: opacity 0.2s;
         }
-        .nav-links a:hover { text-decoration: underline; }
+        .back-link:hover { opacity: 1; text-decoration: underline; }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-left">
-            <div class="logo">⚔️</div>
-            <div>
-                <h1>KoTH CTF Platform</h1>
-                <p class="subtitle">King of the Hill — Team Registration</p>
-            </div>
-        </div>
-        <div class="header-right">
-            <a href="/" style="color:var(--accent-cyan); text-decoration:none; font-weight:700;">← Scoreboard</a>
-        </div>
-    </header>
-
     <div class="register-page">
+        <a href="/login" class="back-link">← Back to Login</a>
         <div id="alert-container"></div>
 
         <div class="register-card" id="register-form-card">
@@ -253,10 +241,6 @@
             </div>
         </div>
 
-        <div class="nav-links">
-            <a href="/">🏠 Scoreboard</a>
-            <a href="/history">📊 Point History</a>
-        </div>
     </div>
 
     <script>
@@ -354,6 +338,5 @@
         return div.innerHTML;
     }
     </script>
-    <script src="/static/js/navbar.js"></script>
 </body>
 </html>
