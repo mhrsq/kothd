@@ -152,6 +152,7 @@ _HTML_TO_CLEAN = {
     "register.html": "/register",
     "dashboard.html": "/dashboard",
     "organizer.html": "/organizer",
+    "org-login.html": "/org",
     "admin.html": "/admin",
     "index.html": "/scoreboard",
     "history.html": "/history",
@@ -189,6 +190,7 @@ _PUBLIC_PAGES = {
     "/scoreboard": "index.html",
     "/history": "history.html",
     "/organizer": "organizer.html",
+    "/org": "org-login.html",
     "/admin": "admin.html",
 }
 

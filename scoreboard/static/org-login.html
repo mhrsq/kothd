@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoTH CTF — Organizer Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+    <style>
+        :root {
+            --bg-primary: #0a0e17; --bg-secondary: #111827; --bg-card: #1a2332;
+            --border: #2a3a4e; --text-primary: #e2e8f0; --text-secondary: #94a3b8; --text-muted: #64748b;
+            --accent-green: #22c55e; --accent-red: #ef4444; --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4; --accent-orange: #f97316; --accent-purple: #a855f7;
+            --font-mono: 'JetBrains Mono', monospace; --font-sans: 'Inter', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-sans); background: var(--bg-primary); color: var(--text-primary);
+            min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(168,85,247,.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(6,182,212,.06) 0%, transparent 50%);
+        }
+        .login-container { width: 100%; max-width: 480px; padding: 20px; }
+        .brand { text-align: center; margin-bottom: 36px; }
+        .brand-icon { font-size: 64px; margin-bottom: 12px; filter: drop-shadow(0 0 20px rgba(168,85,247,.4)); }
+        .brand h1 {
+            font-size: 22px; font-weight: 900; letter-spacing: 1px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .brand p { color: var(--text-muted); font-size: 13px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; }
+        .login-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 32px;
+        }
+        .fg { margin-bottom: 18px; }
+        .fg label {
+            display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-muted); margin-bottom: 6px; font-weight: 700;
+        }
+        .fg input {
+            width: 100%; padding: 14px 16px; background: var(--bg-secondary);
+            border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text-primary); font-family: var(--font-mono); font-size: 14px;
+            transition: border-color .2s;
+        }
+        .fg input:focus { outline: none; border-color: var(--accent-purple); box-shadow: 0 0 0 3px rgba(168,85,247,.1); }
+        .fg input::placeholder { color: var(--text-muted); }
+        .fg .hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+        .btn-login {
+            width: 100%; padding: 14px; border: none; border-radius: 8px;
+            font-size: 15px; font-weight: 800; cursor: pointer;
+            font-family: var(--font-sans); transition: all .2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-admin { background: linear-gradient(135deg, var(--accent-purple), #7c3aed); color: #fff; }
+        .btn-admin:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-login:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+        .login-err {
+            background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
+            border-radius: 6px; padding: 10px 14px; color: var(--accent-red);
+            font-size: 13px; margin-bottom: 14px; display: none;
+        }
+        .login-footer {
+            text-align: center; margin-top: 32px; color: var(--text-muted);
+            font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+        }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .login-container { animation: fadeUp .5s ease-out; }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <div class="brand">
+        <div class="brand-icon">🛡️</div>
+        <h1>KoTH CTF Platform</h1>
+        <p>Event Organizer — Login</p>
+    </div>
+
+    <div class="login-card">
+        <div class="login-err" id="err-admin"></div>
+        <div class="fg">
+            <label>Admin Token</label>
+            <input type="password" id="admin-token" placeholder="Masukkan admin token..." autocomplete="off">
+            <div class="hint">Hanya untuk panitia dan event organizer.</div>
+        </div>
+        <button class="btn-login btn-admin" onclick="loginAdmin()" id="btn-admin">
+            🛡️ Masuk sebagai Organizer
+        </button>
+    </div>
+
+    <div class="login-footer">
+        <p>KoTH CTF Platform</p>
+    </div>
+</div>
+
+<script>
+const API = window.location.origin + '/api';
+
+async function loginAdmin() {
+    const token = document.getElementById('admin-token').value.trim();
+    const errEl = document.getElementById('err-admin');
+    const btn = document.getElementById('btn-admin');
+    if (!token) { showErr(errEl, 'Masukkan admin token'); return; }
+
+    btn.disabled = true; btn.textContent = '⏳ Memverifikasi...';
+    errEl.style.display = 'none';
+
+    try {
+        const r = await fetch(API + '/auth/admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admin_token: token })
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || 'Login gagal');
+
+        sessionStorage.setItem('koth_role', 'admin');
+        sessionStorage.setItem('koth_admin_token', token);
+        window.location.href = '/organizer';
+    } catch(e) {
+        showErr(errEl, e.message);
+    } finally {
+        btn.disabled = false; btn.innerHTML = '🛡️ Masuk sebagai Organizer';
+    }
+}
+
+function showErr(el, msg) {
+    el.textContent = msg; el.style.display = 'block';
+}
+
+document.getElementById('admin-token').addEventListener('keydown', e => { if(e.key==='Enter') loginAdmin(); });
+
+// Auto-redirect if already logged in as admin
+(function() {
+    if (sessionStorage.getItem('koth_role') === 'admin' && sessionStorage.getItem('koth_admin_token')) {
+        window.location.href = '/organizer';
+    }
+})();
+</script>
+</body>
+</html>
