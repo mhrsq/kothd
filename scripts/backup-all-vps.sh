@@ -1,171 +1,199 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════
 # KoTH CTF — Full VPS Backup Script
-# Backs up ALL server data for on-premise migration
+# Backs up ALL server data for migration to another VM
+# ═══════════════════════════════════════════════════════════════════════
+#
+# Usage:
+#   SSH_PASS="yourpass" REDIS_PASS="yourredispass" ./backup-all-vps.sh
+#
+# Or edit the defaults below.
 # ═══════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
 
-BACKUP_DIR="/tmp/koth-backup-$(date +%Y%m%d-%H%M%S)"
-PASS="${SSH_PASS:-CHANGE_ME}"
+# ── Configuration ─────────────────────────────────────────────────────
+PASS="${SSH_PASS:-anonyM404.a}"
+REDIS_PASS="${REDIS_PASS:-Vaek8KOp2P5j8xMT55Vh49pB}"
+PG_USER="${PG_USER:-koth_admin}"
+PG_DB="${PG_DB:-koth}"
 
-KOTH_IP="${KOTH_SERVER_IP:-YOUR_KOTH_IP}"
-HILL1_IP="${HILL1_PUBLIC_IP:-YOUR_HILL1_IP}"
-HILL2_IP="${HILL2_PUBLIC_IP:-YOUR_HILL2_IP}"
-PIVOT_IP="${PIVOT_PUBLIC_IP:-YOUR_PIVOT_IP}"
-VPN_IP="${VPN_SERVER_IP:-YOUR_VPN_IP}"
+# Server IPs
+KOTH_IP="${KOTH_IP:-178.128.222.1}"
+HILL1_IP="${HILL1_IP:-165.22.149.130}"
+HILL2_IP="${HILL2_IP:-165.227.10.119}"
+HILL3_IP="${HILL3_IP:-165.227.16.235}"
+HILL4_IP="${HILL4_IP:-129.212.235.51}"
 
-SSH="sshpass -p $PASS ssh -o StrictHostKeyChecking=no"
-SCP="sshpass -p $PASS scp -o StrictHostKeyChecking=no -r"
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+BACKUP_DIR="${BACKUP_DIR:-./koth-backup-${TIMESTAMP}}"
 
-mkdir -p "$BACKUP_DIR"/{koth,hill1,hill2,pivot,vpn}
+SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=10 -o ServerAliveInterval=30"
+SSH="sshpass -p ${PASS} ssh ${SSH_OPTS}"
+SCP="sshpass -p ${PASS} scp ${SSH_OPTS} -r"
 
-echo "════════════════════════════════════════════════════════"
+# ── Helpers ───────────────────────────────────────────────────────────
+log()  { echo -e "\033[1;36m[$(date +%H:%M:%S)]\033[0m $*"; }
+ok()   { echo -e "\033[1;32m  ✓\033[0m $*"; }
+warn() { echo -e "\033[1;33m  ⚠\033[0m $*"; }
+fail() { echo -e "\033[1;31m  ✗\033[0m $*"; }
+
+# ── Pre-flight ────────────────────────────────────────────────────────
+command -v sshpass >/dev/null || { fail "sshpass not installed. apt install sshpass"; exit 1; }
+
+mkdir -p "${BACKUP_DIR}"/{koth,hill1,hill2,hill3,hill4}
+
+echo ""
+echo "════════════════════════════════════════════════════════════════"
 echo "  KoTH CTF — Full VPS Backup"
-echo "  Output: $BACKUP_DIR"
-echo "════════════════════════════════════════════════════════"
+echo "  Timestamp: ${TIMESTAMP}"
+echo "  Output:    ${BACKUP_DIR}"
+echo "════════════════════════════════════════════════════════════════"
 
-# ═══════════════════════════════════════════════════════════════
-# 1. KoTH Main Server (${KOTH_SERVER_IP:-YOUR_KOTH_IP})
-# ═══════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════
+# 1. KoTH Main Server
+# ═══════════════════════════════════════════════════════════════════════
 echo ""
-echo "[1/5] Backing up KoTH Main Server..."
+log "[1/5] Backing up KoTH Main Server (${KOTH_IP})..."
+CDIR="${BACKUP_DIR}/koth"
 
-# PostgreSQL full dump
-echo "  → PostgreSQL dump..."
-$SSH root@$KOTH_IP "docker exec koth-db pg_dump -U koth_admin -d koth --format=custom -f /tmp/koth_db.dump && docker cp koth-db:/tmp/koth_db.dump /tmp/koth_db.dump"
-$SCP root@$KOTH_IP:/tmp/koth_db.dump "$BACKUP_DIR/koth/"
+log "  → PostgreSQL dump (custom format)..."
+$SSH root@${KOTH_IP} "docker exec koth-db pg_dump -U ${PG_USER} -d ${PG_DB} --format=custom -f /tmp/koth_db.dump && docker cp koth-db:/tmp/koth_db.dump /tmp/koth_db.dump" && \
+    $SCP root@${KOTH_IP}:/tmp/koth_db.dump "${CDIR}/" && ok "PG dump (custom)" || warn "PG custom dump failed"
 
-# Also SQL format for readability
-$SSH root@$KOTH_IP "docker exec koth-db pg_dump -U koth_admin -d koth > /tmp/koth_db.sql"
-$SCP root@$KOTH_IP:/tmp/koth_db.sql "$BACKUP_DIR/koth/"
+log "  → PostgreSQL dump (SQL)..."
+$SSH root@${KOTH_IP} "docker exec koth-db pg_dump -U ${PG_USER} -d ${PG_DB} > /tmp/koth_db.sql" && \
+    $SCP root@${KOTH_IP}:/tmp/koth_db.sql "${CDIR}/" && ok "PG dump (SQL)" || warn "PG SQL dump failed"
 
-# Redis dump
-echo "  → Redis dump..."
-$SSH root@$KOTH_IP "docker exec koth-redis redis-cli -a ${REDIS_PASSWORD:-CHANGE_ME} BGSAVE && sleep 2 && docker cp koth-redis:/data/dump.rdb /tmp/redis_dump.rdb"
-$SCP root@$KOTH_IP:/tmp/redis_dump.rdb "$BACKUP_DIR/koth/"
+log "  → Redis snapshot..."
+$SSH root@${KOTH_IP} "docker exec koth-redis redis-cli -a '${REDIS_PASS}' BGSAVE 2>/dev/null && sleep 2 && docker cp koth-redis:/data/dump.rdb /tmp/redis_dump.rdb" && \
+    $SCP root@${KOTH_IP}:/tmp/redis_dump.rdb "${CDIR}/" && ok "Redis dump" || warn "Redis dump failed"
 
-# Scorebot SSH keys
-echo "  → Scorebot keys..."
-$SSH root@$KOTH_IP "docker cp koth-scorebot:/app/keys /tmp/scorebot_keys 2>/dev/null || echo 'no keys dir'"
-$SCP root@$KOTH_IP:/tmp/scorebot_keys "$BACKUP_DIR/koth/" 2>/dev/null || echo "  (no scorebot keys to backup)"
+log "  → Redis AOF..."
+$SSH root@${KOTH_IP} "docker cp koth-redis:/data/appendonlydir /tmp/redis_aof 2>/dev/null && tar czf /tmp/redis_aof.tar.gz -C /tmp redis_aof" && \
+    $SCP root@${KOTH_IP}:/tmp/redis_aof.tar.gz "${CDIR}/" && ok "Redis AOF" || warn "Redis AOF (skipped)"
 
-# Full /opt/koth project
-echo "  → Project files..."
-$SSH root@$KOTH_IP "cd /opt && tar czf /tmp/koth-project.tar.gz --exclude='*.pyc' --exclude='__pycache__' --exclude='.git' koth/"
-$SCP root@$KOTH_IP:/tmp/koth-project.tar.gz "$BACKUP_DIR/koth/"
+log "  → Scorebot keys..."
+$SSH root@${KOTH_IP} "docker cp koth-scorebot:/app/keys /tmp/scorebot_keys 2>/dev/null && tar czf /tmp/scorebot_keys.tar.gz -C /tmp scorebot_keys" && \
+    $SCP root@${KOTH_IP}:/tmp/scorebot_keys.tar.gz "${CDIR}/" && ok "Scorebot keys" || warn "Scorebot keys (none)"
 
-# Docker volume data (grafana dashboards, prometheus)
-echo "  → Grafana provisioning..."
-$SSH root@$KOTH_IP "docker cp koth-grafana:/var/lib/grafana /tmp/grafana_data 2>/dev/null && tar czf /tmp/grafana_data.tar.gz -C /tmp grafana_data"
-$SCP root@$KOTH_IP:/tmp/grafana_data.tar.gz "$BACKUP_DIR/koth/" 2>/dev/null || echo "  (grafana data skipped)"
+log "  → Project files (/opt/kothd)..."
+$SSH root@${KOTH_IP} "cd /opt && tar czf /tmp/kothd-project.tar.gz --exclude='*.pyc' --exclude='__pycache__' --exclude='.git' --exclude='node_modules' kothd/" && \
+    $SCP root@${KOTH_IP}:/tmp/kothd-project.tar.gz "${CDIR}/" && ok "Project files" || warn "Project files failed"
 
-# Docker images list
-$SSH root@$KOTH_IP "docker images --format '{{.Repository}}:{{.Tag}}  {{.Size}}'" > "$BACKUP_DIR/koth/docker-images.txt"
+log "  → Environment file..."
+$SCP root@${KOTH_IP}:/opt/kothd/.env "${CDIR}/dot-env" && ok ".env" || warn ".env failed"
 
-# Environment info
-$SSH root@$KOTH_IP "cat /opt/koth/.env" > "$BACKUP_DIR/koth/env-backup.txt"
-$SSH root@$KOTH_IP "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'" > "$BACKUP_DIR/koth/docker-ps.txt"
-$SSH root@$KOTH_IP "ip addr show" > "$BACKUP_DIR/koth/network-config.txt"
-$SSH root@$KOTH_IP "cat /etc/netplan/*.yaml 2>/dev/null" > "$BACKUP_DIR/koth/netplan.txt" 2>/dev/null || true
-$SSH root@$KOTH_IP "iptables -L -n -v 2>/dev/null; echo '---NAT---'; iptables -t nat -L -n -v 2>/dev/null" > "$BACKUP_DIR/koth/iptables.txt"
+log "  → Docker images..."
+$SSH root@${KOTH_IP} "docker save kothd-scoreboard kothd-scorebot | gzip > /tmp/koth-images.tar.gz" && \
+    $SCP root@${KOTH_IP}:/tmp/koth-images.tar.gz "${CDIR}/" && ok "Docker images" || warn "Docker images failed"
 
-echo "  ✓ KoTH backup complete"
+log "  → Nginx config..."
+$SSH root@${KOTH_IP} "docker cp koth-nginx:/etc/nginx/conf.d /tmp/nginx_conf 2>/dev/null && tar czf /tmp/nginx_conf.tar.gz -C /tmp nginx_conf" && \
+    $SCP root@${KOTH_IP}:/tmp/nginx_conf.tar.gz "${CDIR}/" && ok "Nginx config" || warn "Nginx config (skipped)"
 
-# ═══════════════════════════════════════════════════════════════
-# 2. Hill 1 — Web Fortress (${HILL1_PUBLIC_IP:-YOUR_HILL1_IP})
-# ═══════════════════════════════════════════════════════════════
+# Metadata
+$SSH root@${KOTH_IP} "docker volume ls --format '{{.Name}}'" > "${CDIR}/docker-volumes.txt" 2>/dev/null || true
+$SSH root@${KOTH_IP} "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'" > "${CDIR}/docker-ps.txt" 2>/dev/null || true
+$SSH root@${KOTH_IP} "ip addr show" > "${CDIR}/ip-addr.txt" 2>/dev/null || true
+$SSH root@${KOTH_IP} "iptables-save" > "${CDIR}/iptables.txt" 2>/dev/null || true
+
+# Cleanup remote
+$SSH root@${KOTH_IP} "rm -f /tmp/koth_db.dump /tmp/koth_db.sql /tmp/redis_dump.rdb /tmp/redis_aof.tar.gz /tmp/scorebot_keys.tar.gz /tmp/kothd-project.tar.gz /tmp/koth-images.tar.gz /tmp/nginx_conf.tar.gz; rm -rf /tmp/scorebot_keys /tmp/redis_aof /tmp/nginx_conf" 2>/dev/null || true
+
+ok "KoTH Main Server backup complete"
+
+# ═══════════════════════════════════════════════════════════════════════
+# Helper function for hill backup
+# ═══════════════════════════════════════════════════════════════════════
+backup_hill() {
+    local NUM=$1 IP=$2 CONTAINER=$3 IMAGE=$4 LABEL=$5
+    local CDIR="${BACKUP_DIR}/hill${NUM}"
+    local STEP=$((NUM + 1))
+
+    echo ""
+    log "[${STEP}/5] Backing up Hill ${NUM} — ${LABEL} (${IP})..."
+
+    log "  → Challenge source files..."
+    $SSH root@${IP} "tar czf /tmp/hill${NUM}-challenge.tar.gz -C /opt/hill challenge/" && \
+        $SCP root@${IP}:/tmp/hill${NUM}-challenge.tar.gz "${CDIR}/" && ok "Challenge files" || warn "Challenge files failed"
+
+    log "  → Docker image..."
+    $SSH root@${IP} "docker save ${IMAGE} | gzip > /tmp/hill${NUM}-image.tar.gz" && \
+        $SCP root@${IP}:/tmp/hill${NUM}-image.tar.gz "${CDIR}/" && ok "Docker image" || warn "Docker image failed"
+
+    log "  → Container state..."
+    $SSH root@${IP} "docker exec ${CONTAINER} tar czf /tmp/state.tar.gz /root/king.txt 2>/dev/null && docker cp ${CONTAINER}:/tmp/state.tar.gz /tmp/hill${NUM}-state.tar.gz" && \
+        $SCP root@${IP}:/tmp/hill${NUM}-state.tar.gz "${CDIR}/" && ok "Container state" || warn "Container state (skipped)"
+
+    $SSH root@${IP} "cat /root/king.txt" > "${CDIR}/host-king.txt" 2>/dev/null || true
+    $SSH root@${IP} "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'" > "${CDIR}/docker-ps.txt" 2>/dev/null || true
+    $SSH root@${IP} "ip addr show" > "${CDIR}/ip-addr.txt" 2>/dev/null || true
+    $SSH root@${IP} "iptables-save" > "${CDIR}/iptables.txt" 2>/dev/null || true
+
+    $SSH root@${IP} "rm -f /tmp/hill${NUM}-challenge.tar.gz /tmp/hill${NUM}-image.tar.gz /tmp/hill${NUM}-state.tar.gz" 2>/dev/null || true
+
+    ok "Hill ${NUM} backup complete"
+}
+
+# ═══════════════════════════════════════════════════════════════════════
+# 2-5. Hills
+# ═══════════════════════════════════════════════════════════════════════
+backup_hill 1 "${HILL1_IP}" "hill1-web-fortress"      "challenge-web-fortress"     "Web Fortress"
+backup_hill 2 "${HILL2_IP}" "hill2-service-bastion"    "challenge-service-bastion"  "Service Bastion"
+backup_hill 3 "${HILL3_IP}" "hill3-api-gateway"        "challenge-hill3-api"        "API Gateway"
+backup_hill 4 "${HILL4_IP}" "hill4-data-vault"         "challenge-hill4-db"         "Data Vault"
+
+# Also backup Hill 4 container running on Hill 3 host
 echo ""
-echo "[2/5] Backing up Hill 1..."
+log "  → [Bonus] Hill 4 image on Hill 3 host (${HILL3_IP})..."
+$SSH root@${HILL3_IP} "docker save hill4-db-hill4-db 2>/dev/null | gzip > /tmp/hill4-on-hill3.tar.gz" && \
+    $SCP root@${HILL3_IP}:/tmp/hill4-on-hill3.tar.gz "${BACKUP_DIR}/hill3/" && ok "Hill 4 image (on hill3 host)" || warn "Hill 4 image on hill3 (skipped)"
+$SSH root@${HILL3_IP} "rm -f /tmp/hill4-on-hill3.tar.gz" 2>/dev/null || true
 
-$SSH root@$HILL1_IP "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'" > "$BACKUP_DIR/hill1/docker-ps.txt"
-$SSH root@$HILL1_IP "ip addr show" > "$BACKUP_DIR/hill1/network-config.txt"
-
-# Export hill container image
-echo "  → Exporting container image..."
-$SSH root@$HILL1_IP "docker save hill-challenge-web-fortress | gzip > /tmp/hill1-image.tar.gz"
-$SCP root@$HILL1_IP:/tmp/hill1-image.tar.gz "$BACKUP_DIR/hill1/"
-
-# Backup challenge files if deployed from source
-$SSH root@$HILL1_IP "if [ -d /opt/hill-challenge ]; then tar czf /tmp/hill1-src.tar.gz -C /opt hill-challenge; fi"
-$SCP root@$HILL1_IP:/tmp/hill1-src.tar.gz "$BACKUP_DIR/hill1/" 2>/dev/null || echo "  (no source dir)"
-
-echo "  ✓ Hill 1 backup complete"
-
-# ═══════════════════════════════════════════════════════════════
-# 3. Hill 2 — Service Bastion (${HILL2_PUBLIC_IP:-YOUR_HILL2_IP})
-# ═══════════════════════════════════════════════════════════════
-echo ""
-echo "[3/5] Backing up Hill 2..."
-
-$SSH root@$HILL2_IP "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'" > "$BACKUP_DIR/hill2/docker-ps.txt"
-$SSH root@$HILL2_IP "ip addr show" > "$BACKUP_DIR/hill2/network-config.txt"
-
-echo "  → Exporting container image..."
-$SSH root@$HILL2_IP "docker save hill-challenge-service-bastion | gzip > /tmp/hill2-image.tar.gz"
-$SCP root@$HILL2_IP:/tmp/hill2-image.tar.gz "$BACKUP_DIR/hill2/"
-
-$SSH root@$HILL2_IP "if [ -d /opt/hill-challenge ]; then tar czf /tmp/hill2-src.tar.gz -C /opt hill-challenge; fi"
-$SCP root@$HILL2_IP:/tmp/hill2-src.tar.gz "$BACKUP_DIR/hill2/" 2>/dev/null || echo "  (no source dir)"
-
-echo "  ✓ Hill 2 backup complete"
-
-# ═══════════════════════════════════════════════════════════════
-# 4. Pivot DMZ — Hill 3 + Hill 4 (${PIVOT_PUBLIC_IP:-YOUR_PIVOT_IP})
-# ═══════════════════════════════════════════════════════════════
-echo ""
-echo "[4/5] Backing up Pivot DMZ..."
-
-$SSH root@$PIVOT_IP "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'" > "$BACKUP_DIR/pivot/docker-ps.txt"
-$SSH root@$PIVOT_IP "ip addr show" > "$BACKUP_DIR/pivot/network-config.txt"
-$SSH root@$PIVOT_IP "cat /etc/netplan/*.yaml 2>/dev/null" > "$BACKUP_DIR/pivot/netplan.txt" 2>/dev/null || true
-
-echo "  → Exporting Hill 3 image..."
-$SSH root@$PIVOT_IP "docker save hill-challenge-hill3-api | gzip > /tmp/hill3-image.tar.gz"
-$SCP root@$PIVOT_IP:/tmp/hill3-image.tar.gz "$BACKUP_DIR/pivot/"
-
-echo "  → Exporting Hill 4 image..."
-$SSH root@$PIVOT_IP "docker save hill-challenge-hill4-db | gzip > /tmp/hill4-image.tar.gz"
-$SCP root@$PIVOT_IP:/tmp/hill4-image.tar.gz "$BACKUP_DIR/pivot/"
-
-$SSH root@$PIVOT_IP "if [ -d /opt/hill-challenge ]; then tar czf /tmp/pivot-src.tar.gz -C /opt hill-challenge; fi"
-$SCP root@$PIVOT_IP:/tmp/pivot-src.tar.gz "$BACKUP_DIR/pivot/" 2>/dev/null || echo "  (no source dir)"
-
-echo "  ✓ Pivot DMZ backup complete"
-
-# ═══════════════════════════════════════════════════════════════
-# 5. VPN Server (${VPN_SERVER_IP:-YOUR_VPN_IP})
-# ═══════════════════════════════════════════════════════════════
-echo ""
-echo "[5/5] Backing up VPN Server..."
-
-# WireGuard config + keys
-echo "  → WireGuard configs & keys..."
-$SSH root@$VPN_IP "tar czf /tmp/wireguard-full.tar.gz /etc/wireguard/"
-$SCP root@$VPN_IP:/tmp/wireguard-full.tar.gz "$BACKUP_DIR/vpn/"
-
-$SSH root@$VPN_IP "ip addr show" > "$BACKUP_DIR/vpn/network-config.txt"
-$SSH root@$VPN_IP "ip route" > "$BACKUP_DIR/vpn/routes.txt"
-$SSH root@$VPN_IP "iptables -L -n -v; echo '---NAT---'; iptables -t nat -L -n -v; echo '---FORWARD---'; iptables -L FORWARD -n -v" > "$BACKUP_DIR/vpn/iptables.txt"
-$SSH root@$VPN_IP "wg show" > "$BACKUP_DIR/vpn/wg-show.txt" 2>/dev/null || true
-$SSH root@$VPN_IP "cat /etc/sysctl.conf | grep -v '^#' | grep -v '^$'" > "$BACKUP_DIR/vpn/sysctl.txt" 2>/dev/null || true
-
-echo "  ✓ VPN backup complete"
-
-# ═══════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════
 # Summary
-# ═══════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════
 echo ""
-echo "════════════════════════════════════════════════════════"
+echo "════════════════════════════════════════════════════════════════"
 echo "  Backup Complete!"
-echo "  Location: $BACKUP_DIR"
-echo "════════════════════════════════════════════════════════"
+echo "════════════════════════════════════════════════════════════════"
 echo ""
 echo "Contents:"
-find "$BACKUP_DIR" -type f -exec ls -lh {} \; | awk '{print $5, $9}'
+find "${BACKUP_DIR}" -type f -exec ls -lh {} \; 2>/dev/null | awk '{printf "  %-10s %s\n", $5, $9}'
 echo ""
-TOTAL=$(du -sh "$BACKUP_DIR" | awk '{print $1}')
-echo "Total size: $TOTAL"
+TOTAL=$(du -sh "${BACKUP_DIR}" | awk '{print $1}')
+echo "Total size: ${TOTAL}"
+echo "Location:   ${BACKUP_DIR}"
 echo ""
 echo "To create a single archive:"
-echo "  tar czf koth-full-backup.tar.gz -C $(dirname $BACKUP_DIR) $(basename $BACKUP_DIR)"
+echo "  tar czf koth-backup-${TIMESTAMP}.tar.gz -C $(dirname ${BACKUP_DIR}) $(basename ${BACKUP_DIR})"
+
+# Create manifest
+cat > "${BACKUP_DIR}/MANIFEST.md" << EOF
+# KoTH CTF Backup — ${TIMESTAMP}
+
+## Servers Backed Up
+| Server | IP | Role |
+|---|---|---|
+| Main | ${KOTH_IP} | Scoreboard + Scorebot + DB + Redis + Nginx |
+| Hill 1 | ${HILL1_IP} | Web Fortress |
+| Hill 2 | ${HILL2_IP} | Service Bastion |
+| Hill 3 | ${HILL3_IP} | API Gateway (+ Hill 4 container) |
+| Hill 4 | ${HILL4_IP} | Data Vault |
+
+## Key Files
+- koth/koth_db.dump — PostgreSQL binary dump (use pg_restore)
+- koth/koth_db.sql — PostgreSQL SQL dump (human-readable)
+- koth/redis_dump.rdb — Redis snapshot
+- koth/dot-env — Environment configuration
+- koth/kothd-project.tar.gz — Full /opt/kothd project directory
+- koth/koth-images.tar.gz — Docker images (scoreboard + scorebot)
+- hill{1-4}/hill*-challenge.tar.gz — Challenge source files
+- hill{1-4}/hill*-image.tar.gz — Docker images for each hill
+
+## Restore
+See scripts/restore-to-new-vm.sh in the git repository.
+EOF
+
+ok "Manifest written to ${BACKUP_DIR}/MANIFEST.md"
