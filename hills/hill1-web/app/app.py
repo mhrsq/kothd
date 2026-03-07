@@ -89,7 +89,7 @@ BASE_TEMPLATE = '''
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        {{ content }}
+        {{ content|safe }}
     </div>
     <footer>Web Fortress Corporate Portal v2.1.3 &copy; 2026</footer>
 </body>

@@ -107,17 +107,7 @@ def index():
         "service": "API Gateway",
         "version": "3.2.1",
         "status": "running",
-        "endpoints": [
-            "/api/v1/status",
-            "/api/v1/health",
-            "/api/v1/keys",
-            "/api/v1/routes",
-            "/api/v1/config",
-            "/api/v1/admin",
-            "/api/v1/proxy",
-            "/api/v1/auth/token",
-            "/api/v1/debug",
-        ]
+        "documentation": "Contact administrator for API documentation"
     })
 
 @app.route('/api/v1/health')

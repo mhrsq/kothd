@@ -46,6 +46,13 @@ def init_redis():
             'role': 'readonly',
             'email': 'monitor@vault.local',
         },
+        'maintenance': {
+            'username': 'maintenance',
+            'password': hashlib.md5(b'').hexdigest(),  # Empty password! d41d8cd98f00b204e9800998ecf8427e
+            'role': 'admin',
+            'email': 'maint@vault.internal',
+            'note': 'temporary account - TODO: set password before prod deploy',
+        },
     }
 
     for name, data in users.items():
@@ -75,9 +82,8 @@ def init_redis():
         },
         'system-credentials': {
             'value': json.dumps({
-                'ssh_root': 'd4tav4ult_r00t',
-                'dbadmin': 'db@dmin2026',
-                'redis': 'VaultR3dis2026',
+                'ssh_dbadmin': 'db@dmin2026',
+                'note': 'Redis auth configured in /opt/vault/services/vault_service.py',
             }),
             'owner': 'admin',
             'created': '2026-01-01',

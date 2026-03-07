@@ -146,28 +146,22 @@ class VaultSession:
     def cmd_auth(self, args):
         """
         VULNERABLE: 
-          1. Debug backdoor: auth debug V4ult-Backdoor-2026
+          1. Timing-based auth bypass: empty password with special user
           2. MD5 auth is weak
-          3. After auth, role is taken from Redis (can be manipulated)
+          3. Redis key injection in username (user:admin' -> user:admin)
         """
-        if len(args) < 2:
+        if len(args) < 1:
             self.send("Usage: auth <username> <password>")
             return
 
         username = args[0]
         password = args[1] if len(args) > 1 else ''
 
-        # VULNERABLE: Debug backdoor
-        if username == 'debug' and password == 'V4ult-Backdoor-2026':
-            self.authenticated = True
-            self.username = 'admin'
-            self.role = 'admin'
-            self.send("[DEBUG] Authenticated as admin via debug backdoor")
-            return
-
         # Normal auth via Redis
         try:
             r = self.get_redis()
+            # VULNERABLE: Username is not sanitized — Redis key injection
+            # e.g., auth "admin\x00" "anything" or use key patterns
             user_data = r.hgetall(f'user:{username}')
             if not user_data:
                 self.send("Authentication failed: user not found")
@@ -176,6 +170,8 @@ class VaultSession:
             stored_hash = user_data.get('password', '')
             input_hash = hashlib.md5(password.encode()).hexdigest()
 
+            # VULNERABLE: Type juggling — if stored password field is empty,
+            # MD5 of empty string matches (d41d8cd98f00b204e9800998ecf8427e)
             if input_hash == stored_hash:
                 self.authenticated = True
                 self.username = username
@@ -183,34 +179,31 @@ class VaultSession:
                 self.send(f"Authenticated as {username} (role: {self.role})")
             else:
                 self.send("Authentication failed: wrong password")
-                # VULNERABLE: Hint about password format
-                self.send("Hint: Passwords are stored as MD5 hashes. Check user data.")
         except Exception as e:
             self.send(f"Auth error: {e}")
 
     # ── Help ─────────────────────────────────────────────────────────────
 
     def cmd_help(self):
-        help_text = """Available commands:
-  auth <user> <pass>   Authenticate to the vault
-  help                 Show this help
-  quit                 Disconnect
-
-After authentication:
+        if self.authenticated:
+            help_text = """Available commands:
   whoami               Show current user
   get <key>            Get a value from the data store
   set <key> <value>    Set a value in the data store
   list [pattern]       List keys matching pattern
   info                 Show vault system information
   users                List user accounts
-  secrets              List stored secrets
+  secrets              List stored secrets (admin/operator)
   config [key] [val]   View or update configuration
-  export <format>      Export data (json, csv, raw)
-  dump <filepath>      Read a file from the system
-  load <filepath> <d>  Write data to a file
-  backup [name]        Create a backup
-  restore <data>       Restore from backup (base64 encoded)
-  exec <query>         Execute a data query
+  backup [name]        Create a data backup
+  help                 Show this help
+  quit                 Disconnect
+"""
+        else:
+            help_text = """Available commands:
+  auth <user> <pass>   Authenticate to the vault
+  help                 Show this help
+  quit                 Disconnect
 """
         self.send(help_text)
 
@@ -258,23 +251,21 @@ After authentication:
     # ── VULN #4: Info disclosure ─────────────────────────────────────────
 
     def cmd_info(self):
-        """VULNERABLE: Leaks Redis password, system info, file paths"""
+        """VULNERABLE: Leaks some system info but not everything"""
+        try:
+            uptime = subprocess.check_output(['uptime', '-p'], text=True).strip()
+        except:
+            uptime = 'unknown'
         info = {
             'vault_version': '4.1.0',
             'backend': 'redis',
             'redis_host': REDIS_HOST,
             'redis_port': REDIS_PORT,
-            'redis_password': REDIS_PASS,  # VULNERABLE: leaks password
             'data_dir': '/opt/vault/data',
             'backup_dir': '/opt/vault/backups',
-            'serialization': 'pickle',
             'os_user': os.environ.get('USER', 'dbadmin'),
-            'suid_binaries': ['/usr/local/bin/vault_backup'],
-            'cron_scripts': ['/opt/vault/admin/maintenance.sh (writable)'],
-            'sudo_cmds': [
-                'redis-cli (as root, no password)',
-                '/opt/vault/admin/db_admin.sh (as root, no password)',
-            ],
+            'uptime': uptime,
+            'note': 'Use "config" to view vault configuration',
         }
         self.send(json.dumps(info, indent=2))
 
@@ -310,6 +301,9 @@ After authentication:
 
     def cmd_export(self, args):
         """VULNERABLE: Command injection via format parameter"""
+        if self.role not in ('admin', 'operator'):
+            self.send("Access denied: admin or operator role required")
+            return
         if not args:
             self.send("Usage: export <format>  (json, csv, raw)")
             return
@@ -328,11 +322,16 @@ After authentication:
     # ── VULN #5: Arbitrary file read ─────────────────────────────────────
 
     def cmd_dump(self, args):
-        """VULNERABLE: Arbitrary file read"""
+        """VULNERABLE: Path traversal — checks for /opt/vault/ prefix but can be bypassed"""
         if not args:
             self.send("Usage: dump <filepath>")
             return
         filepath = args[0]
+        # "Security" check — VULNERABLE: can bypass with /opt/vault/../../etc/shadow
+        if not filepath.startswith('/opt/vault/'):
+            self.send("Access denied: can only read files under /opt/vault/")
+            return
+        # Note: no os.path.realpath() call — path traversal works
         try:
             with open(filepath, 'r') as f:
                 content = f.read(8192)
@@ -343,12 +342,16 @@ After authentication:
     # ── VULN #5: Arbitrary file write ────────────────────────────────────
 
     def cmd_load(self, args):
-        """VULNERABLE: Arbitrary file write"""
+        """VULNERABLE: Path traversal — same bypass as dump"""
         if len(args) < 2:
             self.send("Usage: load <filepath> <data>")
             return
         filepath = args[0]
         data = args[1]
+        # "Security" check — VULNERABLE: bypass with /opt/vault/../../root/king.txt
+        if not filepath.startswith('/opt/vault/'):
+            self.send("Access denied: can only write files under /opt/vault/")
+            return
         try:
             with open(filepath, 'w') as f:
                 f.write(data)
@@ -419,7 +422,10 @@ After authentication:
     # ── Exec query ───────────────────────────────────────────────────────
 
     def cmd_exec(self, args):
-        """Execute Redis commands directly"""
+        """Execute Redis commands directly — admin only"""
+        if self.role != 'admin':
+            self.send("Access denied: admin role required")
+            return
         if not args:
             self.send("Usage: exec <redis-command>")
             return

@@ -8,6 +8,7 @@ services:
     ports:
       - "2222:22"           # SSH for teams
       - "21:21"             # FTP
+      - "80:8080"           # Web monitoring dashboard
       - "9999:9999"         # TCP management console (SLA check target)
       - "40000-40100:40000-40100"  # FTP passive ports
     restart: unless-stopped

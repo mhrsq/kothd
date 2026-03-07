@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     vsftpd gcc libc6-dev make sudo xinetd cron \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Flask for web monitoring dashboard
+RUN pip install --no-cache-dir flask==3.0.0
+
 # Setup SSH with weak credentials (VULNERABLE)
 RUN mkdir -p /run/sshd && \
     echo 'root:toor' | chpasswd && \
@@ -26,7 +29,8 @@ RUN useradd -m -s /bin/bash -g operator operator && \
 # ── Vulnerable TCP Service (Python) ──
 COPY services/tcp_service.py /opt/services/tcp_service.py
 COPY services/command_handler.py /opt/services/command_handler.py
-RUN chmod +x /opt/services/tcp_service.py
+COPY services/web_monitor.py /opt/services/web_monitor.py
+RUN chmod +x /opt/services/tcp_service.py /opt/services/web_monitor.py
 
 # ── Vulnerable FTP config (VULNERABLE: anon read, weak user write) ──
 COPY services/vsftpd.conf /etc/vsftpd.conf
@@ -55,6 +59,6 @@ RUN echo 'nobody' > /root/king.txt && chmod 644 /root/king.txt
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 21 22 9999
+EXPOSE 21 22 8080 9999
 
 CMD ["/entrypoint.sh"]
