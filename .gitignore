@@ -43,6 +43,7 @@ docker-compose.override.yml
 
 # ─── Data & Backups ──────────────────────────────────────────
 backup-vps/
+koth-backup-*/
 *.sql.gz
 *.dump
 
