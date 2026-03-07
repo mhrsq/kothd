@@ -186,7 +186,6 @@ _PUBLIC_PAGES = {
     "/vpn": "dashboard.html",
     "/topology": "dashboard.html",
     "/rules": "dashboard.html",
-    "/guide": "dashboard.html",
     "/scoreboard": "index.html",
     "/history": "history.html",
     "/organizer": "organizer.html",

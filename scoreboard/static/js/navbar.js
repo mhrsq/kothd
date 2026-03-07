@@ -20,7 +20,6 @@
         navItems += `<a href="/vpn" class="gn-link ${isActive('/vpn')}">🔐 VPN</a>`;
         navItems += `<a href="/topology" class="gn-link ${isActive('/topology')}">🗺️ Topology</a>`;
         navItems += `<a href="/rules" class="gn-link ${isActive('/rules')}">📜 Rules</a>`;
-        navItems += `<a href="/guide" class="gn-link ${isActive('/guide')}">📖 Guide</a>`;
         navItems += `<a href="/scoreboard" class="gn-link ${isActive('/scoreboard')}">📊 Scoreboard</a>`;
         navItems += `<a href="/history" class="gn-link ${isActive('/history')}">📈 History</a>`;
     } else if (role === 'admin') {
