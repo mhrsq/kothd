@@ -51,6 +51,15 @@ class Settings(BaseSettings):
     scorebot_port: int = 8081
     scorebot_check_timeout: int = 15
 
+    # SMTP (disabled by default — set smtp_enabled=true to activate email verification)
+    smtp_enabled: bool = False
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+    smtp_use_tls: bool = True
+
     # Branding
     event_name: str = "KoTH CTF"
     event_subtitle: str = "King of the Hill Competition"

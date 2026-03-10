@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KoTH CTF — Point History</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/fonts.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <script>if(!sessionStorage.getItem('koth_role'))location.replace('/login');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -149,7 +149,7 @@
                 <canvas id="all-teams-chart"></canvas>
             </div>
             <p id="all-teams-nodata" class="no-data" style="display:none;">
-                Belum ada data. Game belum dimulai atau belum ada tick yang diproses.
+                No data available. Game has not started or no ticks have been processed.
             </p>
         </div>
 
@@ -157,9 +157,9 @@
         <div class="chart-card">
             <h2>🔍 Team Detail — Point Breakdown</h2>
             <div class="team-selector">
-                <label for="team-select">Pilih Team:</label>
+                <label for="team-select">Select Team:</label>
                 <select id="team-select" onchange="loadTeamHistory()">
-                    <option value="">-- Pilih Team --</option>
+                    <option value="">-- Select Team --</option>
                 </select>
             </div>
 
@@ -203,7 +203,7 @@
                 </table>
             </div>
             <p id="team-nodata" class="no-data">
-                Pilih team untuk melihat detail history point.
+                Select a team to view point history details.
             </p>
         </div>
 
@@ -363,7 +363,7 @@
             if (!data.history || data.history.length === 0) {
                 document.getElementById('team-nodata').style.display = 'block';
                 document.getElementById('team-nodata').textContent =
-                    `${data.display_name || data.team_name} belum memiliki point. Belum menjadi king di hill manapun.`;
+                    `${data.display_name || data.team_name} has no points yet. Has not been king on any hill.`;
                 document.getElementById('team-detail-table').style.display = 'none';
                 document.getElementById('team-stats').style.display = 'none';
                 if (teamChart) { teamChart.destroy(); teamChart = null; }
@@ -480,7 +480,7 @@
                     <td><span class="points-badge">+${h.points_this_tick}</span></td>
                     <td>${h.cumulative_points.toLocaleString()}</td>
                     <td style="color:var(--text-muted); font-size:11px;">
-                        ${h.timestamp ? new Date(h.timestamp).toLocaleTimeString('id-ID') : '-'}
+                        ${h.timestamp ? new Date(h.timestamp).toLocaleTimeString('en-US') : '-'}
                     </td>
                 </tr>
             `).join('');
@@ -488,7 +488,7 @@
         } catch(e) {
             console.error('Failed to load team history:', e);
             document.getElementById('team-nodata').style.display = 'block';
-            document.getElementById('team-nodata').textContent = 'Gagal memuat data: ' + e.message;
+            document.getElementById('team-nodata').textContent = 'Failed to load data: ' + e.message;
         }
     }
 

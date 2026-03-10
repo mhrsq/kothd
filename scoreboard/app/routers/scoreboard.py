@@ -766,3 +766,24 @@ async def get_public_categories(db: AsyncSession = Depends(get_db)):
     else:
         categories = [{"id": "default", "label": "Default"}]
     return {"categories": categories}
+
+# ─── Public Game Config (scoring parameters) ────────────────────────────────
+
+@router.get("/game-config")
+async def get_public_game_config(db: AsyncSession = Depends(get_db)):
+    """Public endpoint: returns scoring-related config for dashboard rules page"""
+    from app.config import get_settings
+    _settings = get_settings()
+    _keys = [
+        "tick_interval", "base_points", "first_blood_bonus",
+        "defense_streak_bonus", "pivot_multiplier",
+    ]
+    result = await db.execute(select(GameConfig).where(GameConfig.key.in_(_keys)))
+    configs = {c.key: c.value for c in result.scalars().all()}
+    return {
+        "tick_interval": int(configs.get("tick_interval", _settings.tick_interval)),
+        "base_points": int(configs.get("base_points", _settings.base_points)),
+        "first_blood_bonus": int(configs.get("first_blood_bonus", _settings.first_blood_bonus)),
+        "defense_streak_bonus": int(configs.get("defense_streak_bonus", _settings.defense_streak_bonus)),
+        "pivot_multiplier": float(configs.get("pivot_multiplier", _settings.pivot_multiplier)),
+    }

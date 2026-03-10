@@ -8,7 +8,7 @@
         // Admin page merged into Organizer Console
         window.location.replace('/organizer');
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/fonts.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
         .admin-container {
@@ -143,7 +143,7 @@
     <!-- Auth -->
     <div id="auth-panel" class="auth-panel">
         <h2 style="margin-bottom:8px;">🔐 Admin Login</h2>
-        <p style="color:var(--text-muted); font-size:13px;">Masukkan admin token</p>
+        <p style="color:var(--text-muted); font-size:13px;">Enter admin token</p>
         <input type="password" id="admin-token" placeholder="Admin Token" onkeypress="if(event.key==='Enter') authenticate()">
         <br>
         <button class="btn btn-primary" onclick="authenticate()">Login</button>
@@ -166,7 +166,7 @@
                     <button class="btn btn-danger" onclick="gameControl('stop')">⏹ Stop</button>
                 </div>
                 <button class="btn btn-danger" style="margin-top:16px; width:100%;"
-                        onclick="if(confirm('RESET semua data game?')) resetGame()">
+                        onclick="if(confirm('RESET all game data?')) resetGame()">
                     🗑️ Reset Game
                 </button>
             </div>
@@ -250,7 +250,7 @@
         })
         .catch(e => {
             document.getElementById('auth-error').style.display = 'block';
-            document.getElementById('auth-error').textContent = 'Token tidak valid';
+            document.getElementById('auth-error').textContent = 'Invalid token';
         });
     }
 
@@ -297,7 +297,7 @@
             const r = await fetch(`${API_BASE}/teams`);
             const teams = await r.json();
             const el = document.getElementById('teams-list');
-            if (teams.length === 0) { el.innerHTML = '<p style="color:var(--text-muted);">Belum ada team</p>'; return; }
+            if (teams.length === 0) { el.innerHTML = '<p style="color:var(--text-muted);">No teams yet</p>'; return; }
             el.innerHTML = teams.map(t => `
                 <div class="stat-row">
                     <span class="stat-label">#${t.id} ${t.name}</span>
@@ -312,7 +312,7 @@
             const r = await apiCall(`${API_BASE}/admin/audit?limit=50`);
             const logs = await r.json();
             const el = document.getElementById('audit-log');
-            if (logs.length === 0) { el.innerHTML = '<p style="color:var(--text-muted);">Belum ada log</p>'; return; }
+            if (logs.length === 0) { el.innerHTML = '<p style="color:var(--text-muted);">No logs yet</p>'; return; }
             el.innerHTML = logs.map(l => `
                 <div class="audit-item">
                     <span class="audit-type">[${l.event_type}]</span>
@@ -383,7 +383,7 @@
         const reason = document.getElementById('adj-reason').value;
 
         if (!teamId || isNaN(points) || !reason) {
-            showAlert('Semua field harus diisi', 'error');
+            showAlert('All fields are required', 'error');
             return;
         }
 

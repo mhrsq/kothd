@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoTH CTF — King of the Hill</title>
+    <link rel="stylesheet" href="/static/css/fonts.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+    <style>
+        body { overflow-x: hidden; }
+        .hero {
+            position: relative;
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 80px 24px 60px;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 30% 20%, rgba(34,197,94,.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(59,130,246,.10) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .hero-content { position: relative; max-width: 720px; }
+        .hero-icon { font-size: 64px; margin-bottom: 16px; }
+        .hero h1 {
+            font-family: var(--font-sans);
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        .hero-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            justify-content: center;
+            margin-bottom: 40px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .hero-meta span { display: flex; align-items: center; gap: 6px; }
+        .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn-hero {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 15px;
+            text-decoration: none;
+            transition: transform .15s, box-shadow .15s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+        .btn-primary-hero {
+            background: linear-gradient(135deg, var(--accent-green), #16a34a);
+            color: #fff;
+        }
+        .btn-secondary-hero {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .info-grid {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+        .info-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 28px;
+        }
+        .info-card h3 {
+            font-size: 15px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .info-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .desc-section {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+        }
+        .desc-section h2 {
+            font-size: 20px;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+        .desc-section p, .desc-section div {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .rules-section {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+        }
+        .rules-section h2 {
+            font-size: 20px;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+        .rules-section pre {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            font-family: var(--font-sans);
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        .game-status-bar {
+            max-width: 720px;
+            margin: 0 auto 40px;
+            padding: 16px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .status-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+        .status-dot.running { background: var(--accent-green); animation: pulse 2s infinite; }
+        .status-dot.paused { background: var(--accent-orange); }
+        .status-dot.stopped { background: var(--accent-red); }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .4; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="hero-content">
+            <div class="hero-icon">⚔️</div>
+            <h1 id="eventName">KoTH CTF</h1>
+            <p class="hero-subtitle" id="eventSubtitle">King of the Hill — Capture the Flag</p>
+            <div class="hero-meta">
+                <span id="metaDate" style="display:none;">📅 <span id="eventDate"></span></span>
+                <span id="metaLocation" style="display:none;">📍 <span id="eventLocation"></span></span>
+                <span id="metaOrganizer" style="display:none;">🏢 <span id="eventOrganizer"></span></span>
+                <span id="metaContact" style="display:none;">📧 <span id="eventContact"></span></span>
+            </div>
+            <div class="game-status-bar" id="gameStatusBar" style="display:none;">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Loading...</span>
+            </div>
+            <div class="hero-actions">
+                <a href="/scoreboard" class="btn-hero btn-primary-hero">📊 Live Scoreboard</a>
+                <a href="/login" class="btn-hero btn-secondary-hero">🔑 Team Login</a>
+                <a href="/register" class="btn-hero btn-secondary-hero" id="registerBtn" style="display:none;">📝 Register</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-card">
+            <h3>⚔️ Attack & Defend</h3>
+            <p>Compete to capture and hold hill servers. Score points for every tick you control a hill.</p>
+        </div>
+        <div class="info-card">
+            <h3>📊 Real-time Scoring</h3>
+            <p>Live scoreboard with WebSocket updates. Watch rankings shift in real-time as teams battle.</p>
+        </div>
+        <div class="info-card">
+            <h3>🏆 First Blood Bonus</h3>
+            <p>Be the first team to capture a hill and earn bonus points. Speed and skill matter.</p>
+        </div>
+    </div>
+
+    <div class="desc-section" id="descSection" style="display:none;">
+        <h2>About the Event</h2>
+        <div id="eventDescription"></div>
+    </div>
+
+    <div class="rules-section" id="rulesSection" style="display:none;">
+        <h2>Rules</h2>
+        <pre id="eventRules"></pre>
+    </div>
+
+    <footer class="footer" style="text-align:center; padding:24px; color:var(--text-muted); font-size:12px; border-top:1px solid var(--border);">
+        <p>KoTH CTF Platform — Powered by kothd</p>
+    </footer>
+
+    <script src="/static/js/navbar.js"></script>
+    <script>
+    (async () => {
+        try {
+            const [eventRes, statusRes] = await Promise.all([
+                fetch('/api/scoreboard/event-info'),
+                fetch('/api/admin/game/status').catch(() => null)
+            ]);
+
+            if (eventRes.ok) {
+                const e = await eventRes.json();
+                if (e.event_name) document.getElementById('eventName').textContent = e.event_name;
+                if (e.event_subtitle) document.getElementById('eventSubtitle').textContent = e.event_subtitle;
+                if (e.event_date) {
+                    document.getElementById('eventDate').textContent = e.event_date;
+                    document.getElementById('metaDate').style.display = '';
+                }
+                if (e.event_location) {
+                    document.getElementById('eventLocation').textContent = e.event_location;
+                    document.getElementById('metaLocation').style.display = '';
+                }
+                if (e.event_organizer) {
+                    document.getElementById('eventOrganizer').textContent = e.event_organizer;
+                    document.getElementById('metaOrganizer').style.display = '';
+                }
+                if (e.event_contact) {
+                    document.getElementById('eventContact').textContent = e.event_contact;
+                    document.getElementById('metaContact').style.display = '';
+                }
+                if (e.event_description) {
+                    document.getElementById('eventDescription').textContent = e.event_description;
+                    document.getElementById('descSection').style.display = '';
+                }
+                if (e.event_rules) {
+                    document.getElementById('eventRules').textContent = e.event_rules;
+                    document.getElementById('rulesSection').style.display = '';
+                }
+            }
+
+            if (statusRes && statusRes.ok) {
+                const s = await statusRes.json();
+                const bar = document.getElementById('gameStatusBar');
+                const dot = document.getElementById('statusDot');
+                const txt = document.getElementById('statusText');
+                const labels = {
+                    not_started: 'Game not started',
+                    grace_period: 'Grace period — game starting soon',
+                    running: 'Game is LIVE!',
+                    paused: 'Game paused',
+                    finished: 'Game finished',
+                    stopped: 'Game ended'
+                };
+                const status = s.game_status || 'not_started';
+                txt.textContent = labels[status] || status;
+                if (status === 'running' || status === 'grace_period') dot.classList.add('running');
+                else if (status === 'paused') dot.classList.add('paused');
+                else if (status === 'finished' || status === 'stopped') dot.classList.add('stopped');
+                bar.style.display = '';
+            }
+
+            // Check registration status
+            try {
+                const regRes = await fetch('/api/scoreboard/event-info');
+                if (regRes.ok) {
+                    // If registration page is accessible, show button
+                    document.getElementById('registerBtn').style.display = '';
+                }
+            } catch {}
+
+        } catch (err) {
+            console.error('Landing page load error:', err);
+        }
+    })();
+    </script>
+</body>
+</html>

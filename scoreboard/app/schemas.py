@@ -224,6 +224,7 @@ class FirstBloodResponse(BaseModel):
 class TeamRegisterRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=64, pattern="^[a-zA-Z0-9_-]+$")
     display_name: str = Field(..., min_length=2, max_length=128, pattern="^[a-zA-Z0-9 _\\-().]+$")
+    email: Optional[str] = Field(None, max_length=255)
     category: str = Field(default="default", max_length=32)
     registration_code: str = Field(..., min_length=1)
 

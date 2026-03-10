@@ -17,6 +17,7 @@ class Team(Base):
     display_name = Column(String(128))
     vpn_ip = Column(String(45))
     token = Column(String(128))
+    email = Column(String(255), nullable=True)
     category = Column(String(32), default="default")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())

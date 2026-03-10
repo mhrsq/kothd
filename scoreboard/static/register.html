@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KoTH CTF — Team Registration</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/fonts.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
         .register-page {
@@ -172,38 +172,44 @@
 
             <div class="form-group">
                 <label>Team Name *</label>
-                <input type="text" id="reg-name" placeholder="contoh: team-alpha" maxlength="64"
+                <input type="text" id="reg-name" placeholder="e.g. team-alpha" maxlength="64"
                        pattern="^[a-zA-Z0-9_-]+$">
-                <div class="hint">Hanya huruf, angka, underscore, dan dash. Akan digunakan untuk identifikasi di king.txt</div>
+                <div class="hint">Letters, numbers, underscore, and dash only. Used for identification in king.txt</div>
             </div>
 
             <div class="form-group">
                 <label>Display Name *</label>
-                <input type="text" id="reg-display" placeholder="contoh: Tim Alpha" maxlength="128">
-                <div class="hint">Nama yang ditampilkan di scoreboard</div>
+                <input type="text" id="reg-display" placeholder="e.g. Team Alpha" maxlength="128">
+                <div class="hint">Name displayed on the scoreboard</div>
             </div>
 
             <div class="form-group">
-                <label>Kategori *</label>
+                <label>Category *</label>
                 <select id="reg-category">
                     <option value="default" selected>Default</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label>Kode Registrasi *</label>
-                <input type="password" id="reg-code" placeholder="Masukkan kode dari panitia">
-                <div class="hint">Dapatkan kode registrasi dari panitia lomba</div>
+                <label>Email (optional)</label>
+                <input type="email" id="reg-email" placeholder="e.g. team@example.com" maxlength="255">
+                <div class="hint">Contact email for your team</div>
+            </div>
+
+            <div class="form-group">
+                <label>Registration Code *</label>
+                <input type="password" id="reg-code" placeholder="Enter code from organizer">
+                <div class="hint">Get the registration code from the event organizer</div>
             </div>
 
             <button class="btn-register" id="btn-register" onclick="doRegister()">
-                Daftar Sekarang
+                Register Now
             </button>
         </div>
 
         <div id="result-container" style="display:none;">
             <div class="result-card">
-                <h3>✅ Registrasi Berhasil!</h3>
+                <h3>✅ Registration Successful!</h3>
                 <div class="result-row">
                     <span class="label">Team ID</span>
                     <span class="value" id="res-id"></span>
@@ -217,7 +223,7 @@
                     <span class="value" id="res-display"></span>
                 </div>
                 <div class="result-row">
-                    <span class="label">Kategori</span>
+                    <span class="label">Category</span>
                     <span class="value" id="res-category"></span>
                 </div>
 
@@ -228,14 +234,14 @@
                         <span class="value" id="res-vpn-ip" style="color:#22c55e;"></span>
                     </div>
                     <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:6px;padding:12px 16px;margin-top:8px;">
-                        <p style="font-size:13px;color:#22c55e;margin-bottom:6px;">✅ Config WireGuard otomatis dibuat!</p>
-                        <p style="font-size:12px;color:var(--text-secondary);">Login dengan token di atas, lalu download config WireGuard di halaman <strong>Dashboard → 🔐 VPN Setup</strong>.</p>
+                        <p style="font-size:13px;color:#22c55e;margin-bottom:6px;">✅ WireGuard config created automatically!</p>
+                        <p style="font-size:12px;color:var(--text-secondary);">Login with the token above, then download the WireGuard config from <strong>Dashboard → 🔐 VPN Setup</strong>.</p>
                     </div>
                 </div>
 
                 <h3 style="margin-top:16px;">🔑 Team Token</h3>
                 <div class="token-display" id="res-token"></div>
-                <p class="token-warning">⚠️ SIMPAN TOKEN INI! Token hanya ditampilkan sekali dan dibutuhkan untuk verifikasi identitas tim.</p>
+                <p class="token-warning">⚠️ SAVE THIS TOKEN! The token is only shown once and is required for team authentication.</p>
 
                 <a href="/login" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#3b82f6;color:#fff;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;">🔐 Login ke Dashboard →</a>
             </div>
@@ -253,7 +259,7 @@
             const d = await r.json();
             if (!d.registration_enabled) {
                 document.getElementById('register-form-card').style.display = 'none';
-                showAlert('Registrasi sudah ditutup. Hubungi panitia untuk informasi lebih lanjut.', 'closed');
+                showAlert('Registration is closed. Contact the organizer for more information.', 'closed');
             }
             // Populate category dropdown dynamically
             if (d.categories && d.categories.length > 0 && d.category_labels) {
@@ -270,23 +276,24 @@
     async function doRegister() {
         const name = document.getElementById('reg-name').value.trim();
         const display = document.getElementById('reg-display').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
         const category = document.getElementById('reg-category').value;
         const code = document.getElementById('reg-code').value;
 
         // Client-side validation
         if (!name || !display || !code) {
-            showAlert('Semua field bertanda * harus diisi', 'error');
+            showAlert('All fields marked * are required', 'error');
             return;
         }
 
         if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
-            showAlert('Team Name hanya boleh huruf, angka, underscore (-), dan dash (_)', 'error');
+            showAlert('Team Name: only letters, numbers, underscore and dash allowed', 'error');
             return;
         }
 
         const btn = document.getElementById('btn-register');
         btn.disabled = true;
-        btn.textContent = 'Mendaftar...';
+        btn.textContent = 'Registering...';
 
         try {
             const r = await fetch(`${API_BASE}/register`, {
@@ -294,8 +301,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: name,
-                    display_name: display,
-                    category: category,
+                    display_name: display,                    email: email || undefined,                    category: category,
                     registration_code: code,
                 }),
             });
@@ -319,14 +325,14 @@
 
                 clearAlert();
             } else {
-                showAlert(d.detail || 'Registrasi gagal', 'error');
+                showAlert(d.detail || 'Registration failed', 'error');
                 btn.disabled = false;
-                btn.textContent = 'Daftar Sekarang';
+                btn.textContent = 'Register Now';
             }
         } catch(e) {
             showAlert('Network error: ' + e.message, 'error');
             btn.disabled = false;
-            btn.textContent = 'Daftar Sekarang';
+            btn.textContent = 'Register Now';
         }
     }
 

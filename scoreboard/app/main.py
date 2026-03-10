@@ -155,6 +155,7 @@ _HTML_TO_CLEAN = {
     "org-login.html": "/org",
     "admin.html": "/admin",
     "index.html": "/scoreboard",
+    "landing.html": "/landing",
     "history.html": "/history",
 }
 
@@ -191,6 +192,7 @@ _PUBLIC_PAGES = {
     "/organizer": "organizer.html",
     "/org": "org-login.html",
     "/admin": "admin.html",
+    "/landing": "landing.html",
 }
 
 
@@ -209,8 +211,8 @@ for _path, _file in _PUBLIC_PAGES.items():
 # ─── Root ────────────────────────────────────────────────────────────────────
 @app.get("/", include_in_schema=False)
 async def root():
-    if _STATIC_DIR and (_STATIC_DIR / "login.html").is_file():
-        return FileResponse(_STATIC_DIR / "login.html", media_type="text/html")
+    if _STATIC_DIR and (_STATIC_DIR / "landing.html").is_file():
+        return FileResponse(_STATIC_DIR / "landing.html", media_type="text/html")
     return HTMLResponse(
         content="""
         <html><head>

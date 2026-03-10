@@ -94,6 +94,7 @@ async def register_team(
     team = Team(
         name=body.name,
         display_name=body.display_name,
+        email=body.email or None,
         category=body.category,
         token=token,
     )

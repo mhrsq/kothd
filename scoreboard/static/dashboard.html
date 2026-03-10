@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KoTH CTF — Team Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/fonts.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
     <style>
         :root {
@@ -14,11 +14,18 @@
             --accent-orange:#f97316;--accent-purple:#a855f7;--accent-gold:#fbbf24;
             --font-mono:'JetBrains Mono',monospace;--font-sans:'Inter',sans-serif;--radius:8px;
         }
+        [data-theme="light"]{
+            --bg-primary:#f8fafc;--bg-secondary:#f1f5f9;--bg-card:#ffffff;--bg-hover:#e2e8f0;
+            --border:#cbd5e1;--text-primary:#1e293b;--text-secondary:#475569;--text-muted:#94a3b8;
+            --accent-green:#16a34a;--accent-red:#dc2626;--accent-blue:#2563eb;--accent-cyan:#0891b2;
+            --accent-orange:#ea580c;--accent-purple:#9333ea;--accent-gold:#d97706;
+        }
         *{box-sizing:border-box;margin:0;padding:0;}
         body{font-family:var(--font-sans);background:var(--bg-primary);color:var(--text-primary);min-height:100vh;}
 
         /* ── Navbar ── */
         .navbar{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;background:linear-gradient(135deg,#111827,#1e293b);border-bottom:2px solid var(--accent-green);position:sticky;top:0;z-index:100;}
+        [data-theme="light"] .navbar{background:linear-gradient(135deg,#e2e8f0,#f1f5f9);}
         .nav-left{display:flex;align-items:center;gap:14px;}
         .nav-logo{font-size:28px;filter:drop-shadow(0 0 8px rgba(34,197,94,.4));}
         .nav-title{font-size:15px;font-weight:900;background:linear-gradient(135deg,var(--accent-green),var(--accent-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
@@ -195,7 +202,7 @@
 <!-- ─── HOME ─── -->
 <div class="page-section active" id="sec-home">
     <div class="welcome" id="welcomeBanner">
-        <h2>Selamat Datang, <span id="welcomeName">Team</span>! ⚔️</h2>
+        <h2>Welcome, <span id="welcomeName">Team</span>! ⚔️</h2>
         <p id="welcomeSubtitle">King of the Hill — Capture. Hold. Defend.</p>
     </div>
 
@@ -206,40 +213,40 @@
 
     <div class="grid-2">
         <div class="card">
-            <h3>📡 Info Team Anda</h3>
+            <h3>📡 Your Team Info</h3>
             <table class="tbl" id="teamInfoTbl">
                 <tbody></tbody>
             </table>
         </div>
         <div class="card">
-            <h3>📢 Pengumuman Terbaru</h3>
+            <h3>📢 Recent Announcements</h3>
             <div id="homeAnnouncements" style="max-height:260px;overflow-y:auto;">
-                <p style="color:var(--text-muted);font-size:13px;">Belum ada pengumuman</p>
+                <p style="color:var(--text-muted);font-size:13px;">No announcements yet</p>
             </div>
         </div>
     </div>
 
     <div class="card">
-        <h3>⚡ Quick Start — 4 Langkah Mulai Bertanding</h3>
+        <h3>⚡ Quick Start — 4 Steps to Start Competing</h3>
         <div class="step">
             <div class="step-num">1</div>
             <div class="step-body">
                 <h4>Setup VPN</h4>
-                <p>Download config WireGuard dari panitia, import ke WireGuard client, dan aktifkan koneksi. Detail lengkap di tab <strong>🔐 VPN Setup</strong>.</p>
+                <p>Download the WireGuard config from the organizer, import it into your WireGuard client, and activate the connection. Full details in the <strong>🔐 VPN Setup</strong> tab.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">2</div>
             <div class="step-body">
                 <h4>Recon & Scan</h4>
-                <p>Temukan dan akses Pivot DMZ melalui VPN network, lalu scan Hill 1-4 melalui pivot. Lihat <strong>🗺️ Topology</strong> untuk overview jaringan.</p>
+                <p>Discover and access the Pivot DMZ through the VPN network, then scan Hills 1-4 through the pivot. See <strong>🗺️ Topology</strong> for the network overview.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">3</div>
             <div class="step-body">
                 <h4>Exploit & Capture</h4>
-                <p>Eksploitasi vulnerability di setiap Hill, dapatkan root access, lalu tulis nama team ke <code style="color:var(--accent-cyan);">/root/king.txt</code>.</p>
+                <p>Exploit vulnerabilities on each Hill, gain root access, then write your team name to <code style="color:var(--accent-cyan);">/root/king.txt</code>.</p>
                 <div class="code-block">
 echo "<span id="qsTeamName">team-name</span>" > /root/king.txt<button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
                 </div>
@@ -249,7 +256,7 @@ echo "<span id="qsTeamName">team-name</span>" > /root/king.txt<button class="cop
             <div class="step-num">4</div>
             <div class="step-body">
                 <h4>Defend & Score</h4>
-                <p>Pertahankan akses root! Setiap <strong>60 detik</strong> scorebot membaca king.txt. Jika nama team anda tertulis DAN service SLA tetap hidup = <strong>+10 poin</strong> per tick per hill.</p>
+                <p>Defend your root access! Every <strong id="cfgTickInterval">60 seconds</strong> the scorebot reads king.txt. If your team name is written AND the SLA service stays up = <strong id="cfgBasePoints">+10 points</strong> per tick per hill.</p>
             </div>
         </div>
     </div>
@@ -261,7 +268,7 @@ echo "<span id="qsTeamName">team-name</span>" > /root/king.txt<button class="cop
 
     <!-- Connection Info -->
     <div class="card">
-        <h3>📋 Info Koneksi VPN Anda</h3>
+        <h3>📋 Your VPN Connection Info</h3>
         <table class="tbl">
             <tbody>
                 <tr><td style="font-weight:700;width:180px;">VPN IP</td><td class="mono" id="vpnIpDisplay">-</td></tr>
@@ -305,31 +312,31 @@ echo "<span id="qsTeamName">team-name</span>" > /root/king.txt<button class="cop
                 <div class="step-num">2</div>
                 <div class="step-body">
                     <h4>Download & Import Config</h4>
-                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">Klik tombol <strong>"🛡️ Download WireGuard Config"</strong> di atas, lalu:</p>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">Click the <strong>"🛡️ Download WireGuard Config"</strong> button above, then:</p>
                     <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;"><strong>Linux:</strong></p>
                     <div class="code-block">sudo cp wg-<span class="vpnTeamSlug">team</span>.conf /etc/wireguard/wg0.conf<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
-                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;margin-bottom:8px;"><strong>Windows:</strong> Buka WireGuard GUI → <code>Add Tunnel</code> → pilih file <code>wg-<span class="vpnTeamSlug">team</span>.conf</code></p>
+                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;margin-bottom:8px;"><strong>Windows:</strong> Open WireGuard GUI → <code>Add Tunnel</code> → select file <code>wg-<span class="vpnTeamSlug">team</span>.conf</code></p>
                 </div>
             </div>
 
             <div class="step">
                 <div class="step-num">3</div>
                 <div class="step-body">
-                    <h4>Aktifkan Koneksi</h4>
+                    <h4>Activate Connection</h4>
                     <div class="code-block">sudo wg-quick up wg0<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
-                    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Windows: Klik <strong>Activate</strong> di WireGuard GUI</p>
+                    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Windows: Click <strong>Activate</strong> in the WireGuard GUI</p>
                 </div>
             </div>
 
             <div class="step">
                 <div class="step-num">4</div>
                 <div class="step-body">
-                    <h4>Verifikasi Koneksi</h4>
-                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Cek status WireGuard:</p>
+                    <h4>Verify Connection</h4>
+                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Check WireGuard status:</p>
                     <div class="code-block">sudo wg show<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
-                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;margin-bottom:8px;">Scan VPN network untuk discovery:</p>
+                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;margin-bottom:8px;">Scan the VPN network for discovery:</p>
                     <div class="code-block">nmap -sn 10.0.0.0/24<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
-                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;margin-bottom:8px;">Scan port target yang ditemukan:</p>
+                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;margin-bottom:8px;">Port scan the discovered targets:</p>
                     <div class="code-block">nmap -sT -Pn &lt;target-ip&gt;<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
                 </div>
             </div>
@@ -337,7 +344,7 @@ echo "<span id="qsTeamName">team-name</span>" > /root/king.txt<button class="cop
             <div class="step">
                 <div class="step-num">5</div>
                 <div class="step-body">
-                    <h4>Matikan VPN (jika perlu)</h4>
+                    <h4>Disconnect VPN (if needed)</h4>
                     <div class="code-block">sudo wg-quick down wg0<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
                 </div>
             </div>
@@ -362,21 +369,21 @@ echo "<span id="qsTeamName">team-name</span>" > /root/king.txt<button class="cop
                 <div class="step-num">2</div>
                 <div class="step-body">
                     <h4>Download & Connect</h4>
-                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">Klik tombol <strong>"🔑 Download OpenVPN Config"</strong> di atas, lalu:</p>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">Click the <strong>"🔑 Download OpenVPN Config"</strong> button above, then:</p>
                     <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;"><strong>Linux:</strong></p>
                     <div class="code-block">sudo openvpn --config <span class="vpnTeamSlug">team</span>.ovpn<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
-                    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Tunggu sampai muncul: <code style="color:var(--accent-green);">Initialization Sequence Completed</code></p>
-                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;"><strong>Windows:</strong> Buka OpenVPN GUI → Import file <code><span class="vpnTeamSlug">team</span>.ovpn</code> → Connect</p>
+                    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Wait until you see: <code style="color:var(--accent-green);">Initialization Sequence Completed</code></p>
+                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;"><strong>Windows:</strong> Open OpenVPN GUI → Import file <code><span class="vpnTeamSlug">team</span>.ovpn</code> → Connect</p>
                 </div>
             </div>
 
             <div class="step">
                 <div class="step-num">3</div>
                 <div class="step-body">
-                    <h4>Verifikasi Koneksi</h4>
-                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Cek interface tunnel:</p>
+                    <h4>Verify Connection</h4>
+                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Check tunnel interface:</p>
                     <div class="code-block">ip addr show tun0<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
-                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;margin-bottom:8px;">Ping ke VPN network:</p>
+                    <p style="font-size:13px;color:var(--text-muted);margin-top:10px;margin-bottom:8px;">Ping the VPN network:</p>
                     <div class="code-block">ping -c 3 &lt;koth-server-ip&gt;<button class="copy-btn" onclick="copyCode(this);event.stopPropagation();">📋</button></div>
                 </div>
             </div>
@@ -387,19 +394,19 @@ echo "<span id="qsTeamName">team-name</span>" > /root/king.txt<button class="cop
     <div class="card" style="margin-top:20px;">
         <h3>⚠️ Troubleshooting</h3>
         <div class="faq-item" onclick="toggleFaq(this)">
-            <div class="faq-q"><span>🔴 Tidak bisa ping?</span><span class="faq-icon">▶</span></div>
+            <div class="faq-q"><span>🔴 Can't ping?</span><span class="faq-icon">▶</span></div>
             <div class="faq-a"><div class="faq-a-inner" style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
-                Pastikan VPN aktif (<code>sudo wg show</code>), cek apakah firewall lokal memblokir, dan pastikan routing ke <code>10.0.0.0/24</code> melewati interface VPN.
+                Make sure VPN is active (<code>sudo wg show</code>), check if local firewall is blocking, and ensure routing to <code>10.0.0.0/24</code> goes through the VPN interface.
             </div></div>
         </div>
         <div class="faq-item" onclick="toggleFaq(this)">
-            <div class="faq-q"><span>🔴 DNS tidak resolve?</span><span class="faq-icon">▶</span></div>
+            <div class="faq-q"><span>🔴 DNS not resolving?</span><span class="faq-icon">▶</span></div>
             <div class="faq-a"><div class="faq-a-inner" style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
-                Gunakan IP langsung. Hills diakses via IP, bukan domain.
+                Use IP addresses directly. Hills are accessed via IP, not domain names.
             </div></div>
         </div>
         <div class="faq-item" onclick="toggleFaq(this)">
-            <div class="faq-q"><span>🔴 Koneksi lambat?</span><span class="faq-icon">▶</span></div>
+            <div class="faq-q"><span>🔴 Slow connection?</span><span class="faq-icon">▶</span></div>
             <div class="faq-a"><div class="faq-a-inner" style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
                 Cek MTU: <code>sudo ip link set mtu 1280 dev wg0</code>
             </div></div>
@@ -407,7 +414,7 @@ echo "<span id="qsTeamName">team-name</span>" > /root/king.txt<button class="cop
         <div class="faq-item" onclick="toggleFaq(this)">
             <div class="faq-q"><span>🔴 Hill 3 &amp; 4 unreachable?</span><span class="faq-icon">▶</span></div>
             <div class="faq-a"><div class="faq-a-inner" style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
-                Hills ini di belakang Pivot. Pastikan routing lewat pivot aktif. Anda mungkin perlu pivot melalui DMZ.
+                These hills are behind a Pivot. Make sure routing through the pivot is active. You may need to pivot through the DMZ.
             </div></div>
         </div>
     </div>
@@ -416,7 +423,7 @@ echo "<span id="qsTeamName">team-name</span>" > /root/king.txt<button class="cop
 <!-- ─── TOPOLOGY ─── -->
 <div class="page-section" id="sec-topology">
     <h2 class="page-title">🗺️ Network Topology — Interactive Map</h2>
-    <p style="color:var(--text-muted);font-size:13px;margin-bottom:14px;">Drag node untuk mengatur posisi. Klik node untuk melihat detail. Scroll / tombol untuk zoom.</p>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:14px;">Drag nodes to arrange positions. Click a node to view details. Scroll or use buttons to zoom.</p>
 
     <div class="topo-wrap">
         <div class="topo-controls">
@@ -449,11 +456,11 @@ echo "<span id="qsTeamName">team-name</span>" > /root/king.txt<button class="cop
     <div class="card" style="margin-top:20px;">
         <h3>📡 Network Segments</h3>
         <table class="tbl">
-            <thead><tr><th>Segment</th><th>CIDR</th><th>Deskripsi</th><th>Akses</th></tr></thead>
+            <thead><tr><th>Segment</th><th>CIDR</th><th>Description</th><th>Access</th></tr></thead>
             <tbody>
-                <tr><td>VPN Network</td><td class="mono">10.10.0.0/24</td><td>Semua peserta terhubung via WireGuard/OpenVPN</td><td><span class="badge badge-green">Direct</span></td></tr>
-                <tr><td>Game Network</td><td class="mono">10.46.0.0/20</td><td>Private VPC — server interconnect (DO internal)</td><td><span class="badge badge-red">No Access</span></td></tr>
-                <tr><td>Hill Network</td><td class="mono">10.0.0.0/24</td><td>Vulnerable machines & Pivot DMZ</td><td><span class="badge badge-orange">Via Pivot</span></td></tr>
+                <tr><td>VPN Network</td><td class="mono">10.10.0.0/24</td><td>All participants connected via WireGuard/OpenVPN</td><td><span class="badge badge-green">Direct</span></td></tr>
+                <tr><td>Game Network</td><td class="mono">10.46.0.0/20</td><td>Private VPC — server interconnect (internal)</td><td><span class="badge badge-red">No Access</span></td></tr>
+                <tr><td>Hill Network</td><td class="mono">10.0.0.0/24</td><td>Vulnerable machines &amp; Pivot DMZ</td><td><span class="badge badge-orange">Via Pivot</span></td></tr>
             </tbody>
         </table>
     </div>
@@ -461,61 +468,61 @@ echo "<span id="qsTeamName">team-name</span>" > /root/king.txt<button class="cop
 
 <!-- ─── RULES ─── -->
 <div class="page-section" id="sec-rules">
-    <h2 class="page-title">📋 Peraturan & Mekanisme Scoring</h2>
+    <h2 class="page-title">📋 Rules & Scoring Mechanics</h2>
 
     <div class="card">
-        <h3>🎯 Tujuan Permainan</h3>
+        <h3>🎯 Objective</h3>
         <p style="font-size:14px;color:var(--text-secondary);line-height:1.8;margin-bottom:12px;">
-            Kumpulkan poin sebanyak mungkin dengan <strong style="color:var(--accent-green);">menguasai (capture)</strong> dan <strong style="color:var(--accent-green);">mempertahankan (defend)</strong> server Hill. 
-            Setiap 60 detik, scorebot akan mengecek siapa "King" di setiap Hill. King mendapat poin!
+            Collect as many points as possible by <strong style="color:var(--accent-green);">capturing</strong> and <strong style="color:var(--accent-green);">defending</strong> Hill servers. 
+            Every <strong id="cfgTickInterval2">60 seconds</strong>, the scorebot checks who is "King" on each Hill. The King earns points!
         </p>
     </div>
 
     <div class="grid-2">
         <div class="card">
             <h3>⚡ Scoring Formula</h3>
-            <div class="rule-item"><span class="ri">👑</span><div><strong>King Points</strong> = BASE (10) × Multiplier per tick per hill</div></div>
-            <div class="rule-item"><span class="ri">🩸</span><div><strong>First Blood</strong> = +50 bonus poin (pertama capture hill)</div></div>
-            <div class="rule-item"><span class="ri">🛡️</span><div><strong>Defense Streak</strong> = +5 bonus per tick berturut-turut memegang hill</div></div>
-            <div class="rule-item"><span class="ri">🔄</span><div><strong>Pivot Bonus</strong> = Hill di belakang pivot punya multiplier 1.5x</div></div>
-            <div class="rule-item"><span class="ri">⚠️</span><div><strong>SLA Required!</strong> Service hill HARUS tetap hidup. Jika service mati = <strong style="color:var(--accent-red);">0 poin</strong> meskipun anda King!</div></div>
+            <div class="rule-item"><span class="ri">👑</span><div><strong>King Points</strong> = BASE (<span class="cfg-base-points">10</span>) × Multiplier per tick per hill</div></div>
+            <div class="rule-item"><span class="ri">🩸</span><div><strong>First Blood</strong> = +<span class="cfg-fb-bonus">50</span> bonus points (first capture of a hill)</div></div>
+            <div class="rule-item"><span class="ri">🛡️</span><div><strong>Defense Streak</strong> = +<span class="cfg-streak-bonus">5</span> bonus per consecutive tick holding a hill</div></div>
+            <div class="rule-item"><span class="ri">🔄</span><div><strong>Pivot Bonus</strong> = Hills behind pivot have <span class="cfg-pivot-mult">1.5</span>x multiplier</div></div>
+            <div class="rule-item"><span class="ri">⚠️</span><div><strong>SLA Required!</strong> Hill service MUST stay alive. If the service is down = <strong style="color:var(--accent-red);">0 points</strong> even if you are King!</div></div>
         </div>
 
         <div class="card">
-            <h3>📏 Aturan Pertandingan</h3>
-            <div class="rule-item"><span class="ri">✅</span><div>Exploit vulnerability yang ada di setiap Hill</div></div>
-            <div class="rule-item"><span class="ri">✅</span><div>Gunakan tools apapun (Kali Linux, custom scripts, dll)</div></div>
-            <div class="rule-item"><span class="ri">✅</span><div>Serang Hill milik team lain untuk merebut King</div></div>
-            <div class="rule-item"><span class="ri">❌</span><div><strong style="color:var(--accent-red);">DILARANG</strong> menyerang infrastruktur (VPN server, KoTH server, Scorebot)</div></div>
-            <div class="rule-item"><span class="ri">❌</span><div><strong style="color:var(--accent-red);">DILARANG</strong> melakukan DoS ke VPN/scoreboard</div></div>
-            <div class="rule-item"><span class="ri">❌</span><div><strong style="color:var(--accent-red);">DILARANG</strong> mematikan service Hill secara sengaja (penalty!)</div></div>
+            <h3>📏 Competition Rules</h3>
+            <div class="rule-item"><span class="ri">✅</span><div>Exploit vulnerabilities on each Hill</div></div>
+            <div class="rule-item"><span class="ri">✅</span><div>Use any tools (Kali Linux, custom scripts, etc.)</div></div>
+            <div class="rule-item"><span class="ri">✅</span><div>Attack other teams' Hills to claim King</div></div>
+            <div class="rule-item"><span class="ri">❌</span><div><strong style="color:var(--accent-red);">FORBIDDEN</strong> to attack infrastructure (VPN server, KoTH server, Scorebot)</div></div>
+            <div class="rule-item"><span class="ri">❌</span><div><strong style="color:var(--accent-red);">FORBIDDEN</strong> to DoS VPN/scoreboard</div></div>
+            <div class="rule-item"><span class="ri">❌</span><div><strong style="color:var(--accent-red);">FORBIDDEN</strong> to intentionally shut down Hill services (penalty!)</div></div>
         </div>
     </div>
 
     <div class="card">
-        <h3>👑 Cara Claim Hill</h3>
+        <h3>👑 How to Claim a Hill</h3>
         <div class="step">
             <div class="step-num">1</div>
             <div class="step-body">
-                <h4>Dapatkan Root Access di Host OS Hill</h4>
-                <p>Exploit vuln service → shell user → privilege escalation → root. Vuln services berjalan di Docker container, king.txt ada di <strong>host OS</strong>.</p>
+                <h4>Get Root Access on the Hill Host OS</h4>
+                <p>Exploit vuln service → user shell → privilege escalation → root. Vuln services run in Docker containers, king.txt is on the <strong>host OS</strong>.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">2</div>
             <div class="step-body">
-                <h4>Tulis Nama Team ke /root/king.txt</h4>
+                <h4>Write Your Team Name to /root/king.txt</h4>
                 <div class="code-block">
 echo "<span class="teamNamePlaceholder">team-name</span>" > /root/king.txt<button class="copy-btn" onclick="copyCode(this)">📋</button>
                 </div>
-                <p style="margin-top:8px;">⚠️ Nama harus <strong>PERSIS</strong> sama dengan team name yang terdaftar (case-sensitive). Cek di info team anda.</p>
+                <p style="margin-top:8px;">⚠️ Name must be <strong>EXACTLY</strong> the same as the registered team name (case-sensitive). Check in your team info.</p>
             </div>
         </div>
         <div class="step">
             <div class="step-num">3</div>
             <div class="step-body">
-                <h4>Pertahankan Akses</h4>
-                <p>Scorebot baca king.txt setiap 60 detik. Jika team lain overwrite → mereka jadi King. Defend!</p>
+                <h4>Defend Your Access</h4>
+                <p>Scorebot reads king.txt every <span class="cfg-tick-seconds">60</span> seconds. If another team overwrites it → they become King. Defend!</p>
             </div>
         </div>
     </div>
@@ -524,14 +531,14 @@ echo "<span class="teamNamePlaceholder">team-name</span>" > /root/king.txt<butto
         <h3>⏱️ Timeline Event</h3>
         <table class="tbl">
             <tbody>
-                <tr><td class="mono" style="font-weight:700;width:120px;">08:00</td><td>Gate Open — Registrasi ulang & setup VPN</td></tr>
-                <tr><td class="mono" style="font-weight:700;">08:30</td><td>Technical Briefing — Penjelasan mekanisme</td></tr>
-                <tr><td class="mono" style="font-weight:700;color:var(--accent-green);">09:00</td><td style="color:var(--accent-green);font-weight:700;">🚀 GAME START — Grace period 5 menit (no scoring)</td></tr>
-                <tr><td class="mono" style="font-weight:700;">09:05</td><td>Tick #1 — Scoring dimulai!</td></tr>
-                <tr><td class="mono" style="font-weight:700;">12:00</td><td>Lunch Break (game tetap berjalan!)</td></tr>
-                <tr><td class="mono" style="font-weight:700;color:var(--accent-orange);">14:30</td><td style="color:var(--accent-orange);">🧊 Scoreboard FREEZE — Score disembunyikan 30 menit terakhir</td></tr>
+                <tr><td class="mono" style="font-weight:700;width:120px;">08:00</td><td>Gate Open — Registration & VPN setup</td></tr>
+                <tr><td class="mono" style="font-weight:700;">08:30</td><td>Technical Briefing — Mechanics walkthrough</td></tr>
+                <tr><td class="mono" style="font-weight:700;color:var(--accent-green);">09:00</td><td style="color:var(--accent-green);font-weight:700;">🚀 GAME START — 5 minute grace period (no scoring)</td></tr>
+                <tr><td class="mono" style="font-weight:700;">09:05</td><td>Tick #1 — Scoring begins!</td></tr>
+                <tr><td class="mono" style="font-weight:700;">12:00</td><td>Lunch Break (game continues!)</td></tr>
+                <tr><td class="mono" style="font-weight:700;color:var(--accent-orange);">14:30</td><td style="color:var(--accent-orange);">🧊 Scoreboard FREEZE — Scores hidden for last 30 minutes</td></tr>
                 <tr><td class="mono" style="font-weight:700;color:var(--accent-red);">15:00</td><td style="color:var(--accent-red);font-weight:700;">🏁 GAME OVER — Final scoring</td></tr>
-                <tr><td class="mono" style="font-weight:700;">15:30</td><td>Pengumuman pemenang & ceremony</td></tr>
+                <tr><td class="mono" style="font-weight:700;">15:30</td><td>Winner announcement &amp; ceremony</td></tr>
             </tbody>
         </table>
     </div>
@@ -586,7 +593,7 @@ function setupUI() {
     document.querySelectorAll('.teamNamePlaceholder').forEach(el => el.textContent = teamData.team_name);
     const teamSlug = (teamData?.team_name || 'team').replace(/\s+/g, '-').toLowerCase();
     document.querySelectorAll('.vpnTeamSlug').forEach(el => el.textContent = teamSlug);
-    document.getElementById('vpnIpDisplay').textContent = teamData.vpn_ip || 'Belum di-assign';
+    document.getElementById('vpnIpDisplay').textContent = teamData.vpn_ip || 'Not assigned yet';
 
     // Team info table
     document.querySelector('#teamInfoTbl tbody').innerHTML = `
@@ -662,7 +669,7 @@ async function downloadVpnConfig(type) {
     const btnWg = document.getElementById('btnDownloadWG');
     const btnOvpn = document.getElementById('btnDownloadOVPN');
     const token = sessionStorage.getItem('koth_team_token');
-    if (!token) { status.textContent = '❌ Login dulu!'; return; }
+    if (!token) { status.textContent = '❌ Please login first!'; return; }
 
     btnWg.disabled = true;
     btnOvpn.disabled = true;
@@ -673,7 +680,7 @@ async function downloadVpnConfig(type) {
         });
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({}));
-            status.textContent = '❌ ' + (err.detail || 'Gagal download');
+            status.textContent = '❌ ' + (err.detail || 'Download failed');
             btnWg.disabled = false;
             btnOvpn.disabled = false;
             return;
@@ -719,7 +726,7 @@ async function downloadVpnConfig(type) {
                 '',
                 '# NOTE: This is a template config generated from your WireGuard config.',
                 '# The actual VPN server uses WireGuard. Use WireGuard config for best compatibility.',
-                '# If your environment requires OpenVPN, contact panitia for manual setup.',
+                '# If your environment requires OpenVPN, contact the organizer for manual setup.',
             ].join('\n');
 
             const blob = new Blob([ovpnConfig], { type: 'text/plain' });
@@ -756,14 +763,14 @@ async function downloadVpnConfig(type) {
 function toWIB(isoStr) {
     if (!isoStr) return '';
     const d = new Date(isoStr + (isoStr.endsWith('Z') ? '' : 'Z'));
-    return d.toLocaleString('id-ID', { timeZone:'Asia/Jakarta', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+    return d.toLocaleString('en-US', { timeZone:'Asia/Jakarta', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
 }
 async function loadAnnouncements() {
     try {
         const anns = await fetch(API + '/scoreboard/announcements?limit=10').then(r => r.json());
         const el = document.getElementById('homeAnnouncements');
         if (!anns || anns.length === 0) {
-            el.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Belum ada pengumuman</p>';
+            el.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">No announcements yet</p>';
             return;
         }
         el.innerHTML = anns.map(a => {
@@ -792,12 +799,14 @@ async function loadHomeData() {
             <div class="stat-box green"><div class="val-text">${sb.game_status ? sb.game_status.toUpperCase().replace('_',' ') : 'N/A'}</div><div class="lbl">Game Status</div></div>
         `;
     } catch(e) {
-        document.getElementById('homeStats').innerHTML = '<div class="stat-box"><div class="val-text" style="font-size:14px;color:var(--text-muted);">Menunggu data...</div></div>';
+        document.getElementById('homeStats').innerHTML = '<div class="stat-box"><div class="val-text" style="font-size:14px;color:var(--text-muted);">Loading data...</div></div>';
     }
     // Also refresh announcements
     loadAnnouncements();
     // Load event info for landing banner
     loadEventInfo();
+    // Load game config for dynamic rules
+    loadGameConfig();
 }
 
 async function loadEventInfo() {
@@ -830,6 +839,22 @@ async function loadEventInfo() {
     } catch(e) { /* ignore */ }
 }
 
+async function loadGameConfig() {
+    try {
+        const cfg = await fetch(API + '/scoreboard/game-config').then(r => r.json());
+        const setById = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        const setByCls = (cls, v) => { document.querySelectorAll('.' + cls).forEach(el => el.textContent = v); };
+        setById('cfgTickInterval', cfg.tick_interval + ' seconds');
+        setById('cfgBasePoints', '+' + cfg.base_points + ' points');
+        setById('cfgTickInterval2', cfg.tick_interval + ' seconds');
+        setByCls('cfg-base-points', cfg.base_points);
+        setByCls('cfg-fb-bonus', cfg.first_blood_bonus);
+        setByCls('cfg-streak-bonus', cfg.defense_streak_bonus);
+        setByCls('cfg-pivot-mult', cfg.pivot_multiplier);
+        setByCls('cfg-tick-seconds', cfg.tick_interval);
+    } catch(e) { /* keep defaults */ }
+}
+
 // ══════════════════════════════════════════════════
 // INTERACTIVE TOPOLOGY DIAGRAM
 // ══════════════════════════════════════════════════
@@ -859,8 +884,8 @@ const TOPO_LINKS_DEFAULT = [
 // Node info details (for click-to-view)
 const NODE_INFO = {
     vpn:  { 'Network':'10.10.0.0/24','Protocols':'WireGuard / OpenVPN','Port':'51820/UDP' },
-    koth: { 'Services':'Scoreboard, Tick Engine, Scorebot','Access':'Otomatis via VPN','Note':'⛔ JANGAN DISERANG!' },
-    pivot:{ 'Role':'Dual-homed router: VPN ↔ Hill Network','Hint':'Gateway ke semua Hills','Note':'Hill 3 & 4 via pivot' },
+    koth: { 'Services':'Scoreboard, Tick Engine, Scorebot','Access':'Automatic via VPN','Note':'⛔ DO NOT ATTACK!' },
+    pivot:{ 'Role':'Dual-homed router: VPN ↔ Hill Network','Hint':'Gateway to all Hills','Note':'Hill 3 & 4 via pivot' },
     h1:   { 'IP':'🔍 Scan to discover','Multiplier':'1.0x','King File':'/root/king.txt' },
     h2:   { 'IP':'🔍 Scan to discover','Multiplier':'1.0x','King File':'/root/king.txt' },
     h3:   { 'IP':'🔍 Scan to discover','Multiplier':'1.5x (Pivot)','King File':'/root/king.txt','Note':'⚠️ Behind Pivot' },

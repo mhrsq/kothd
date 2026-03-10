@@ -62,7 +62,7 @@ function connectWebSocket() {
     ws.onopen = () => {
         console.log('WebSocket connected');
         updateWSStatus(true);
-        addEvent('system', 'Terhubung ke server');
+        addEvent('system', 'Connected to server');
 
         // Ping every 30s
         setInterval(() => {
@@ -82,7 +82,7 @@ function connectWebSocket() {
 
     ws.onclose = () => {
         updateWSStatus(false);
-        addEvent('system', 'Koneksi terputus, mencoba koneksi ulang...');
+        addEvent('system', 'Connection lost, reconnecting...');
         scheduleReconnect();
     };
 
@@ -105,15 +105,15 @@ function handleWSMessage(msg) {
     switch (msg.type) {
         case 'tick_update':
             fetchScoreboard(); // Refresh on every tick
-            addEvent('tick_update', `Tick #${msg.data.tick_number} selesai`);
+            addEvent('tick_update', `Tick #${msg.data.tick_number} completed`);
             break;
 
         case 'king_change':
             const kc = msg.data;
             addEvent('king_change',
-                `👑 ${kc.new_king_name || '???'} merebut ${kc.hill_name}!`);
+                `👑 ${kc.new_king_name || '???'} captured ${kc.hill_name}!`);
             showToast('king_change',
-                `👑 King Change! ${kc.new_king_name} menguasai ${kc.hill_name}`);
+                `👑 King Change! ${kc.new_king_name} captured ${kc.hill_name}`);
             fetchScoreboard();
             break;
 
@@ -163,7 +163,7 @@ function renderHills(hills) {
                     ${hasCaptured
                         ? `<span class="king-crown">👑</span>
                            <span class="king-name">${escHtml(hill.current_king)}</span>`
-                        : `<span class="king-none">Belum dikuasai</span>`
+                        : `<span class="king-none">Uncaptured</span>`
                     }
                 </div>
                 <div class="hill-badges">
@@ -178,12 +178,26 @@ function renderHills(hills) {
     }).join('');
 }
 
+function filterLeaderboard() {
+    if (scoreboardData) renderLeaderboard(scoreboardData.teams);
+}
+
 function renderLeaderboard(teams) {
     const tbody = document.getElementById('leaderboard-body');
 
     let filtered = teams;
     if (activeCategory !== 'all') {
         filtered = teams.filter(t => t.category === activeCategory);
+    }
+
+    // Search filter
+    const searchEl = document.getElementById('leaderboardSearch');
+    if (searchEl && searchEl.value.trim()) {
+        const q = searchEl.value.trim().toLowerCase();
+        filtered = filtered.filter(t =>
+            (t.team_name && t.team_name.toLowerCase().includes(q)) ||
+            (t.display_name && t.display_name.toLowerCase().includes(q))
+        );
     }
 
     // Re-rank after filter
@@ -227,7 +241,7 @@ function renderFirstBloods(fbList) {
         grid.innerHTML = `
             <div class="fb-card empty">
                 <div class="fb-icon">🩸</div>
-                <div>Belum ada first blood</div>
+                <div>No first blood yet</div>
             </div>
         `;
         return;

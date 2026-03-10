@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KoTH CTF — Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/fonts.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
     <style>
         :root {
@@ -13,6 +13,12 @@
             --accent-green: #22c55e; --accent-red: #ef4444; --accent-blue: #3b82f6;
             --accent-cyan: #06b6d4; --accent-orange: #f97316; --accent-purple: #a855f7;
             --font-mono: 'JetBrains Mono', monospace; --font-sans: 'Inter', sans-serif;
+        }
+        [data-theme="light"] {
+            --bg-primary: #f8fafc; --bg-secondary: #f1f5f9; --bg-card: #ffffff;
+            --border: #cbd5e1; --text-primary: #1e293b; --text-secondary: #475569; --text-muted: #94a3b8;
+            --accent-green: #16a34a; --accent-red: #dc2626; --accent-blue: #2563eb;
+            --accent-cyan: #0891b2; --accent-orange: #ea580c; --accent-purple: #9333ea;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -128,16 +134,16 @@
             <div class="login-err" id="err-team"></div>
             <div class="fg">
                 <label>Team Token</label>
-                <input type="password" id="team-token" placeholder="Masukkan token team anda..." autocomplete="off">
-                <div class="hint">Token diterima saat registrasi team. Hubungi panitia jika kehilangan.</div>
+                <input type="password" id="team-token" placeholder="Enter your team token..." autocomplete="off">
+                <div class="hint">Token received during team registration. Contact organizer if lost.</div>
             </div>
             <button class="btn-login btn-team" onclick="loginTeam()" id="btn-team">
-                ⚡ Masuk sebagai Team
+                ⚡ Login as Team
             </button>
-            <div class="divider">atau</div>
+            <div class="divider">or</div>
             <div style="text-align:center;">
                 <a href="/register" style="color:var(--accent-cyan); text-decoration:none; font-weight:700; font-size:14px;">
-                    📝 Daftar Team Baru
+                    📝 Register New Team
                 </a>
             </div>
         </div>
@@ -147,21 +153,21 @@
             <div class="login-err" id="err-individual"></div>
             <div class="fg">
                 <label>Username</label>
-                <input type="text" id="ind-username" placeholder="Masukkan username..." autocomplete="off">
+                <input type="text" id="ind-username" placeholder="Enter username..." autocomplete="off">
             </div>
             <div class="fg">
                 <label>Password</label>
-                <input type="password" id="ind-password" placeholder="Masukkan password..." autocomplete="off">
-                <div class="hint">Login individual — gunakan akun yang diberikan panitia.</div>
+                <input type="password" id="ind-password" placeholder="Enter password..." autocomplete="off">
+                <div class="hint">Individual login — use the account provided by the organizer.</div>
             </div>
             <button class="btn-login btn-individual" onclick="loginIndividual()" id="btn-individual">
-                👤 Masuk sebagai Individual
+                👤 Login as Individual
             </button>
         </div>
     </div>
 
     <div class="quick-links">
-        <a href="/scoreboard">📊 Lihat Scoreboard</a>
+        <a href="/scoreboard">📊 View Scoreboard</a>
         <a href="/history">📈 Point History</a>
     </div>
 
@@ -178,9 +184,9 @@ async function loginTeam() {
     const token = document.getElementById('team-token').value.trim();
     const errEl = document.getElementById('err-team');
     const btn = document.getElementById('btn-team');
-    if (!token) { showErr(errEl, 'Masukkan team token'); return; }
+    if (!token) { showErr(errEl, 'Please enter team token'); return; }
 
-    btn.disabled = true; btn.textContent = '⏳ Memverifikasi...';
+    btn.disabled = true; btn.textContent = '⏳ Verifying...';
     errEl.style.display = 'none';
 
     try {
@@ -190,7 +196,7 @@ async function loginTeam() {
             body: JSON.stringify({ token })
         });
         const d = await r.json();
-        if (!r.ok) throw new Error(d.detail || 'Login gagal');
+        if (!r.ok) throw new Error(d.detail || 'Login failed');
 
         sessionStorage.setItem('koth_role', 'team');
         sessionStorage.setItem('koth_team_token', token);
@@ -199,7 +205,7 @@ async function loginTeam() {
     } catch(e) {
         showErr(errEl, e.message);
     } finally {
-        btn.disabled = false; btn.innerHTML = '⚡ Masuk sebagai Team';
+        btn.disabled = false; btn.innerHTML = '⚡ Login as Team';
     }
 }
 
@@ -209,9 +215,9 @@ async function loginIndividual() {
     const password = document.getElementById('ind-password').value;
     const errEl = document.getElementById('err-individual');
     const btn = document.getElementById('btn-individual');
-    if (!username || !password) { showErr(errEl, 'Masukkan username dan password'); return; }
+    if (!username || !password) { showErr(errEl, 'Please enter username and password'); return; }
 
-    btn.disabled = true; btn.textContent = '⏳ Memverifikasi...';
+    btn.disabled = true; btn.textContent = '⏳ Verifying...';
     errEl.style.display = 'none';
 
     try {
@@ -221,7 +227,7 @@ async function loginIndividual() {
             body: JSON.stringify({ username, password })
         });
         const d = await r.json();
-        if (!r.ok) throw new Error(d.detail || 'Login gagal');
+        if (!r.ok) throw new Error(d.detail || 'Login failed');
 
         sessionStorage.setItem('koth_role', 'individual');
         sessionStorage.setItem('koth_individual_user', username);
@@ -230,7 +236,7 @@ async function loginIndividual() {
     } catch(e) {
         showErr(errEl, e.message);
     } finally {
-        btn.disabled = false; btn.innerHTML = '👤 Masuk sebagai Individual';
+        btn.disabled = false; btn.innerHTML = '👤 Login as Individual';
     }
 }
 

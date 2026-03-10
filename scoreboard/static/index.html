@@ -4,18 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KoTH CTF — Live Scoreboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/fonts.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
-    <script>if(!sessionStorage.getItem('koth_role'))location.replace('/login');</script>
 </head>
 <body>
     <!-- Timer/Tick bar (below global navbar) -->
     <div class="game-bar">
         <div class="game-bar-inner">
             <div class="game-timer" id="game-timer">
-                <span class="timer-label">WAKTU</span>
+                <span class="timer-label">TIME</span>
                 <span class="timer-value" id="timer-display">--:--:--</span>
             </div>
             <div class="tick-counter">
@@ -26,6 +24,7 @@
     </div>
     <style>
         .game-bar{background:linear-gradient(135deg,#0f172a,#1a2332);border-bottom:1px solid #2a3a4e;padding:10px 32px;}
+        [data-theme="light"] .game-bar{background:linear-gradient(135deg,#e2e8f0,#f1f5f9);border-bottom-color:#cbd5e1;}
         .game-bar-inner{max-width:1400px;margin:0 auto;display:flex;justify-content:center;gap:40px;}
     </style>
 
@@ -43,9 +42,12 @@
         <section class="leaderboard-section">
             <div class="leaderboard-header">
                 <h2 class="section-title">🏆 Leaderboard</h2>
-                <div class="category-tabs">
-                    <button class="tab active" data-category="all" onclick="filterCategory('all')">All</button>
-                    <!-- Category tabs populated dynamically -->
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <input type="text" id="leaderboardSearch" placeholder="Search team..." oninput="filterLeaderboard()" style="background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;font-family:var(--font-sans);width:180px;outline:none;">
+                    <div class="category-tabs">
+                        <button class="tab active" data-category="all" onclick="filterCategory('all')">All</button>
+                        <!-- Category tabs populated dynamically -->
+                    </div>
                 </div>
             </div>
             <div class="leaderboard-table-wrap">
@@ -54,7 +56,7 @@
                         <tr>
                             <th class="col-rank">#</th>
                             <th class="col-team">Team</th>
-                            <th class="col-cat">Kategori</th>
+                            <th class="col-cat">Category</th>
                             <th class="col-points">Points</th>
                             <th class="col-hills">Hills</th>
                             <th class="col-ticks">Ticks King</th>
@@ -73,7 +75,7 @@
             <div class="event-feed" id="event-feed">
                 <div class="event-item system">
                     <span class="event-time">--:--:--</span>
-                    <span class="event-text">Menunggu koneksi ke server...</span>
+                    <span class="event-text">Waiting for server connection...</span>
                 </div>
             </div>
         </section>

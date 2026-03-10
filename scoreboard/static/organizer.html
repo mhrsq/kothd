@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KoTH CTF — Event Organizer Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/fonts.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
         /* ── Layout ── */
@@ -266,7 +266,7 @@
         <h2>Event Organizer Console</h2>
         <p>KoTH CTF Platform<br>Enter admin token for full access.</p>
         <input type="password" id="tokenInput" placeholder="Admin Token" onkeydown="if(event.key==='Enter')doLogin()">
-        <div class="auth-err" id="authErr">Token tidak valid</div>
+        <div class="auth-err" id="authErr">Invalid token</div>
         <br><br>
         <button class="btn btn-primary" style="width:100%;" onclick="doLogin()">🔐 Login</button>
     </div>
@@ -340,7 +340,7 @@
         </div>
         <div class="card">
             <h3>🏆 Top 5 Teams</h3>
-            <table class="tbl" id="dashTopTbl"><thead><tr><th>#</th><th>Team</th><th>Pts</th><th>Kategori</th></tr></thead><tbody></tbody></table>
+            <table class="tbl" id="dashTopTbl"><thead><tr><th>#</th><th>Team</th><th>Pts</th><th>Category</th></tr></thead><tbody></tbody></table>
         </div>
     </div>
 </div>
@@ -349,7 +349,7 @@
 <div class="section-page" id="page-gamecontrol">
     <h2 class="page-title">🎮 Game Control</h2>
     <div class="card">
-        <h3>Status Saat Ini</h3>
+        <h3>Current Status</h3>
         <div class="game-badge" id="gcBadge"></div>
         <div class="big-timer stopped" id="gcTimer">00:00:00</div>
         <div id="gcInfo" style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:16px;"></div>
@@ -363,10 +363,10 @@
     <div class="card">
         <h3>⚠️ Danger Zone</h3>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
-            Reset akan menghapus SEMUA data tick, score, first blood. Team tetap ada.
+            Reset will delete ALL tick, score, and first blood data. Teams will remain.
         </p>
         <div class="btn-row">
-            <button class="btn btn-danger" onclick="confirmAction('RESET semua data game? Ketik RESET untuk konfirmasi.','RESET',resetGame)">🗑️ Reset Game Data</button>
+            <button class="btn btn-danger" onclick="confirmAction('RESET all game data? Type RESET to confirm.','RESET',resetGame)">🗑️ Reset Game Data</button>
             <button class="btn btn-blue" onclick="freezeBoard()">🧊 Freeze Scoreboard</button>
             <button class="btn btn-ghost" onclick="unfreezeBoard()">☀️ Unfreeze Scoreboard</button>
         </div>
@@ -379,7 +379,7 @@
     <div class="card">
         <h3>Manual Tick</h3>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
-            Force jalankan 1 tick sekarang. Berguna untuk testing sebelum event.
+            Force run 1 tick now. Useful for testing before the event.
         </p>
         <button class="btn btn-purple" onclick="forceTick()">⚡ Force Tick Now</button>
         <span id="tickResult" style="margin-left:12px; font-size:13px;"></span>
@@ -398,16 +398,16 @@
     <h2 class="page-title">👥 Team Management</h2>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
         <div class="card">
-            <h3>➕ Register Team Baru</h3>
+            <h3>➕ Register New Team</h3>
             <div class="fg"><label>Team Name (slug)</label><input id="t_name" placeholder="team-alpha"></div>
             <div class="fg"><label>Display Name</label><input id="t_display" placeholder="Team Alpha"></div>
             <div class="form-row">
-                <div class="fg"><label>Kategori</label>
+                <div class="fg"><label>Category</label>
                     <select id="t_cat"><option value="default">Default</option></select>
                 </div>
                 <div class="fg"><label>VPN IP</label><input id="t_vpn" placeholder="10.10.0.x"></div>
             </div>
-            <button class="btn btn-primary" onclick="createTeam()">Daftarkan Team</button>
+            <button class="btn btn-primary" onclick="createTeam()">Register Team</button>
         </div>
         <div class="card">
             <h3>📦 Bulk Register (JSON)</h3>
@@ -419,7 +419,7 @@
     </div>
     <div class="card">
         <h3>� WireGuard VPN — Auto Generate</h3>
-        <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px;">Generate WireGuard config untuk semua team sekaligus. IP akan auto-assign mulai dari 10.10.0.2. Key yang sudah ada akan di-reuse.</p>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px;">Generate WireGuard config for all teams at once. IPs will be auto-assigned starting from 10.10.0.2. Existing keys will be reused.</p>
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
             <button class="btn btn-primary" onclick="generateVpnConfigs()" id="btnGenVpn">⚡ Generate All VPN Configs</button>
             <button class="btn btn-blue" onclick="downloadServerConfig()" id="btnDlServer">⬇️ Download Server Config</button>
@@ -433,9 +433,9 @@
         </div>
     </div>
     <div class="card">
-        <h3>�📋 Semua Team <span id="teamCount" style="color:var(--text-muted); font-weight:400;"></span></h3>
+        <h3>📋 All Teams <span id="teamCount" style="color:var(--text-muted); font-weight:400;"></span></h3>
         <table class="tbl" id="teamsTbl">
-            <thead><tr><th>ID</th><th>Name</th><th>Display</th><th>Kategori</th><th>VPN IP</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>ID</th><th>Name</th><th>Display</th><th>Category</th><th>VPN IP</th><th>Status</th><th>Action</th></tr></thead>
             <tbody id="teamsBody"></tbody>
         </table>
     </div>
@@ -446,11 +446,11 @@
     <h2 class="page-title">🏔️ Hill Management</h2>
     <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <h3 style="margin:0;">📋 Semua Hill</h3>
-            <button class="btn btn-primary" onclick="openHillModal()">➕ Tambah Hill</button>
+            <h3 style="margin:0;">📋 All Hills</h3>
+            <button class="btn btn-primary" onclick="openHillModal()">➕ Add Hill</button>
         </div>
         <table class="tbl" id="hillsTbl">
-            <thead><tr><th>ID</th><th>Nama</th><th>IP</th><th>Type</th><th>Pts</th><th>Multi</th><th>Pivot</th><th>King</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>ID</th><th>Name</th><th>IP</th><th>Type</th><th>Pts</th><th>Multi</th><th>Pivot</th><th>King</th><th>Status</th><th>Action</th></tr></thead>
             <tbody id="hillsBody"></tbody>
         </table>
     </div>
@@ -459,10 +459,10 @@
     <div class="card">
         <h3>🔑 Agent Tokens</h3>
         <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-            Token autentikasi untuk setiap hill agent. Generate token lalu deploy ke hill server.
+            Authentication tokens for each hill agent. Generate a token then deploy to the hill server.
         </p>
         <table class="tbl" id="hillAgentTokenTbl">
-            <thead><tr><th>Hill</th><th>IP</th><th>Agent Token</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Hill</th><th>IP</th><th>Agent Token</th><th>Status</th><th>Action</th></tr></thead>
             <tbody id="hillAgentTokenBody"></tbody>
         </table>
     </div>
@@ -492,10 +492,10 @@
         <h3 style="margin-bottom:16px;">✏️ Edit Hill — <span id="he_title"></span></h3>
         <input type="hidden" id="he_id">
         <div class="form-row">
-            <div class="fg"><label>Nama Hill</label><input id="he_name"></div>
+            <div class="fg"><label>Hill Name</label><input id="he_name"></div>
             <div class="fg"><label>IP Address</label><input id="he_ip"></div>
         </div>
-        <div class="fg"><label>Deskripsi</label><textarea id="he_desc"></textarea></div>
+        <div class="fg"><label>Description</label><textarea id="he_desc"></textarea></div>
         <div style="border-top:1px solid var(--border); margin:12px 0; padding-top:12px;">
             <h4 style="margin-bottom:8px; color:var(--accent-cyan);">🔐 SSH Credentials</h4>
         </div>
@@ -509,7 +509,7 @@
         </div>
         <div class="form-row">
             <div class="fg"><label>SLA Check Type</label>
-                <select id="he_sla_type"><option value="http">HTTP</option><option value="tcp">TCP</option><option value="ssh">SSH</option><option value="">Tidak ada</option></select>
+                <select id="he_sla_type"><option value="http">HTTP</option><option value="tcp">TCP</option><option value="ssh">SSH</option><option value="">None</option></select>
             </div>
             <div class="fg"><label>SLA Check URL</label><input id="he_sla_url" placeholder="http://10.0.0.100:80"></div>
             <div class="fg"><label>SLA Check Port</label><input type="number" id="he_sla_port"></div>
@@ -526,7 +526,7 @@
         </div>
         <div style="display:flex;gap:10px;margin-top:16px;">
             <button class="btn btn-primary" onclick="saveEditHill()">💾 Save Changes</button>
-            <button class="btn btn-ghost" onclick="closeEditHillModal()">Batal</button>
+            <button class="btn btn-ghost" onclick="closeEditHillModal()">Cancel</button>
         </div>
     </div>
 </div>
@@ -535,12 +535,12 @@
 <div id="hillModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);align-items:center;justify-content:center;">
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:28px 32px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;position:relative;">
         <button onclick="closeHillModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">&times;</button>
-        <h3 style="margin-bottom:16px;">➕ Create Hill Baru</h3>
+        <h3 style="margin-bottom:16px;">➕ Create New Hill</h3>
         <div class="form-row">
-            <div class="fg"><label>Nama Hill</label><input id="h_name" placeholder="Hill 5 - Crypto Vault"></div>
+            <div class="fg"><label>Hill Name</label><input id="h_name" placeholder="Hill 5 - Crypto Vault"></div>
             <div class="fg"><label>IP Address</label><input id="h_ip" placeholder="10.0.0.100"></div>
         </div>
-        <div class="fg"><label>Deskripsi</label><textarea id="h_desc" placeholder="Deskripsi vulnerable machine..."></textarea></div>
+        <div class="fg"><label>Description</label><textarea id="h_desc" placeholder="Description of vulnerable machine..."></textarea></div>
         <div class="form-row">
             <div class="fg"><label>SSH Port</label><input type="number" id="h_ssh" value="22"></div>
             <div class="fg"><label>SLA Check Type</label>
@@ -563,7 +563,7 @@
         </div>
         <div style="display:flex;gap:10px;margin-top:16px;">
             <button class="btn btn-primary" onclick="createHill()">Create Hill</button>
-            <button class="btn btn-ghost" onclick="closeHillModal()">Batal</button>
+            <button class="btn btn-ghost" onclick="closeHillModal()">Cancel</button>
         </div>
     </div>
 </div>
@@ -572,15 +572,15 @@
 <div class="section-page" id="page-scores">
     <h2 class="page-title">⚖️ Score Adjustment</h2>
     <div class="card">
-        <h3>Adjust Score Manual</h3>
+        <h3>Manual Score Adjustment</h3>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
-            Gunakan untuk penalty, bonus, atau koreksi score. Nilai negatif untuk pengurangan.
+            Use for penalties, bonuses, or score corrections. Negative values for deductions.
         </p>
         <div class="form-row">
             <div class="fg"><label>Team</label><select id="adj_team"></select></div>
             <div class="fg"><label>Points (+/-)</label><input type="number" id="adj_pts" placeholder="-50"></div>
         </div>
-        <div class="fg"><label>Alasan</label><input id="adj_reason" placeholder="Penalty: mematikan service sengaja"></div>
+        <div class="fg"><label>Reason</label><input id="adj_reason" placeholder="Penalty: intentional service shutdown"></div>
         <button class="btn btn-warning" onclick="adjustScore()">⚖️ Apply Adjustment</button>
     </div>
     <div class="card">
@@ -596,11 +596,11 @@
 <div class="section-page" id="page-announce">
     <h2 class="page-title">📢 Broadcast Announcement</h2>
     <div class="card">
-        <h3>Kirim Pengumuman</h3>
+        <h3>Send Announcement</h3>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
-            Pesan akan dikirim ke semua client yang terhubung via WebSocket secara realtime.
+            Message will be sent to all connected clients via WebSocket in real-time.
         </p>
-        <div class="fg"><label>Pesan</label><textarea id="ann_msg" placeholder="Perhatian: game akan dimulai dalam 5 menit..."></textarea></div>
+        <div class="fg"><label>Message</label><textarea id="ann_msg" placeholder="Attention: game will start in 5 minutes..."></textarea></div>
         <div class="fg"><label>Tipe</label>
             <select id="ann_type">
                 <option value="info">ℹ️ Info</option>
@@ -612,21 +612,21 @@
     </div>
     <div class="card">
         <h3 style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-            📜 Riwayat Pengumuman
+            📜 Announcement History
             <span id="annBulkActions" style="display:none;">
-                <button class="btn btn-sm" style="background:var(--accent-red);color:#fff;" onclick="annBulkDelete()">🗑️ Hapus Terpilih (<span id="annSelCount">0</span>)</button>
-                <button class="btn btn-sm btn-ghost" onclick="annClearSelection()">✕ Batal</button>
+                <button class="btn btn-sm" style="background:var(--accent-red);color:#fff;" onclick="annBulkDelete()">🗑️ Delete Selected (<span id="annSelCount">0</span>)</button>
+                <button class="btn btn-sm btn-ghost" onclick="annClearSelection()">✕ Cancel</button>
             </span>
-            <button class="btn btn-sm" style="background:rgba(239,68,68,.15);color:var(--accent-red);border:1px solid rgba(239,68,68,.3);" onclick="annDeleteAll()">🗑️ Hapus Semua</button>
+            <button class="btn btn-sm" style="background:rgba(239,68,68,.15);color:var(--accent-red);border:1px solid rgba(239,68,68,.3);" onclick="annDeleteAll()">🗑️ Delete All</button>
         </h3>
         <table class="tbl" id="annTbl" style="font-size:13px;">
             <thead><tr>
                 <th style="width:40px;"><input type="checkbox" id="annSelectAll" onchange="annToggleAll(this.checked)" title="Select All"></th>
                 <th style="width:50px;">#</th>
-                <th style="width:80px;">Tipe</th>
-                <th>Pesan</th>
-                <th style="width:150px;">Waktu</th>
-                <th style="width:110px;">Aksi</th>
+                <th style="width:80px;">Type</th>
+                <th>Message</th>
+                <th style="width:150px;">Time</th>
+                <th style="width:110px;">Action</th>
             </tr></thead>
             <tbody id="annBody"><tr><td colspan="6">Loading...</td></tr></tbody>
         </table>
@@ -639,8 +639,8 @@
         <div class="modal-header"><h3>✏️ Edit Announcement</h3><button class="btn btn-sm btn-ghost" onclick="closeAnnEditModal()">✕</button></div>
         <div class="modal-body">
             <input type="hidden" id="annEditId">
-            <div class="fg"><label>Pesan</label><textarea id="annEditMsg" rows="4" style="width:100%;resize:vertical;"></textarea></div>
-            <div class="fg"><label>Tipe</label>
+            <div class="fg"><label>Message</label><textarea id="annEditMsg" rows="4" style="width:100%;resize:vertical;"></textarea></div>
+            <div class="fg"><label>Type</label>
                 <select id="annEditType" style="width:100%;">
                     <option value="info">ℹ️ Info</option>
                     <option value="warning">⚠️ Warning</option>
@@ -649,8 +649,8 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-ghost" onclick="closeAnnEditModal()">Batal</button>
-            <button class="btn btn-blue" onclick="saveAnnEdit()">💾 Simpan</button>
+            <button class="btn btn-ghost" onclick="closeAnnEditModal()">Cancel</button>
+            <button class="btn btn-blue" onclick="saveAnnEdit()">💾 Save</button>
         </div>
     </div>
 </div>
@@ -659,14 +659,14 @@
 <div class="section-page" id="page-registration">
     <h2 class="page-title">📝 Registration Control</h2>
     <div class="card">
-        <h3>Status Registrasi</h3>
+        <h3>Registration Status</h3>
         <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
             <span>Self-Registration:</span>
             <span id="regStatus" class="badge badge-gray">...</span>
             <button class="btn btn-sm btn-blue" onclick="toggleRegistration()">🔄 Toggle</button>
         </div>
-        <div class="fg"><label>Kode Registrasi (read-only)</label><input id="regCode" readonly></div>
-        <p style="font-size:12px; color:var(--text-muted);">Kode ini digunakan peserta untuk self-register di <a href="/register" style="color:var(--accent-cyan);">/register</a></p>
+        <div class="fg"><label>Registration Code (read-only)</label><input id="regCode" readonly></div>
+        <p style="font-size:12px; color:var(--text-muted);">This code is used by participants to self-register at <a href="/register" style="color:var(--accent-cyan);">/register</a></p>
     </div>
 </div>
 
@@ -677,7 +677,7 @@
     <!-- Event Mode -->
     <div class="card">
         <h3>🎯 Event Mode</h3>
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Pilih mode event: <strong>Team</strong> (tim login pakai token) atau <strong>Individual</strong> (peserta login pakai username/password).</p>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Choose event mode: <strong>Team</strong> (teams login with token) or <strong>Individual</strong> (participants login with username/password).</p>
         <div class="mode-toggle" id="eventModeToggle">
             <button id="modeTeam" onclick="setEventMode('team')">👥 Team</button>
             <button id="modeIndividual" onclick="setEventMode('individual')">👤 Individual</button>
@@ -688,7 +688,7 @@
     <!-- Organizer Users -->
     <div class="card um-section">
         <h3>🛡️ Organizer Accounts</h3>
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Akun organizer bisa login ke console ini dengan username/password.</p>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Organizer accounts can login to this console with username/password.</p>
         <div class="um-add-form">
             <div class="fg"><label>Username</label><input id="orgNewUser" placeholder="username" style="width:160px;"></div>
             <div class="fg"><label>Display Name</label><input id="orgNewName" placeholder="Display Name" style="width:180px;"></div>
@@ -699,10 +699,10 @@
                     <option value="superadmin">Superadmin</option>
                 </select>
             </div>
-            <button class="btn btn-sm btn-green" onclick="createOrganizer()">+ Tambah</button>
+            <button class="btn btn-sm btn-green" onclick="createOrganizer()">+ Add</button>
         </div>
         <table class="tbl">
-            <thead><tr><th>ID</th><th>Username</th><th>Display Name</th><th>Role</th><th>Active</th><th>Last Login</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>ID</th><th>Username</th><th>Display Name</th><th>Role</th><th>Active</th><th>Last Login</th><th>Action</th></tr></thead>
             <tbody id="orgUsersBody"></tbody>
         </table>
     </div>
@@ -710,19 +710,19 @@
     <!-- Individual Users -->
     <div class="card um-section" id="individualSection">
         <h3>👤 Individual Users</h3>
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">User individual hanya bisa login jika event mode = Individual.</p>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">Individual users can only login when event mode = Individual.</p>
         <div id="individualDisabledMsg" style="background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:6px; padding:10px 14px; color:var(--accent-red); font-size:12px; margin-bottom:14px; display:none;">
-            ⚠️ Event mode saat ini = <strong>Team</strong>. Individual users tidak bisa login. Ganti ke Individual mode untuk mengaktifkan.
+            ⚠️ Current event mode = <strong>Team</strong>. Individual users cannot login. Switch to Individual mode to enable.
         </div>
         <div class="um-add-form">
             <div class="fg"><label>Username</label><input id="indNewUser" placeholder="username" style="width:160px;"></div>
             <div class="fg"><label>Display Name</label><input id="indNewName" placeholder="Display Name" style="width:180px;"></div>
             <div class="fg"><label>Password</label><input id="indNewPass" type="password" placeholder="min 6 chars" style="width:160px;"></div>
             <div class="fg"><label>Category</label><input id="indNewCat" placeholder="default" style="width:120px;" value="default"></div>
-            <button class="btn btn-sm btn-green" onclick="createIndividual()">+ Tambah</button>
+            <button class="btn btn-sm btn-green" onclick="createIndividual()">+ Add</button>
         </div>
         <table class="tbl">
-            <thead><tr><th>ID</th><th>Username</th><th>Display Name</th><th>Category</th><th>Active</th><th>Last Login</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>ID</th><th>Username</th><th>Display Name</th><th>Category</th><th>Active</th><th>Last Login</th><th>Action</th></tr></thead>
             <tbody id="indUsersBody"></tbody>
         </table>
     </div>
@@ -731,36 +731,36 @@
 <!-- ───── PAGE: EVENT DETAILS ───── -->
 <div class="section-page" id="page-eventdetails">
     <h2 class="page-title">📋 Event Details</h2>
-    <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Atur informasi event yang akan ditampilkan di halaman landing page peserta setelah login.</p>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Configure event information displayed on the participant landing page after login.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div class="card">
             <h3>🏷️ Identitas Event</h3>
             <div class="fg"><label>Event Name</label><input id="ed_name" placeholder="KoTH CTF"></div>
             <div class="fg"><label>Event Subtitle</label><input id="ed_subtitle" placeholder="King of the Hill Competition"></div>
-            <div class="fg"><label>Organizer</label><input id="ed_organizer" placeholder="Nama penyelenggara"></div>
+            <div class="fg"><label>Organizer</label><input id="ed_organizer" placeholder="Organizer name"></div>
             <div class="fg"><label>Contact</label><input id="ed_contact" placeholder="Email / WA / Telegram"></div>
         </div>
         <div class="card">
             <h3>📅 Detail Event</h3>
-            <div class="fg"><label>Tanggal &amp; Waktu</label><input id="ed_date" placeholder="25 Januari 2025, 09:00 - 17:00 WIB"></div>
-            <div class="fg"><label>Lokasi</label><input id="ed_location" placeholder="Online / Gedung ABC"></div>
+            <div class="fg"><label>Date &amp; Time</label><input id="ed_date" placeholder="January 25 2025, 09:00 - 17:00 WIB"></div>
+            <div class="fg"><label>Location</label><input id="ed_location" placeholder="Online / Building ABC"></div>
         </div>
     </div>
     <div class="card">
-        <h3>📝 Deskripsi Event</h3>
-        <div class="fg"><label>Deskripsi (tampil di landing page)</label>
-            <textarea id="ed_description" rows="4" placeholder="Deskripsi singkat tentang event ini..." style="width:100%;padding:10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-family:var(--font-sans);font-size:13px;resize:vertical;"></textarea>
+        <h3>📝 Event Description</h3>
+        <div class="fg"><label>Description (shown on landing page)</label>
+            <textarea id="ed_description" rows="4" placeholder="Brief description of this event..." style="width:100%;padding:10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-family:var(--font-sans);font-size:13px;resize:vertical;"></textarea>
         </div>
-        <div class="fg"><label>Rules / Aturan (tampil di landing page)</label>
-            <textarea id="ed_rules" rows="5" placeholder="Aturan lomba, format penulisan king.txt, larangan, dsb..." style="width:100%;padding:10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-family:var(--font-sans);font-size:13px;resize:vertical;"></textarea>
+        <div class="fg"><label>Rules (shown on landing page)</label>
+            <textarea id="ed_rules" rows="5" placeholder="Competition rules, king.txt format, restrictions, etc..." style="width:100%;padding:10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-family:var(--font-sans);font-size:13px;resize:vertical;"></textarea>
         </div>
-        <button class="btn btn-primary" onclick="saveEventDetails()">💾 Simpan Event Details</button>
+        <button class="btn btn-primary" onclick="saveEventDetails()">💾 Save Event Details</button>
         <span id="edSaveStatus" style="margin-left:12px;font-size:12px;color:var(--accent-green);"></span>
     </div>
     <div class="card" style="margin-top:8px;">
         <h3>👁️ Preview Landing Page</h3>
         <div id="edPreview" style="background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;padding:24px;min-height:120px;">
-            <p style="color:var(--text-muted);font-size:13px;">Simpan perubahan untuk melihat preview.</p>
+            <p style="color:var(--text-muted);font-size:13px;">Save changes to see preview.</p>
         </div>
     </div>
 </div>
@@ -768,22 +768,22 @@
 <!-- ───── PAGE: CATEGORIES ───── -->
 <div class="section-page" id="page-categories">
     <h2 class="page-title">🏷️ Category Management</h2>
-    <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Kelola kategori team. Kategori akan muncul di form registrasi dan di halaman Teams.</p>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Manage team categories. Categories will appear in the registration form and Teams page.</p>
     <div class="card">
-        <h3>➕ Tambah Kategori</h3>
+        <h3>➕ Add Category</h3>
         <div style="display:flex;gap:12px;align-items:flex-end;">
             <div class="fg" style="flex:1;margin-bottom:0;"><label>Category ID (slug)</label><input id="cat_new_id" placeholder="military"></div>
             <div class="fg" style="flex:1;margin-bottom:0;"><label>Display Label</label><input id="cat_new_label" placeholder="Military / TNI"></div>
-            <button class="btn btn-primary" onclick="addCategory()" style="height:42px;">➕ Tambah</button>
+            <button class="btn btn-primary" onclick="addCategory()" style="height:42px;">➕ Add</button>
         </div>
     </div>
     <div class="card">
-        <h3>📋 Daftar Kategori</h3>
+        <h3>📋 Category List</h3>
         <table class="tbl" id="catTbl">
-            <thead><tr><th>#</th><th>Category ID</th><th>Display Label</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>#</th><th>Category ID</th><th>Display Label</th><th>Action</th></tr></thead>
             <tbody id="catBody"></tbody>
         </table>
-        <button class="btn btn-blue" onclick="saveCategories()" style="margin-top:12px;">💾 Simpan Perubahan</button>
+        <button class="btn btn-blue" onclick="saveCategories()" style="margin-top:12px;">💾 Save Changes</button>
         <span id="catSaveStatus" style="margin-left:12px;font-size:12px;color:var(--accent-green);"></span>
     </div>
 </div>
@@ -792,9 +792,9 @@
 <div class="section-page" id="page-config">
     <h2 class="page-title">⚙️ Game Configuration</h2>
     <div class="card">
-        <h3>Semua Config</h3>
+        <h3>All Configuration</h3>
         <table class="tbl" id="configTbl">
-            <thead><tr><th>Key</th><th>Value</th><th>Deskripsi</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Key</th><th>Value</th><th>Description</th><th>Action</th></tr></thead>
             <tbody id="configBody"></tbody>
         </table>
     </div>
@@ -805,9 +805,9 @@
     <h2 class="page-title">📋 Audit Log</h2>
     <div class="card">
         <div class="audit-search">
-            <input type="text" id="auditSearch" placeholder="🔍 Cari di audit log (IP, username, detail...)" onkeydown="if(event.key==='Enter') loadAudit();">
+            <input type="text" id="auditSearch" placeholder="🔍 Search audit log (IP, username, detail...)" onkeydown="if(event.key==='Enter') loadAudit();">
             <select id="auditFilter" onchange="loadAudit()" style="padding:8px 12px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:6px; color:var(--text-primary); font-size:13px;">
-                <option value="">Semua Event</option>
+                <option value="">All Events</option>
                 <option value="game_control">Game Control</option>
                 <option value="team_created">Team Created</option>
                 <option value="team_self_registered">Self Register</option>
@@ -837,14 +837,14 @@
 <div class="section-page" id="page-verification">
     <h2 class="page-title">🔍 Connection Status</h2>
     <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
-        Setiap tick dicek dengan 2 metode: <strong>SSH</strong> (scorebot) dan <strong>Agent</strong> (hill binary).
-        Jika peserta matiin SSH, agent tetap jalan — scoring tidak terganggu.
+        Each tick is checked using 2 methods: <strong>SSH</strong> (scorebot) and <strong>Agent</strong> (hill binary).
+        If participants disable SSH, the agent still runs — scoring is unaffected.
     </p>
 
     <!-- Agent Status Overview -->
     <div class="card">
         <h3>📡 Agent Status (Live)</h3>
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Status agent yang running di setiap hill server.</p>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Status of agents running on each hill server.</p>
         <div id="agentStatusGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:12px;">
             <div style="color:var(--text-muted);">Loading...</div>
         </div>
@@ -936,7 +936,7 @@
     </div>
     <div class="card">
         <h3>Export Scoreboard Snapshot</h3>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Snapshot lengkap scoreboard saat ini.</p>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Complete snapshot of the current scoreboard.</p>
         <button class="btn btn-ghost" onclick="exportScoreboard()">📥 Download Scoreboard JSON</button>
     </div>
 </div>
@@ -948,18 +948,18 @@
     <!-- STEPPER -->
     <div class="card" style="margin-bottom:0; border-bottom-left-radius:0; border-bottom-right-radius:0; background:var(--bg-secondary);">
         <div id="wizardStepper" style="display:flex; gap:8px; justify-content:center;">
-            <div class="wiz-step active" data-step="1"><span class="wiz-num">1</span> Konfigurasi</div>
+            <div class="wiz-step active" data-step="1"><span class="wiz-num">1</span> Configuration</div>
             <div class="wiz-arrow">→</div>
             <div class="wiz-step" data-step="2"><span class="wiz-num">2</span> Script</div>
             <div class="wiz-arrow">→</div>
-            <div class="wiz-step" data-step="3"><span class="wiz-num">3</span> Verifikasi</div>
+            <div class="wiz-step" data-step="3"><span class="wiz-num">3</span> Verification</div>
         </div>
     </div>
 
-    <!-- STEP 1: KONFIGURASI -->
+    <!-- STEP 1: CONFIGURATION -->
     <div class="card wiz-panel" id="wizStep1" style="border-top-left-radius:0; border-top-right-radius:0;">
-        <h3 style="margin-bottom:16px;">⚙️ Step 1 — Konfigurasi Hill & Agent</h3>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Isi detail hill baru. Hill akan otomatis dibuat di database, agent token auto-generated, dan script deploy di-generate.</p>
+        <h3 style="margin-bottom:16px;">⚙️ Step 1 — Configure Hill & Agent</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Fill in new hill details. The hill will be automatically created in the database, agent token auto-generated, and deploy script generated.</p>
 
         <div class="form-row">
             <div class="fg">
@@ -990,7 +990,7 @@
                 <input id="wz_hill_name" placeholder="Hill 5 - Crypto Vault">
             </div>
             <div class="fg">
-                <label>Deskripsi</label>
+                <label>Description</label>
                 <input id="wz_hill_desc" placeholder="Vulnerable crypto service">
             </div>
         </div>
@@ -1009,7 +1009,7 @@
         <div style="border-top:1px solid var(--border); margin:16px 0; padding-top:16px;">
             <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600;">
                 <input type="checkbox" id="wz_ssh_enabled" onchange="document.getElementById('wz_ssh_opts').style.display=this.checked?'block':'none'">
-                🔐 Configure SSH Access (opsional — untuk scorebot SSH verification)
+                🔐 Configure SSH Access (optional — for scorebot SSH verification)
             </label>
         </div>
         <div id="wz_ssh_opts" style="display:none; border:1px dashed var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
@@ -1022,7 +1022,7 @@
 
         <div style="border-top:1px solid var(--border); margin:16px 0; padding-top:16px;">
             <h4 style="margin-bottom:12px; color:var(--accent-cyan);">🔑 Agent Configuration</h4>
-            <small style="color:var(--text-muted); font-size:11px;">Agent token akan otomatis di-generate setelah hill dibuat.</small>
+            <small style="color:var(--text-muted); font-size:11px;">Agent token will be auto-generated after hill is created.</small>
         </div>
 
         <div class="form-row">
@@ -1039,7 +1039,7 @@
             <div class="fg">
                 <label>SLA Check Type</label>
                 <select id="wz_sla_type">
-                    <option value="">Tidak ada</option>
+                    <option value="">None</option>
                     <option value="http">HTTP</option>
                     <option value="tcp">TCP</option>
                 </select>
@@ -1054,7 +1054,7 @@
             <div class="fg" id="wz_container_fg" style="display:none;">
                 <label>Container Name</label>
                 <input id="wz_container_name" placeholder="hill5-crypto-vault">
-                <small style="color:var(--text-muted); font-size:11px;">Nama container Docker di Pivot server</small>
+                <small style="color:var(--text-muted); font-size:11px;">Docker container name on the Pivot server</small>
             </div>
         </div>
 
@@ -1066,7 +1066,7 @@
     <!-- STEP 2: GENERATED SCRIPT -->
     <div class="card wiz-panel" id="wizStep2" style="display:none; border-top-left-radius:0; border-top-right-radius:0;">
         <h3 style="margin-bottom:16px;">📜 Step 2 — Deploy Script</h3>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Hill berhasil dibuat! Copy script di bawah dan jalankan di server target.</p>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Hill created successfully! Copy the script below and run it on the target server.</p>
 
         <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
             <span class="badge badge-blue" id="wz_os_badge">Ubuntu</span>
@@ -1081,18 +1081,18 @@
 
         <div style="display:flex; gap:10px; margin-top:16px;">
             <button class="btn btn-ghost" onclick="wizGoStep(1)">← Kembali</button>
-            <button class="btn btn-primary" onclick="wizGoStep3()">Cek Status →</button>
+            <button class="btn btn-primary" onclick="wizGoStep3()">Check Status →</button>
         </div>
     </div>
 
-    <!-- STEP 3: VERIFIKASI -->
+    <!-- STEP 3: VERIFY -->
     <div class="card wiz-panel" id="wizStep3" style="display:none; border-top-left-radius:0; border-top-right-radius:0;">
-        <h3 style="margin-bottom:16px;">✅ Step 3 — Verifikasi Agent</h3>
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Setelah menjalankan script, klik tombol di bawah untuk cek apakah agent sudah melapor ke server.</p>
+        <h3 style="margin-bottom:16px;">✅ Step 3 — Verify Agent</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">After running the script, click the button below to check if the agent has reported to the server.</p>
 
         <div class="card" style="background:var(--bg-secondary); text-align:center; padding:32px;">
             <div id="wizVerifyIcon" style="font-size:48px; margin-bottom:12px;">⏳</div>
-            <div id="wizVerifyStatus" style="font-size:18px; font-weight:700; margin-bottom:8px; color:var(--text-muted);">Menunggu pengecekan...</div>
+            <div id="wizVerifyStatus" style="font-size:18px; font-weight:700; margin-bottom:8px; color:var(--text-muted);">Waiting for check...</div>
             <div id="wizVerifyDetail" style="font-size:13px; color:var(--text-muted);"></div>
         </div>
 
@@ -1105,7 +1105,7 @@
 
         <div style="display:flex; gap:10px; margin-top:16px;">
             <button class="btn btn-ghost" onclick="wizGoStep(2)">← Kembali</button>
-            <button class="btn btn-primary" id="wizCheckBtn" onclick="wizCheckAgent()">🔍 Cek Agent Status</button>
+            <button class="btn btn-primary" id="wizCheckBtn" onclick="wizCheckAgent()">🔍 Check Agent Status</button>
             <button class="btn btn-blue" id="wizAutoCheck" onclick="wizAutoCheckStart()" style="display:none;">🔄 Auto-Check (30s)</button>
         </div>
     </div>
@@ -1116,28 +1116,28 @@
     <h2 class="page-title">📖 Admin &amp; Organizer Guide</h2>
     <div class="card" style="max-width:960px;">
         <div id="guideContent" style="line-height:1.8; font-size:13px; color:var(--text-secondary);">
-            <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">KoTH CTF Platform — Panduan Organizer (Step-by-Step)</p>
+            <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">KoTH CTF Platform — Organizer Guide (Step-by-Step)</p>
 
             <!-- TOC -->
             <details open style="margin-bottom:20px;">
-                <summary style="cursor:pointer; font-weight:700; color:var(--accent-cyan); font-size:14px;">📑 Daftar Isi</summary>
+                <summary style="cursor:pointer; font-weight:700; color:var(--accent-cyan); font-size:14px;">📑 Table of Contents</summary>
                 <ol style="padding-left:20px; margin-top:8px; font-size:12px; columns:2;">
-                    <li><a href="#g1" style="color:var(--accent-blue);">Arsitektur Infrastruktur</a></li>
-                    <li><a href="#g2" style="color:var(--accent-blue);">Login Organizer Console</a></li>
+                    <li><a href="#g1" style="color:var(--accent-blue);">Infrastructure Architecture</a></li>
+                    <li><a href="#g2" style="color:var(--accent-blue);">Login to Organizer Console</a></li>
                     <li><a href="#g3" style="color:var(--accent-blue);">Setup Event Details</a></li>
-                    <li><a href="#g4" style="color:var(--accent-blue);">Kelola Kategori Tim</a></li>
-                    <li><a href="#g5" style="color:var(--accent-blue);">Konfigurasi Game</a></li>
-                    <li><a href="#g6" style="color:var(--accent-blue);">Tambah &amp; Kelola Hills</a></li>
-                    <li><a href="#g7" style="color:var(--accent-blue);">Manajemen Tim</a></li>
-                    <li><a href="#g8" style="color:var(--accent-blue);">Registrasi Peserta</a></li>
-                    <li><a href="#g9" style="color:var(--accent-blue);">Jalankan Game (Start/Pause/Stop)</a></li>
-                    <li><a href="#g10" style="color:var(--accent-blue);">Kontrol Scoreboard</a></li>
-                    <li><a href="#g11" style="color:var(--accent-blue);">Kirim Pengumuman</a></li>
+                    <li><a href="#g4" style="color:var(--accent-blue);">Manage Team Categories</a></li>
+                    <li><a href="#g5" style="color:var(--accent-blue);">Game Configuration</a></li>
+                    <li><a href="#g6" style="color:var(--accent-blue);">Add &amp; Manage Hills</a></li>
+                    <li><a href="#g7" style="color:var(--accent-blue);">Team Management</a></li>
+                    <li><a href="#g8" style="color:var(--accent-blue);">Participant Registration</a></li>
+                    <li><a href="#g9" style="color:var(--accent-blue);">Run Game (Start/Pause/Stop)</a></li>
+                    <li><a href="#g10" style="color:var(--accent-blue);">Scoreboard Control</a></li>
+                    <li><a href="#g11" style="color:var(--accent-blue);">Send Announcements</a></li>
                     <li><a href="#g12" style="color:var(--accent-blue);">Score Adjustment</a></li>
                     <li><a href="#g13" style="color:var(--accent-blue);">Monitoring &amp; Dashboard</a></li>
                     <li><a href="#g14" style="color:var(--accent-blue);">Audit Log</a></li>
                     <li><a href="#g15" style="color:var(--accent-blue);">Export Data</a></li>
-                    <li><a href="#g16" style="color:var(--accent-blue);">Checklist Hari-H</a></li>
+                    <li><a href="#g16" style="color:var(--accent-blue);">D-Day Checklist</a></li>
                     <li><a href="#g17" style="color:var(--accent-blue);">Troubleshooting</a></li>
                     <li><a href="#g18" style="color:var(--accent-blue);">API Reference</a></li>
                 </ol>
@@ -1164,268 +1164,268 @@
             </style>
 
             <!-- ═══ 1. Architecture ═══ -->
-            <h3 id="g1">1. Arsitektur Infrastruktur</h3>
-            <p>Platform KoTH CTF terdiri dari beberapa komponen Docker yang berjalan di satu server:</p>
+            <h3 id="g1">1. Infrastructure Architecture</h3>
+            <p>The KoTH CTF platform consists of several Docker components running on a single server:</p>
             <table>
-                <thead><tr><th>Container</th><th>Port</th><th>Fungsi</th></tr></thead>
+                <thead><tr><th>Container</th><th>Port</th><th>Function</th></tr></thead>
                 <tbody>
                     <tr><td><code>koth-scoreboard</code></td><td>:8000</td><td>FastAPI — Scoreboard, API, Dashboard</td></tr>
                     <tr><td><code>koth-scorebot</code></td><td>:8080</td><td>Go — SLA checker &amp; scoring engine</td></tr>
                     <tr><td><code>koth-nginx</code></td><td>:80</td><td>Reverse proxy — serve all traffic</td></tr>
-                    <tr><td><code>koth-postgres</code></td><td>:5432</td><td>PostgreSQL 16 — database utama</td></tr>
+                    <tr><td><code>koth-postgres</code></td><td>:5432</td><td>PostgreSQL 16 — main database</td></tr>
                     <tr><td><code>koth-redis</code></td><td>:6379</td><td>Redis 7 — cache &amp; WebSocket pub/sub</td></tr>
                 </tbody>
             </table>
-            <p>Hill servers adalah mesin terpisah yang menjalankan <code>koth-agent</code>. Scorebot melakukan pengecekan SLA ke setiap hill setiap tick.</p>
+            <p>Hill servers are separate machines running <code>koth-agent</code>. Scorebot performs SLA checks on every hill each tick.</p>
 
             <!-- ═══ 2. Login ═══ -->
             <h3 id="g2">2. Login Organizer Console</h3>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Buka browser, akses <strong>https://DOMAIN_ANDA/org</strong></div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Masukkan <strong>Admin Token</strong> (didefinisikan di file <code>.env</code> sebagai <code>API_ADMIN_TOKEN</code>)</div></div>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Klik <strong>Login</strong> — Anda akan masuk ke Dashboard organizer</div></div>
-            <p>Setelah login, gunakan <strong>sidebar menu di sebelah kiri</strong> untuk navigasi ke semua fitur.</p>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Open browser, navigate to <strong>https://YOUR_DOMAIN/org</strong></div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Enter the <strong>Admin Token</strong> (defined in <code>.env</code> as <code>API_ADMIN_TOKEN</code>)</div></div>
+            <div class="step-box"><div class="sn">3</div><div class="sb">Click <strong>Login</strong> — you will be taken to the Organizer Dashboard</div></div>
+            <p>After logging in, use the <strong>sidebar menu on the left</strong> to navigate to all features.</p>
 
             <!-- ═══ 3. Event Details ═══ -->
             <h3 id="g3">3. Setup Event Details</h3>
-            <p>Atur informasi event yang akan tampil sebagai landing page peserta setelah login.</p>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">📋 Event Details</span> di sidebar</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Isi form: <strong>Event Name</strong>, <strong>Subtitle</strong>, <strong>Organizer</strong>, <strong>Contact</strong>, <strong>Tanggal</strong>, <strong>Lokasi</strong>, <strong>Deskripsi</strong>, dan <strong>Rules</strong></div></div>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Lihat <strong>Live Preview</strong> di panel sebelah kanan untuk memastikan tampilan</div></div>
-            <div class="step-box"><div class="sn">4</div><div class="sb">Klik tombol <strong>💾 Simpan Event Details</strong></div></div>
-            <p><strong>Verifikasi:</strong> Buka halaman dashboard peserta — informasi event akan muncul di banner atas halaman Home.</p>
+            <p>Set up event information that will be displayed as the participant landing page after login.</p>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">📋 Event Details</span> in the sidebar</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Fill in the form: <strong>Event Name</strong>, <strong>Subtitle</strong>, <strong>Organizer</strong>, <strong>Contact</strong>, <strong>Date</strong>, <strong>Location</strong>, <strong>Description</strong>, and <strong>Rules</strong></div></div>
+            <div class="step-box"><div class="sn">3</div><div class="sb">Check the <strong>Live Preview</strong> in the right panel to verify the display</div></div>
+            <div class="step-box"><div class="sn">4</div><div class="sb">Click the <strong>💾 Save Event Details</strong> button</div></div>
+            <p><strong>Verify:</strong> Open the participant dashboard — event information will appear in the top banner of the Home page.</p>
 
             <!-- ═══ 4. Categories ═══ -->
-            <h3 id="g4">4. Kelola Kategori Tim</h3>
-            <p>Kategori digunakan untuk mengelompokkan tim (misal: Militer, Sipil, Mahasiswa, dll).</p>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">🏷️ Categories</span> di sidebar</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Untuk menambah kategori: isi <strong>Category ID</strong> (slug, huruf kecil tanpa spasi, contoh: <code>military</code>) dan <strong>Display Label</strong> (contoh: <code>Militer</code>)</div></div>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Klik <strong>➕ Tambah</strong> — kategori baru muncul di tabel</div></div>
-            <div class="step-box"><div class="sn">4</div><div class="sb">Untuk mengedit label: langsung ubah di kolom <strong>Label</strong> pada tabel</div></div>
-            <div class="step-box"><div class="sn">5</div><div class="sb">Untuk menghapus: klik tombol <strong>🗑️</strong> (kategori <code>default</code> tidak bisa dihapus)</div></div>
-            <div class="step-box"><div class="sn">6</div><div class="sb">Klik <strong>💾 Simpan Kategori</strong> untuk menyimpan perubahan</div></div>
-            <p><strong>Verifikasi:</strong> Buka halaman registrasi — dropdown kategori akan menampilkan kategori yang sudah dibuat.</p>
+            <h3 id="g4">4. Manage Team Categories</h3>
+            <p>Categories are used to group teams (e.g.: Military, Civilian, Student, etc.).</p>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">🏷️ Categories</span> in the sidebar</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">To add a category: fill in <strong>Category ID</strong> (slug, lowercase no spaces, e.g.: <code>military</code>) and <strong>Display Label</strong> (e.g.: <code>Military</code>)</div></div>
+            <div class="step-box"><div class="sn">3</div><div class="sb">Click <strong>➕ Add</strong> — new category appears in the table</div></div>
+            <div class="step-box"><div class="sn">4</div><div class="sb">To edit a label: directly modify the <strong>Label</strong> column in the table</div></div>
+            <div class="step-box"><div class="sn">5</div><div class="sb">To delete: click the <strong>🗑️</strong> button (<code>default</code> category cannot be deleted)</div></div>
+            <div class="step-box"><div class="sn">6</div><div class="sb">Click <strong>💾 Save Categories</strong> to save changes</div></div>
+            <p><strong>Verify:</strong> Open the registration page — the category dropdown will show the categories you created.</p>
 
             <!-- ═══ 5. Config ═══ -->
-            <h3 id="g5">5. Konfigurasi Game</h3>
-            <p>Atur parameter game sebelum event dimulai.</p>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">⚙️ Config</span> di sidebar</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Anda akan melihat tabel konfigurasi. Parameter penting:</div></div>
+            <h3 id="g5">5. Game Configuration</h3>
+            <p>Set game parameters before the event starts.</p>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">⚙️ Config</span> in the sidebar</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">You will see the configuration table. Important parameters:</div></div>
             <table>
-                <thead><tr><th>Key</th><th>Default</th><th>Keterangan</th></tr></thead>
+                <thead><tr><th>Key</th><th>Default</th><th>Description</th></tr></thead>
                 <tbody>
-                    <tr><td><code>tick_interval</code></td><td>60</td><td>Interval scoring dalam detik</td></tr>
-                    <tr><td><code>grace_period</code></td><td>300</td><td>Grace period awal tanpa scoring (5 menit)</td></tr>
-                    <tr><td><code>game_duration</code></td><td>21600</td><td>Durasi total game dalam detik (6 jam)</td></tr>
-                    <tr><td><code>freeze_before_end</code></td><td>1800</td><td>Freeze scoreboard X detik sebelum berakhir</td></tr>
-                    <tr><td><code>first_blood_bonus</code></td><td>50</td><td>Bonus first blood per hill</td></tr>
-                    <tr><td><code>defense_streak_bonus</code></td><td>5</td><td>Bonus defense streak per tick</td></tr>
-                    <tr><td><code>base_points</code></td><td>10</td><td>Poin dasar per tick per hill</td></tr>
+                    <tr><td><code>tick_interval</code></td><td>60</td><td>Scoring interval in seconds</td></tr>
+                    <tr><td><code>grace_period</code></td><td>300</td><td>Initial grace period without scoring (5 minutes)</td></tr>
+                    <tr><td><code>game_duration</code></td><td>21600</td><td>Total game duration in seconds (6 hours)</td></tr>
+                    <tr><td><code>freeze_before_end</code></td><td>1800</td><td>Freeze scoreboard X seconds before end</td></tr>
+                    <tr><td><code>first_blood_bonus</code></td><td>50</td><td>First blood bonus per hill</td></tr>
+                    <tr><td><code>defense_streak_bonus</code></td><td>5</td><td>Defense streak bonus per tick</td></tr>
+                    <tr><td><code>base_points</code></td><td>10</td><td>Base points per tick per hill</td></tr>
                 </tbody>
             </table>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Klik tombol <strong>✏️ Edit</strong> pada baris yang ingin diubah</div></div>
-            <div class="step-box"><div class="sn">4</div><div class="sb">Masukkan nilai baru, lalu klik <strong>💾 Save</strong></div></div>
-            <div class="warn">⚠️ Ubah konfigurasi <strong>sebelum</strong> game dimulai. Mengubah saat game berjalan bisa menyebabkan skor tidak konsisten.</div>
+            <div class="step-box"><div class="sn">3</div><div class="sb">Click the <strong>✏️ Edit</strong> button on the row you want to change</div></div>
+            <div class="step-box"><div class="sn">4</div><div class="sb">Enter the new value, then click <strong>💾 Save</strong></div></div>
+            <div class="warn">⚠️ Change configuration <strong>before</strong> the game starts. Changing during gameplay may cause inconsistent scores.</div>
 
             <!-- ═══ 6. Hills ═══ -->
-            <h3 id="g6">6. Tambah &amp; Kelola Hills</h3>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">🏔️ Hills</span> di sidebar</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Untuk menambah hill baru, isi form di bagian atas:
+            <h3 id="g6">6. Add &amp; Manage Hills</h3>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">🏔️ Hills</span> in the sidebar</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">To add a new hill, fill in the form at the top:
                 <ul>
-                    <li><strong>Name</strong> — Nama hill (contoh: "Web Server")</li>
-                    <li><strong>IP Address</strong> — IP VPC hill</li>
-                    <li><strong>SSH Port</strong> — Port SSH hill</li>
-                    <li><strong>SLA Check</strong> — Tipe pengecekan SLA (<code>http</code>, <code>tcp</code>)</li>
-                    <li><strong>SLA Port</strong> — Port yang dicek untuk SLA</li>
-                    <li><strong>Base Points</strong> — Poin per tick</li>
-                    <li><strong>Multiplier</strong> — Pengali skor (1.0 normal, 1.5 untuk pivot)</li>
+                    <li><strong>Name</strong> — Hill name (e.g.: "Web Server")</li>
+                    <li><strong>IP Address</strong> — Hill VPC IP</li>
+                    <li><strong>SSH Port</strong> — Hill SSH port</li>
+                    <li><strong>SLA Check</strong> — SLA check type (<code>http</code>, <code>tcp</code>)</li>
+                    <li><strong>SLA Port</strong> — Port checked for SLA</li>
+                    <li><strong>Base Points</strong> — Points per tick</li>
+                    <li><strong>Multiplier</strong> — Score multiplier (1.0 normal, 1.5 for pivot)</li>
                 </ul>
             </div></div>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Klik <strong>Create Hill</strong></div></div>
-            <div class="step-box"><div class="sn">4</div><div class="sb">Untuk menonaktifkan hill (misal ada masalah teknis): klik tombol <strong>Toggle</strong> pada baris hill</div></div>
-            <p><strong>Verifikasi:</strong> Cek menu <span class="menu-ref">🔍 Connection Status</span> untuk memastikan semua hill terhubung dan SLA OK.</p>
+            <div class="step-box"><div class="sn">3</div><div class="sb">Click <strong>Create Hill</strong></div></div>
+            <div class="step-box"><div class="sn">4</div><div class="sb">To disable a hill (e.g. technical issues): click the <strong>Toggle</strong> button on the hill row</div></div>
+            <p><strong>Verify:</strong> Check <span class="menu-ref">🔍 Connection Status</span> to ensure all hills are connected and SLA OK.</p>
 
             <!-- ═══ 7. Teams ═══ -->
-            <h3 id="g7">7. Manajemen Tim</h3>
-            <h4>Tambah Tim Manual (oleh Organizer)</h4>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">👥 Teams</span> di sidebar</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Isi form: <strong>Team Name</strong> (slug, tanpa spasi), <strong>Display Name</strong>, pilih <strong>Category</strong>, isi <strong>VPN IP</strong> (opsional)</div></div>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Klik <strong>Daftarkan Team</strong></div></div>
-            <div class="step-box"><div class="sn">4</div><div class="sb">Tim baru akan muncul di tabel di bawah. Catat <strong>password</strong> yang di-generate untuk diberikan ke peserta.</div></div>
+            <h3 id="g7">7. Team Management</h3>
+            <h4>Manual Team Creation (by Organizer)</h4>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">👥 Teams</span> in the sidebar</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Fill in the form: <strong>Team Name</strong> (slug, no spaces), <strong>Display Name</strong>, select <strong>Category</strong>, enter <strong>VPN IP</strong> (optional)</div></div>
+            <div class="step-box"><div class="sn">3</div><div class="sb">Click <strong>Register Team</strong></div></div>
+            <div class="step-box"><div class="sn">4</div><div class="sb">The new team will appear in the table below. Note the <strong>password</strong> generated to give to participants.</div></div>
             <h4>Bulk Create via File</h4>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Siapkan data tim dalam format JSON array</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Gunakan API <code>POST /api/teams/bulk</code> dengan header <code>X-Admin-Token</code></div></div>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Prepare team data in JSON array format</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Use the API <code>POST /api/teams/bulk</code> with <code>X-Admin-Token</code> header</div></div>
 
             <!-- ═══ 8. Registration ═══ -->
-            <h3 id="g8">8. Registrasi Peserta</h3>
-            <p>Self-registration memungkinkan peserta mendaftar sendiri tanpa harus dibuatkan oleh organizer.</p>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">📝 Registration</span> di sidebar</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Klik tombol <strong>Toggle</strong> untuk mengaktifkan registrasi (status berubah jadi <strong style="color:var(--accent-green);">ON</strong>)</div></div>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Bagikan link registrasi ke peserta: <code>https://DOMAIN_ANDA/register</code></div></div>
-            <div class="step-box"><div class="sn">4</div><div class="sb">Peserta perlu memasukkan <strong>Registration Code</strong> (didefinisikan di <code>.env</code> sebagai <code>REGISTRATION_CODE</code>)</div></div>
-            <div class="step-box"><div class="sn">5</div><div class="sb">Setelah semua peserta terdaftar, klik <strong>Toggle</strong> lagi untuk menutup registrasi (<strong style="color:var(--accent-red);">OFF</strong>)</div></div>
-            <div class="warn">⚠️ Bagikan registration code saat briefing, <strong>bukan</strong> sebelumnya. Tutup registrasi sebelum game dimulai.</div>
-            <p><strong>Verifikasi:</strong> Cek menu <span class="menu-ref">👥 Teams</span> — tim yang sudah mendaftar akan muncul di tabel.</p>
+            <h3 id="g8">8. Participant Registration</h3>
+            <p>Self-registration allows participants to register themselves without needing to be created by the organizer.</p>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">📝 Registration</span> in the sidebar</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Click the <strong>Toggle</strong> button to enable registration (status changes to <strong style="color:var(--accent-green);">ON</strong>)</div></div>
+            <div class="step-box"><div class="sn">3</div><div class="sb">Share the registration link with participants: <code>https://YOUR_DOMAIN/register</code></div></div>
+            <div class="step-box"><div class="sn">4</div><div class="sb">Participants need to enter the <strong>Registration Code</strong> (defined in <code>.env</code> as <code>REGISTRATION_CODE</code>)</div></div>
+            <div class="step-box"><div class="sn">5</div><div class="sb">After all participants have registered, click <strong>Toggle</strong> again to close registration (<strong style="color:var(--accent-red);">OFF</strong>)</div></div>
+            <div class="warn">⚠️ Share the registration code during briefing, <strong>not</strong> before. Close registration before the game starts.</div>
+            <p><strong>Verify:</strong> Check <span class="menu-ref">👥 Teams</span> — registered teams will appear in the table.</p>
 
             <!-- ═══ 9. Game Lifecycle ═══ -->
-            <h3 id="g9">9. Jalankan Game (Start / Pause / Stop)</h3>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">🎮 Game Control</span> di sidebar</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Status game saat ini ditampilkan di bagian atas. Awal: <code>idle</code></div></div>
+            <h3 id="g9">9. Run Game (Start / Pause / Stop)</h3>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">🎮 Game Control</span> in the sidebar</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Current game status is displayed at the top. Initial: <code>idle</code></div></div>
             <h4>▶️ Start Game</h4>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Klik tombol <strong>▶️ Start Game</strong></div></div>
-            <div class="step-box"><div class="sn">4</div><div class="sb">Game masuk <strong>Grace Period</strong> (5 menit) — peserta bisa login tapi belum ada scoring</div></div>
-            <div class="step-box"><div class="sn">5</div><div class="sb">Setelah grace period, status berubah ke <strong>running</strong> dan tick pertama dimulai</div></div>
+            <div class="step-box"><div class="sn">3</div><div class="sb">Click the <strong>▶️ Start Game</strong> button</div></div>
+            <div class="step-box"><div class="sn">4</div><div class="sb">Game enters <strong>Grace Period</strong> (5 minutes) — participants can login but no scoring yet</div></div>
+            <div class="step-box"><div class="sn">5</div><div class="sb">After grace period, status changes to <strong>running</strong> and the first tick begins</div></div>
             <h4>⏸️ Pause / ▶️ Resume</h4>
-            <div class="step-box"><div class="sn">•</div><div class="sb">Klik <strong>⏸️ Pause</strong> untuk menghentikan scoring sementara (misal ada masalah teknis)</div></div>
-            <div class="step-box"><div class="sn">•</div><div class="sb">Klik <strong>▶️ Resume</strong> untuk melanjutkan game</div></div>
+            <div class="step-box"><div class="sn">•</div><div class="sb">Click <strong>⏸️ Pause</strong> to temporarily stop scoring (e.g. technical issues)</div></div>
+            <div class="step-box"><div class="sn">•</div><div class="sb">Click <strong>▶️ Resume</strong> to continue the game</div></div>
             <h4>⏹️ Stop Game</h4>
-            <div class="step-box"><div class="sn">•</div><div class="sb">Klik <strong>⏹️ Stop</strong> untuk mengakhiri game</div></div>
-            <div class="danger">⚠️ STOP bersifat <strong>FINAL</strong>! Game tidak bisa di-resume setelah di-stop. Pastikan ini memang akhir pertandingan.</div>
+            <div class="step-box"><div class="sn">•</div><div class="sb">Click <strong>⏹️ Stop</strong> to end the game</div></div>
+            <div class="danger">⚠️ STOP is <strong>FINAL</strong>! The game cannot be resumed after stopping. Make sure this is indeed the end of the match.</div>
             <h4>Status Game</h4>
             <table>
-                <thead><tr><th>Status</th><th>Keterangan</th></tr></thead>
+                <thead><tr><th>Status</th><th>Description</th></tr></thead>
                 <tbody>
-                    <tr><td><code>idle</code></td><td>Game belum dimulai</td></tr>
-                    <tr><td><code>grace_period</code></td><td>Grace period 5 menit — tanpa scoring</td></tr>
-                    <tr><td><code>running</code></td><td>Game berjalan, scoring aktif setiap tick</td></tr>
-                    <tr><td><code>paused</code></td><td>Game di-pause, scoring berhenti</td></tr>
-                    <tr><td><code>stopped</code></td><td>Game selesai</td></tr>
+                    <tr><td><code>idle</code></td><td>Game has not started</td></tr>
+                    <tr><td><code>grace_period</code></td><td>5-minute grace period — no scoring</td></tr>
+                    <tr><td><code>running</code></td><td>Game running, scoring active each tick</td></tr>
+                    <tr><td><code>paused</code></td><td>Game paused, scoring stopped</td></tr>
+                    <tr><td><code>stopped</code></td><td>Game finished</td></tr>
                 </tbody>
             </table>
 
             <!-- ═══ 10. Scoreboard ═══ -->
-            <h3 id="g10">10. Kontrol Scoreboard</h3>
+            <h3 id="g10">10. Scoreboard Control</h3>
             <h4>Freeze / Unfreeze</h4>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">🎮 Game Control</span> di sidebar</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Di bagian Scoreboard, klik <strong>🧊 Freeze</strong> untuk membekukan tampilan scoreboard publik</div></div>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Scoring tetap berjalan di belakang layar — peserta hanya tidak bisa melihat update</div></div>
-            <div class="step-box"><div class="sn">4</div><div class="sb">Setelah game selesai, klik <strong>🔥 Unfreeze</strong> untuk menampilkan skor final</div></div>
-            <p><strong>Auto-freeze:</strong> Scoreboard otomatis freeze 30 menit sebelum game berakhir (bisa diatur di Config: <code>freeze_before_end</code>).</p>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">🎮 Game Control</span> in the sidebar</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">In the Scoreboard section, click <strong>🧊 Freeze</strong> to freeze the public scoreboard display</div></div>
+            <div class="step-box"><div class="sn">3</div><div class="sb">Scoring continues behind the scenes — participants just can't see updates</div></div>
+            <div class="step-box"><div class="sn">4</div><div class="sb">After the game ends, click <strong>🔥 Unfreeze</strong> to reveal final scores</div></div>
+            <p><strong>Auto-freeze:</strong> Scoreboard automatically freezes 30 minutes before the game ends (configurable in Config: <code>freeze_before_end</code>).</p>
 
             <!-- ═══ 11. Announcement ═══ -->
-            <h3 id="g11">11. Kirim Pengumuman</h3>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">📢 Announcement</span> di sidebar</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Ketik pesan di kolom <strong>Message</strong></div></div>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Pilih <strong>Type</strong>:
+            <h3 id="g11">11. Send Announcements</h3>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">📢 Announcement</span> in the sidebar</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Type your message in the <strong>Message</strong> field</div></div>
+            <div class="step-box"><div class="sn">3</div><div class="sb">Select <strong>Type</strong>:
                 <ul>
-                    <li><code>info</code> (biru) — Informasi umum</li>
-                    <li><code>warning</code> (orange) — Peringatan</li>
-                    <li><code>danger</code> (merah) — Peringatan serius / penalty</li>
+                    <li><code>info</code> (blue) — General information</li>
+                    <li><code>warning</code> (orange) — Warning</li>
+                    <li><code>danger</code> (red) — Serious warning / penalty</li>
                 </ul>
             </div></div>
-            <div class="step-box"><div class="sn">4</div><div class="sb">Klik <strong>📢 Broadcast</strong> — pengumuman langsung muncul di dashboard semua peserta via WebSocket</div></div>
+            <div class="step-box"><div class="sn">4</div><div class="sb">Click <strong>📢 Broadcast</strong> — announcement instantly appears on all participant dashboards via WebSocket</div></div>
 
             <!-- ═══ 12. Score Adjust ═══ -->
             <h3 id="g12">12. Score Adjustment</h3>
-            <p>Tambah atau kurangi poin secara manual (bonus / penalty).</p>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">⚖️ Score Adjust</span> di sidebar</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Pilih <strong>Team</strong> dari dropdown</div></div>
-            <div class="step-box"><div class=">3</div><div class="sb">Masukkan <strong>Points</strong>: angka positif untuk bonus, negatif untuk penalty (contoh: <code>-50</code>)</div></div>
-            <div class="step-box"><div class="sn">4</div><div class="sb">Isi <strong>Reason</strong> (wajib) — contoh: "Bonus challenge" atau "Penalty: service destruction"</div></div>
-            <div class="step-box"><div class="sn">5</div><div class="sb">Klik <strong>Submit Adjustment</strong></div></div>
-            <p><strong>Verifikasi:</strong> Cek <spanass="menu-ref">📋 Audit Log</span> — setiap adjustment tercatat dengan detail tim, poin, dan alasan.</p>
+            <p>Add or subtract points manually (bonus / penalty).</p>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">⚖️ Score Adjust</span> in the sidebar</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Select <strong>Team</strong> from the dropdown</div></div>
+            <div class="step-box"><div class=">3</div><div class="sb">Enter <strong>Points</strong>: positive number for bonus, negative for penalty (e.g.: <code>-50</code>)</div></div>
+            <div class="step-box"><div class="sn">4</div><div class="sb">Fill in <strong>Reason</strong> (required) — e.g.: "Bonus challenge" or "Penalty: service destruction"</div></div>
+            <div class="step-box"><div class="sn">5</div><div class="sb">Click <strong>Submit Adjustment</strong></div></div>
+            <p><strong>Verify:</strong> Check <spanass="menu-ref">📋 Audit Log</span> — every adjustment is recorded with team details, points, and reason.</p>
 
             <!-- ═══ 13. Monitoring ═══ -->
             <h3 id="g13">13. Monitoring &amp; Dashboard</h3>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">📊 Dashboard</span> di sidebar (halaman utama setelah login)</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Dashboard menampilkan:
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">📊 Dashboard</span> in the sidebar (main page after login)</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Dashboard displays:
          <ul>
                     <li><strong>Game Status</strong> — idle / running / paused / stopped</li>
-                    <li><strong>Total Teams</strong> — jumlah tim terdaftar</li>
-                    <li><strong>Active Hills</strong> — jumlah hill aktif</li>
-                    <li><strong>Current Tick</strong> — tick terakhir</li>
-                    <li><strong>Time Remaining</strong> — waktu tersisa</li>
+                    <li><strong>Total Teams</strong> — number of registered teams</li>
+                    <li><strong>Active Hills</strong> — number of active hills</li>
+                    <li><strong>Current Tick</strong> — latest tick</li>
+                    <li><strong>Time Remaining</strong> — time left</li>
                 </ul>
             </div></div>
             <h4>Force Tick Manual</h4>
-           <div class="step-box"><div class="sn">•</div><div class="sb">Klik menu <span class="menu-ref">⏱️ Tick Engine</span> → klik <strong>Force Tick</strong> untuk memaksa scoring segera tanpa menunggu interval</div></div>
+           <div class="step-box"><div class="sn">•</div><div class="sb">Click <span class="menu-ref">⏱️ Tick Engine</span> → click <strong>Force Tick</strong> to force immediate scoring without waiting for interval</div></div>
             <h4>Connection Status</h4>
-            <div class="step-box"><div class="sn">•</div><div class="sb">Klik menu <span class="menu-ref">🔍 Connection Status</span> untuk melihat status koneksi ke semua hill secara real-time</div></div>
+            <div class="step-box"><div class="sn">•</div><div class="sb">Click <span class="menu-ref">🔍 Connection Status</span> to view real-time connection status to all hills</div></div>
 
             <!-- ═══ 14.  ═══ -->
             <h3 id="g14">14. Audit Log</h3>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">📋 Audit Log</span> di sidebar</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Semua aksi admin tercatat di sini: start/stop game, score adjustment, toggle registrasi, dll</div></div>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Gunakan <strong>filter/search</strong> untuk mencarnt tertentu</div></div>
-            <h4>Tipe Event yang Tercatat</h4>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">📋 Audit Log</span> in the sidebar</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">All admin actions are recorded here: start/stop game, score adjustment, toggle registration, etc.</div></div>
+            <div class="step-box"><div class="sn">3</div><div class="sb">Use <strong>filter/search</strong> to find specificnt tertentu</div></div>
+            <h4>Recorded Event Types</h4>
             <table>
-                <thead><tr><th>Event Type</th><th>Keterangan</th></tr></thead>
+                <thead><tr><th>Event Type</th><th>Description</th></tr></thead>
                 <tbody>
-                    <tr><td><code>game_started</code></td><td>Game dimulai</td></tr>
-                    <tr><td><code>game_paused</code></td><td>Game di-pause</td></tr>
-                    <tr><td><code>game_resumed</code></td><td>Game di-resume</td></tr>
-                    <tr><td><code>game_stopped</code></td><td>me dihentikan</td></tr>
-                    <tr><td><code>score_adjusted</code></td><td>Poin di-adjust manual</td></tr>
-                    <tr><td><code>hill_toggled</code></td><td>Hill di-enable/disable</td></tr>
-                    <tr><td><code>registration_toggled</code></td><td>Status registrasi diubah</td></tr>
-                    <tr><td><code>tick_forced</code></td><td>Tick dipaksa manual</td></tr>
-                    <tr><td><code>announcement_sent</code></td><td>Pengumuman dikirim</td></tr>
-                  <tr><td><code>scoreboard_frozen</code></td><td>Scoreboard di-freeze</td></tr>
-                    <tr><td><code>scoreboard_unfrozen</code></td><td>Scoreboard di-unfreeze</td></tr>
-                    <tr><td><code>event_details_updated</code></td><td>Event details diubah</td></tr>
-                    <tr><td><code>categories_updated</code></td><td>Kategori diubah</td></tr>
+                    <tr><td><code>game_started</code></td><td>Game started</td></tr>
+                    <tr><td><code>game_paused</code></td><td>Game paused</td></tr>
+                    <tr><td><code>game_resumed</code></td><td>Game resumed</td></tr>
+                    <tr><td><code>game_stopped</code></td><td>Game stopped</td></tr>
+                    <tr><td><code>score_adjusted</code></td><td>Points manually adjusted</td></tr>
+                    <tr><td><code>hill_toggled</code></td><td>Hill enabled/disabled</td></tr>
+                    <tr><td><code>registration_toggled</code></td><td>Registration status changed</td></tr>
+                    <tr><td><code>tick_forced</code></td><td>Tick manually forced</td></tr>
+                    <tr><td><code>announcement_sent</code></td><td>Announcement sent</td></tr>
+                  <tr><td><code>scoreboard_frozen</code></td><td>Scoreboard frozen</td></tr>
+                    <tr><td><code>scoreboard_unfrozen</code></td><td>Scoreboard unfrozen</td></tr>
+                    <tr><td><code>event_details_updated</code></td><td>Event details updated</td></tr>
+                    <tr><td><code>categories_updated</code></td><td>Categories updated</td></tr>
                 </tbody>
             </table>
 
             <!-- ═══ 15. Export ═══ -->
             <h3 id="g15">15. Export Data</h3>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Klik menu <span class="menu-ref">💾 Export Data</span> di sidebar</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Pilih format: <strong>CSV</strong> atau <strong>JSON</strong></div></div>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Klik <strong>Download</strong> — file berisi data tim beserta skor final</div></div>
-            <p>Gunakan data ink pengumuman juara dan dokumentasi event.</p>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Click <span class="menu-ref">💾 Export Data</span> in the sidebar</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Select format: <strong>CSV</strong> or <strong>JSON</strong></div></div>
+            <div class="step-box"><div class="sn">3</div><div class="sb">Click <strong>Download</strong> — file contains team data with final scores</div></div>
+            <p>Use this data for winner announcement and event documentation.</p>
 
             <!-- ═══ 16. Checklist Hari-H ═══ -->
-            <h3 id="g16">16. Checklist Hari-H</h3>
-            <h4>📋 H-1 (Hari Sebelumnya)</h4>
+            <h3 id="g16">16. D-Day Checklist</h3>
+            <h4>📋 D-1 (Day Before)</h4>
             <ul>
-                <li>✅ Semua container Docker running — cek di server: <code>docker ps</code></li>
-                <li>✅ Semua hill accessible dan SLA OK — cek di <span class="menu-ref">🔍 Connection Status</span></li>
-                <li>✅ VPN server running, config WireGuarsudah digenerate</li>
-                <li>✅ Event Details sudah diisi — cek di <span class="menu-ref">📋 Event Details</span></li>
-                <li>✅ Kategori sudah dibuat — cek di <span class="menu-ref">🏷️ Categories</span></li>
-                <li>✅ Konfigurasi game sudah benar — cek di <span class="menu-ref">⚙️ Config</span></li>
-                <li>✅ Test start → stop game, verifikasi scoring berjalan</li>
+                <li>✅ All Docker containers running — check on server: <code>docker ps</code></li>
+                <li>✅ All hills accessible and SLA OK — check in <span class="menu-ref">🔍 Connection Status</span></li>
+                <li>✅ VPN server running, WireGuard configalready generated</li>
+                <li>✅ Event Details filled in — check in <span class="menu-ref">📋 Event Details</span></li>
+                <li>✅ Categories created — check in <span class="menu-ref">🏷️ Categories</span></li>
+                <li>✅ Game configuration is correct — check in <span class="menu-ref">⚙️ Config</span></li>
+                <li>✅ Test start → stop game, verify scoring works</li>
                 <li>✅ Backup database: <code>docker exec koth-postgres pg_dump -U koth_admin koth > backup.sql</code></li>
             </ul>
-            <h4>🏁 Hari-H</h4>
+            <h4>🏁 D-Day</h4>
             <table>
-                <thead><tr><th>Waktu</th><th>Aksi</th><th>Menu</th></tr></thead>
+                <thead><tr><th>Time</th><th>Action</th><th>Menu</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>T-2h</strong></td><td>Verify semua server UP</td><td><span class="menu-ref">📊 Dashboard</span> + <span class="menu-ref">🔍 Connection Status</span></td></tr>
-                    <tr><td><strong>T-1.5h</strong></td><td>Buka registrasi</td>d><span class="menu-ref">📝 Registration</span> → Toggle ON</td></tr>
-                    <tr><td><strong>T-1h</strong></td><td>Peserta mulai registrasi</td><td>Share link <code>/register</code> + registration code</td></tr>
-                    <tr><td><strong>T-30m</strong></td><td>Technical briefing</td><td>—</td></tr>
-                    <tr><td><strong>T-5m</strong></td><td>Tutup registrasi</td><td><span class="menu-ref">📝 Registration</span> → Toggle OFF</td></tr>
+                    <tr><td><strong>T-2h</strong></td><td>Verify all servers are UP</td><td><span class="menu-ref">📊 Dashboard</span> + <span class="menu-ref">🔍 Connection Status</span></td></tr>
+                    <tr><td><strong>T-1.5h</strong></td><td>Open registration</td>d><span class="menu-ref">📝 Registration</span> → Toggle ON</td></tr>
+                    <tr><td><strong>T-1h</strong></td><td>Participants start registration</td><td>Share link <code>/register</code> + registration code</td></tr>
+                    <tr><td><strong>T-30m</strong></td><td>Technical briefing</td><td>&mdash;</td></tr>
+                    <tr><td><strong>T-5m</strong></td><td>Close registration</td><td><span class="menu-ref">📝 Registration</span> → Toggle OFF</td></tr>
                     <tr><tdstrong>T-2m</strong></td><td>Broadcast: "Game starts in 2 minutes!"</td><td><span class="menu-ref">📢 Announcement</span></td></tr>
                     <tr><td style="color:var(--accent-green);"><strong>T=0</strong></td><td style="color:var(--accent-green);font-weight:700;">🚀 START GAME</td><td><span class="menu-ref">🎮 Game Control</span> → Start</td></tr>
-                    <tr><td><em>T+5m</em></td><td>Grace period selesai, tick #1</td><td>Otomatis</td></tr>
-                    <tr><td style="cr:var(--accent-orange);"><strong>T-30m end</strong></td><td style="color:var(--accent-orange);">Scoreboard auto-freeze</td><td>Otomatis</td></tr>
+                    <tr><td><em>T+5m</em></td><td>Grace period ends, tick #1</td><td>Automatic</td></tr>
+                    <tr><td style="cr:var(--accent-orange);"><strong>T-30m end</strong></td><td style="color:var(--accent-orange);">Scoreboard auto-freeze</td><td>Automatic</td></tr>
                     <tr><td style="color:var(--accent-red);"><strong>T=end</strong></td><td style="color:var(--accent-red);font-weight:700;">🏁 STOP GAME</td><td><span class="menu-ref">🎮 Game Control</span> → Stop</td></tr>
                     <tr><td><strong>T+5m end</strong></td><td>Unfreeze scoreboard</td><td><span class="menu-ref">🎮 Game Control</span> → Unfreeze</td></tr>
-                    <tr><td><strong>T+10m end</strong></td><td>Export data &amp; umumkan juara</td><td><span class="menu-ref">💾 Export Data</span></td></tr>
+                    <tr><td><strong>T+10m end</strong></td><td>Export data &amp; announce winners</td><td><span class="menu-ref">💾 Export Data</span></td></tr>
                 </tbody>
             </table>
 
             <!-- ═══ 17. Troubleshooting ═══ -->
             <h3 id="g17">17. Troubleshooting</h3>
-            <h4>Hill SLA Gagal</h4>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Cek <span class="menu-ref">🔍 Connection Status</span> — lihat hill mana yang error</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">SSH ke hill server, cek service: <code>docker ps</code>, <code>systemctl status koth-agent</code></div></div>
-            <div class="step-box"><div class="sn">3</div><div class="sb">Jika perlu, nonaktifkan hill sementara: <span class="menu-ref">🏔️ Hills</span> → Toggle off</div></div>
+            <h4>Hill SLA Failed</h4>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Check <span class="menu-ref">🔍 Connection Status</span> — see which hill has errors</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">SSH to hill server, check services: <code>docker ps</code>, <code>systemctl status koth-agent</code></div></div>
+            <div class="step-box"><div class="sn">3</div><div class="sb">If needed, temporarily disable hill: <span class="menu-ref">🏔️ Hills</span> → Toggle off</div></div>
             <h4>Scorebot Error</h4>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Cek log: <code>docker logs --tail 50 koth-scorebot</code></div></div>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Check logs: <code>docker logs --tail 50 koth-scorebot</code></div></div>
             <div class="step-box"><div class="sn">2</div><div class="sb">Restart: <code>docker restart koth-scorebot</code></div></div>
             <h4>Scoreboard App Error</h4>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Cek log: <code>docker logs --tail 50 koth-scoreboard</code></div></div>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Check logs: <code>docker logs --tail 50 koth-scoreboard</code></div></div>
             <div class="step-box"><div class="sn">2</div><div class="sb">Restart: <code>docker restart koth-scoreboard</code></div></div>
-            <h4>Game Reset (⚠️ DESTRUKTIF!)</h4>
-            <div class="danger">⚠️ EXTREME CAUTION: Reset menghapus SEMUA data scoring. Tim tetap ada tapi semua poin jadi 0.</div>
-            <div class="step-box"><div class="sn">1</div><div class="sb">Stop game terlebih dahulu via <span class="menu-ref">🎮 Game Control</span> → Stop</div></div>
-            <div class="step-box"><div class="sn">2</div><div class="sb">Gunakan API: <code>POST /api/admin/game/reset</code> dengan header <code>X-Admin-Token</code></div></div>
+            <h4>Game Reset (⚠️ DESTRUCTIVE!)</h4>
+            <div class="danger">⚠️ EXTREME CAUTION: Reset deletes ALL scoring data. Teams remain but all points become 0.</div>
+            <div class="step-box"><div class="sn">1</div><div class="sb">Stop the game first via <span class="menu-ref">🎮 Game Control</span> → Stop</div></div>
+            <div class="step-box"><div class="sn">2</div><div class="sb">Use the API: <code>POST /api/admin/game/reset</code> with <code>X-Admin-Token</code> header</div></div>
 
             <!-- ═══ 18. API Reference ═══ -->
             <h3 id="g18">18. API Reference</h3>
-            <p>Untuk kebutuhan otomasi atau scripting, berikut daftar lengkap endpoint API:</p>
-            <h4>Public Endpoints (Tanpa Auth)</h4>
+            <p>For automation or scripting needs, here is the complete list of API endpoints:</p>
+            <h4>Public Endpoints (No Auth)</h4>
             <table>
                 <thead><tr><th>Method</th><th>Endpoint</th><th>Keterangan</th></tr></thead>
                 <tbody>
@@ -1522,9 +1522,9 @@ function renderTimers() {
         if (_gameStatus === 'finished') {
             dashRem.textContent = '🏁 GAME SELESAI';
         } else if (_gameStatus === 'not_started') {
-            dashRem.textContent = 'Menunggu game dimulai';
+            dashRem.textContent = 'Waiting for game to start';
         } else {
-            dashRem.textContent = `Sisa: ${fmtTime(_remainingSec)}`;
+            dashRem.textContent = `Remaining: ${fmtTime(_remainingSec)}`;
         }
     }
 
@@ -1747,7 +1747,7 @@ async function loadGameControl() {
         document.getElementById('gcBadge').innerHTML = statusBadge(s.game_status);
         renderTimers();
         const sisaText = (_gameStatus === 'not_started' || _gameStatus === 'finished') ? '--:--:--' : fmtTime(_remainingSec);
-        document.getElementById('gcInfo').innerHTML = `Tick #${s.current_tick} &middot; Sisa ${sisaText} &middot; Frozen: ${s.is_frozen?'YES':'No'}`;
+        document.getElementById('gcInfo').innerHTML = `Tick #${s.current_tick} &middot; Remaining ${sisaText} &middot; Frozen: ${s.is_frozen?'YES':'No'}`;
     } catch(e) {}
     finally { _gcLoading = false; }
 }
@@ -1916,7 +1916,7 @@ async function loadTicks() {
             <td class="mono" style="font-size:11px;">${t.started_at ? toWIBTime(t.started_at) : '-'}</td>
             <td><span class="badge ${t.status==='completed'?'badge-green':'badge-orange'}">${t.status}</span></td>
             <td class="mono">${t.completed_at && t.started_at ? Math.round((new Date(t.completed_at)-new Date(t.started_at))/1000)+'s' : '-'}</td>
-        </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text-muted)">Belum ada tick</td></tr>';
+        </tr>`).join('') || '<tr><td colspan="4" style="color:var(--text-muted)">No ticks yet</td></tr>';
     } catch(e) {}
 }
 
@@ -1943,7 +1943,7 @@ async function loadTeams() {
         document.getElementById('teamCount').textContent = `(${teams.length} teams)`;
         // Populate adj dropdown
         const sel = document.getElementById('adj_team');
-        sel.innerHTML = '<option value="">-- Pilih --</option>' + teams.map(t => `<option value="${t.id}">#${t.id} ${esc(t.display_name||t.name)}</option>`).join('');
+        sel.innerHTML = '<option value="">-- Select --</option>' + teams.map(t => `<option value="${t.id}">#${t.id} ${esc(t.display_name||t.name)}</option>`).join('');
         document.getElementById('teamsBody').innerHTML = teams.map(t => `<tr>
             <td class="mono">${t.id}</td>
             <td class="mono">${esc(t.name)}</td>
@@ -2105,7 +2105,7 @@ async function toggleHill(id) {
 }
 
 async function deleteHill(id, name) {
-    if (!confirm(`DELETE hill "${name}" dan semua score-nya? Aksi ini tidak bisa di-undo!`)) return;
+    if (!confirm(`DELETE hill "${name}" and all its scores? This action cannot be undone!`)) return;
     try { const d = await api(`/admin/hill/${id}`,{method:'DELETE'}); toast(d.detail); loadHills(); loadDashboard(); }
     catch(e) { toast(e.message,'error'); }
 }
@@ -2154,7 +2154,7 @@ async function saveEditHill() {
         multiplier: parseFloat(document.getElementById('he_mult').value) || 1.0,
         is_behind_pivot: document.getElementById('he_pivot').value === 'true',
     };
-    if (!payload.name || !payload.ip_address) { toast('Name dan IP wajib diisi!', 'error'); return; }
+    if (!payload.name || !payload.ip_address) { toast('Name and IP are required!', 'error'); return; }
     try {
         const d = await api(`/admin/hill/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
         toast(d.detail);
@@ -2186,7 +2186,7 @@ async function loadScores() {
             <td class="mono">${t.hills_owned}</td>
             <td class="mono">${t.total_ticks_as_king}</td>
             <td class="mono">${t.first_bloods}</td>
-        </tr>`).join('') || '<tr><td colspan="6" style="color:var(--text-muted)">Belum ada data</td></tr>';
+        </tr>`).join('') || '<tr><td colspan="6" style="color:var(--text-muted)">No data yet</td></tr>';
     } catch(e) {}
 }
 
@@ -2194,7 +2194,7 @@ async function adjustScore() {
     const teamId = parseInt(document.getElementById('adj_team').value);
     const pts = parseInt(document.getElementById('adj_pts').value);
     const reason = document.getElementById('adj_reason').value.trim();
-    if (!teamId || isNaN(pts) || !reason) { toast('Semua field harus diisi','error'); return; }
+    if (!teamId || isNaN(pts) || !reason) { toast('All fields are required','error'); return; }
     try {
         const d = await api('/admin/score/adjust', {method:'POST', body:JSON.stringify({team_id:teamId, points:pts, reason})});
         toast(d.detail); document.getElementById('adj_pts').value=''; document.getElementById('adj_reason').value='';
@@ -2763,7 +2763,7 @@ async function topoApply() {
 }
 
 function topoReset() {
-    if (!confirm('Reset topology ke default? Semua perubahan akan hilang.')) return;
+    if (!confirm('Reset topology to default? All changes will be lost.')) return;
     topoState = topoDefaultState();
     topoSel = { type:null, idx:-1 };
     topoAutoSave();
@@ -2792,7 +2792,7 @@ async function loadAnnouncements() {
         annUpdateBulkUI();
         document.getElementById('annSelectAll').checked = false;
         if (!anns.length) {
-            tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-muted);text-align:center;">Belum ada pengumuman</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-muted);text-align:center;">No announcements yet</td></tr>';
             return;
         }
         tbody.innerHTML = anns.map(a => {
@@ -2843,7 +2843,7 @@ function annClearSelection() {
 }
 
 async function annBulkDelete() {
-    if (!confirm(`Hapus ${annSelectedIds.size} announcement terpilih?`)) return;
+    if (!confirm(`Delete ${annSelectedIds.size} selected announcements?`)) return;
     try {
         const r = await api('/admin/announcements/bulk', {method:'DELETE', body:JSON.stringify({ids: [...annSelectedIds]})});
         toast(r.detail || 'Deleted!');
@@ -2852,8 +2852,8 @@ async function annBulkDelete() {
 }
 
 async function annDeleteAll() {
-    if (!confirm('⚠️ Hapus SEMUA announcement? Aksi ini tidak bisa di-undo!')) return;
-    if (!confirm('Yakin? Semua pengumuman akan dihapus permanen.')) return;
+    if (!confirm('⚠️ Delete ALL announcements? This action cannot be undone!')) return;
+    if (!confirm('Are you sure? All announcements will be permanently deleted.')) return;
     try {
         const r = await api('/admin/announcements/bulk', {method:'DELETE', body:JSON.stringify({ids: []})});
         toast(r.detail || 'All deleted!');
@@ -2886,7 +2886,7 @@ async function saveAnnEdit() {
 }
 
 async function deleteAnnouncement(id) {
-    if (!confirm('Hapus announcement #' + id + '?')) return;
+    if (!confirm('Delete announcement #' + id + '?')) return;
     try {
         const r = await api(`/admin/announcement/${id}`, {method:'DELETE'});
         toast(r.detail || 'Deleted!');
@@ -2980,7 +2980,7 @@ async function saveEventDetails() {
     try {
         const d = await api('/admin/event-details', {method:'PUT', body:JSON.stringify(body)});
         toast(d.detail);
-        document.getElementById('edSaveStatus').textContent = '✅ Tersimpan!';
+        document.getElementById('edSaveStatus').textContent = '✅ Saved!';
         setTimeout(() => document.getElementById('edSaveStatus').textContent = '', 3000);
         renderEventPreview(body);
     } catch(e) { toast(e.message, 'error'); }
@@ -3010,12 +3010,12 @@ function addCategory() {
     const id = document.getElementById('cat_new_id').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
     const label = document.getElementById('cat_new_label').value.trim();
     if (!id || !label) { toast('Category ID dan Label harus diisi', 'error'); return; }
-    if (_categories.find(c => c.id === id)) { toast('Category ID sudah ada', 'error'); return; }
+    if (_categories.find(c => c.id === id)) { toast('Category ID already exists', 'error'); return; }
     _categories.push({id, label});
     renderCategories();
     document.getElementById('cat_new_id').value = '';
     document.getElementById('cat_new_label').value = '';
-    toast(`Category "${label}" ditambahkan — jangan lupa klik Simpan!`, 'info');
+    toast(`Category "${label}" added — don't forget to click Save!`, 'info');
 }
 
 function removeCategory(idx) {
@@ -3028,7 +3028,7 @@ async function saveCategories() {
     try {
         const d = await api('/admin/categories', {method:'PUT', body:JSON.stringify({categories:_categories})});
         toast(d.detail);
-        document.getElementById('catSaveStatus').textContent = '✅ Tersimpan!';
+        document.getElementById('catSaveStatus').textContent = '✅ Saved!';
         setTimeout(() => document.getElementById('catSaveStatus').textContent = '', 3000);
         _categories = d.categories;
         renderCategories();
@@ -3053,7 +3053,7 @@ async function loadAudit() {
                 <span class="ad" style="flex:1;">${esc(JSON.stringify(l.details))}</span>
                 ${ipPart}${uaPart}
             </div>`;
-        }).join('') || '<p style="color:var(--text-muted)">Belum ada log</p>';
+        }).join('') || '<p style="color:var(--text-muted)">No logs yet</p>';
     } catch(e) { console.error('Audit load:', e); }
 }
 
@@ -3117,7 +3117,7 @@ async function loadOrganizers() {
                 <button class="btn btn-sm btn-ghost" onclick="resetOrgPassword(${u.id}, '${esc(u.username)}')" title="Reset password">🔑</button>
                 <button class="btn btn-sm btn-ghost" onclick="deleteOrganizer(${u.id}, '${esc(u.username)}')" title="Delete" style="color:var(--accent-red);">🗑️</button>
             </td>
-        </tr>`).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Belum ada organizer</td></tr>';
+        </tr>`).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No organizers yet</td></tr>';
     } catch(e) { console.error('loadOrganizers:', e); }
 }
 
@@ -3126,8 +3126,8 @@ async function createOrganizer() {
     const display_name = document.getElementById('orgNewName').value.trim();
     const password = document.getElementById('orgNewPass').value;
     const role = document.getElementById('orgNewRole').value;
-    if (!username || !password) { toast('Username dan password wajib diisi', 'error'); return; }
-    if (password.length < 6) { toast('Password minimal 6 karakter', 'error'); return; }
+    if (!username || !password) { toast('Username and password are required', 'error'); return; }
+    if (password.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
     try {
         await api('/admin/users/organizers', {
             method: 'POST',
@@ -3153,9 +3153,9 @@ async function toggleOrgActive(id, currentActive) {
 }
 
 async function resetOrgPassword(id, username) {
-    const newPass = prompt(`Reset password untuk "${username}".\nMasukkan password baru (min 6 chars):`);
+    const newPass = prompt(`Reset password for "${username}".\nEnter new password (min 6 chars):`);
     if (!newPass) return;
-    if (newPass.length < 6) { toast('Password minimal 6 karakter', 'error'); return; }
+    if (newPass.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
     try {
         await api(`/admin/users/organizers/${id}`, {
             method: 'PUT',
@@ -3166,7 +3166,7 @@ async function resetOrgPassword(id, username) {
 }
 
 async function deleteOrganizer(id, username) {
-    if (!confirm(`Hapus organizer "${username}"? Aksi ini tidak bisa di-undo.`)) return;
+    if (!confirm(`Delete organizer "${username}"? This action cannot be undone.`)) return;
     try {
         await api(`/admin/users/organizers/${id}`, { method: 'DELETE' });
         toast(`Organizer '${username}' deleted`);
@@ -3190,7 +3190,7 @@ async function loadIndividuals() {
                 <button class="btn btn-sm btn-ghost" onclick="resetIndPassword(${u.id}, '${esc(u.username)}')" title="Reset password">🔑</button>
                 <button class="btn btn-sm btn-ghost" onclick="deleteIndividual(${u.id}, '${esc(u.username)}')" title="Delete" style="color:var(--accent-red);">🗑️</button>
             </td>
-        </tr>`).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Belum ada individual user</td></tr>';
+        </tr>`).join('') || '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No individual users yet</td></tr>';
     } catch(e) { console.error('loadIndividuals:', e); }
 }
 
@@ -3199,8 +3199,8 @@ async function createIndividual() {
     const display_name = document.getElementById('indNewName').value.trim();
     const password = document.getElementById('indNewPass').value;
     const category = document.getElementById('indNewCat').value.trim() || 'default';
-    if (!username || !password) { toast('Username dan password wajib diisi', 'error'); return; }
-    if (password.length < 6) { toast('Password minimal 6 karakter', 'error'); return; }
+    if (!username || !password) { toast('Username and password are required', 'error'); return; }
+    if (password.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
     try {
         await api('/admin/users/individuals', {
             method: 'POST',
@@ -3226,9 +3226,9 @@ async function toggleIndActive(id, currentActive) {
 }
 
 async function resetIndPassword(id, username) {
-    const newPass = prompt(`Reset password untuk "${username}".\nMasukkan password baru (min 6 chars):`);
+    const newPass = prompt(`Reset password for "${username}".\nEnter new password (min 6 chars):`);
     if (!newPass) return;
-    if (newPass.length < 6) { toast('Password minimal 6 karakter', 'error'); return; }
+    if (newPass.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
     try {
         await api(`/admin/users/individuals/${id}`, {
             method: 'PUT',
@@ -3239,7 +3239,7 @@ async function resetIndPassword(id, username) {
 }
 
 async function deleteIndividual(id, username) {
-    if (!confirm(`Hapus individual user "${username}"? Aksi ini tidak bisa di-undo.`)) return;
+    if (!confirm(`Delete individual user "${username}"? This action cannot be undone.`)) return;
     try {
         await api(`/admin/users/individuals/${id}`, { method: 'DELETE' });
         toast(`Individual user '${username}' deleted`);
@@ -3337,7 +3337,7 @@ async function loadAgentTokens() {
 }
 
 async function generateAgentToken(hillId, hillName) {
-    if (!confirm(`Generate agent token baru untuk ${hillName}?\nToken lama akan di-replace.`)) return;
+    if (!confirm(`Generate new agent token for ${hillName}?\nOld token will be replaced.`)) return;
     try {
         const d = await api(`/admin/hills/${hillId}/agent-token`, {method: 'POST'});
         toast(`Token generated for ${d.hill_name}`);
@@ -3387,7 +3387,7 @@ async function loadVerification() {
         // Per-tick details
         const container = document.getElementById('verifyTickList');
         if (!data.ticks || data.ticks.length === 0) {
-            container.innerHTML = '<p style="color:var(--text-muted);">Belum ada tick data</p>';
+            container.innerHTML = '<p style="color:var(--text-muted);">No tick data yet</p>';
             return;
         }
 
@@ -3475,7 +3475,7 @@ function wizGoStep(n) { wizSetStep(n); }
 
 async function wizPingHost() {
     const ip = document.getElementById('wz_hill_ip').value.trim();
-    if (!ip) { toast('Masukkan IP/hostname dulu!', 'error'); return; }
+    if (!ip) { toast('Enter IP/hostname first!', 'error'); return; }
     const btn = document.getElementById('wizPingBtn');
     const res = document.getElementById('wz_ping_result');
     btn.disabled = true; btn.textContent = '⏳ Pinging...';
@@ -3503,7 +3503,7 @@ async function wizGoStep2() {
     const hillIp = document.getElementById('wz_hill_ip').value.trim();
 
     if (!hillName || !hillIp) {
-        toast('Hill Name dan IP wajib diisi!', 'error');
+        toast('Hill Name and IP are required!', 'error');
         return;
     }
 
@@ -3582,9 +3582,9 @@ async function wizGoStep2() {
 
 function wizGoStep3() {
     document.getElementById('wizVerifyIcon').textContent = '⏳';
-    document.getElementById('wizVerifyStatus').textContent = 'Menunggu pengecekan...';
+    document.getElementById('wizVerifyStatus').textContent = 'Waiting for check...';
     document.getElementById('wizVerifyStatus').style.color = 'var(--text-muted)';
-    document.getElementById('wizVerifyDetail').textContent = 'Klik "Cek Agent Status" setelah menjalankan script di server.';
+    document.getElementById('wizVerifyDetail').textContent = 'Click "Check Agent Status" after running the script on the server.';
     document.getElementById('wizVerifyTable').style.display = 'none';
     document.getElementById('wizAutoCheck').style.display = 'inline-flex';
     if (wizAutoInterval) { clearInterval(wizAutoInterval); wizAutoInterval = null; }
@@ -3807,7 +3807,7 @@ async function wizCheckAgent() {
             document.getElementById('wizVerifyIcon').textContent = '✅';
             document.getElementById('wizVerifyStatus').textContent = 'Agent ONLINE!';
             document.getElementById('wizVerifyStatus').style.color = 'var(--accent-green)';
-            document.getElementById('wizVerifyDetail').textContent = `Hill #${hillId} agent berhasil melapor ke server.`;
+            document.getElementById('wizVerifyDetail').textContent = `Hill #${hillId} agent successfully reported to server.`;
 
             document.getElementById('wizVerifyTable').style.display = 'block';
             document.getElementById('wizVerifyBody').innerHTML = [
@@ -3825,21 +3825,21 @@ async function wizCheckAgent() {
             document.getElementById('wizVerifyIcon').textContent = '⚠️';
             document.getElementById('wizVerifyStatus').textContent = 'Agent ditemukan tapi OFFLINE';
             document.getElementById('wizVerifyStatus').style.color = 'var(--accent-orange)';
-            document.getElementById('wizVerifyDetail').textContent = `Hill #${hillId} terdaftar tapi belum melapor. Last report: ${agent.last_report_at ? toWIB(agent.last_report_at) : 'never'}.`;
+            document.getElementById('wizVerifyDetail').textContent = `Hill #${hillId} registered but not yet reported. Last report: ${agent.last_report_at ? toWIB(agent.last_report_at) : 'never'}.`;
         } else {
             document.getElementById('wizVerifyIcon').textContent = '❌';
-            document.getElementById('wizVerifyStatus').textContent = 'Agent belum terdeteksi';
+            document.getElementById('wizVerifyStatus').textContent = 'Agent not yet detected';
             document.getElementById('wizVerifyStatus').style.color = 'var(--accent-red)';
-            document.getElementById('wizVerifyDetail').textContent = `Hill #${hillId} belum pernah melapor. Pastikan script sudah dijalankan.`;
+            document.getElementById('wizVerifyDetail').textContent = `Hill #${hillId} has never reported. Make sure the script has been executed.`;
         }
     } catch(e) {
         document.getElementById('wizVerifyIcon').textContent = '❌';
-        document.getElementById('wizVerifyStatus').textContent = 'Gagal cek status';
+        document.getElementById('wizVerifyStatus').textContent = 'Failed to check status';
         document.getElementById('wizVerifyStatus').style.color = 'var(--accent-red)';
         document.getElementById('wizVerifyDetail').textContent = e.message;
     } finally {
         btn.disabled = false;
-        btn.textContent = '🔍 Cek Agent Status';
+        btn.textContent = '🔍 Check Agent Status';
     }
 }
 
